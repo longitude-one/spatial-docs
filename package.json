@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prestart": "node scripts/export-markdown.mjs",
     "start": "docusaurus start",
-    "build": "docusaurus build",
+    "prebuild": "node scripts/export-markdown.mjs",
+    "build": "docusaurus build && node scripts/export-markdown.mjs --verify",
     "serve": "docusaurus serve"
   },
   "engines": {
@@ -16,6 +18,11 @@
     "@docusaurus/preset-classic": "^3.9.2",
     "prism-react-renderer": "^2.4.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5"
   }
 }

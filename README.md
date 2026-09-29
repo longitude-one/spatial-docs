@@ -26,5 +26,14 @@ npm run build
 - `docs/shared/` contains documentation shared across the ecosystem.
 - `docs/libraries/` contains documentation for individual libraries.
 - Use `.md` for documentation by default. Reserve `.mdx` for pages that need
-	interactive React components.
+  interactive React components.
 - `inbox/` contains drafts that are not yet part of the published site.
+
+## Markdown counterparts
+
+`npm run build` exports every `.md` and `.mdx` page to `build/markdown/` and
+generates a root `build/llms.txt` index. Markdown pages are copied without
+front matter. MDX output preserves Markdown and static JSX child content while
+omitting JSX wrappers, imports, props, and rendered component behavior. MDX
+JavaScript expressions are not supported and fail the build. HTML remains the
+authoritative output for interactive content and presentation.

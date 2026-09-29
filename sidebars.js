@@ -5,7 +5,7 @@ const sidebars = {
       type: 'category',
       label: 'Shared',
       link: { type: 'doc', id: 'shared/index' },
-      items: ['shared/index'],
+      items: ['shared/index', 'shared/markdown-export-example'],
     },
     {
       type: 'category',

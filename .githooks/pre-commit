@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+
+markdownlint-cli2 "*.md" "docs/**/*.md" "docs/**/*.mdx" "inbox/**/*.md" "inbox/**/*.mdx"

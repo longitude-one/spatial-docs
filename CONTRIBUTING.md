@@ -65,6 +65,7 @@ Run each suite independently with:
 ```sh
 node --test tests/export-markdown.test.mjs
 node --test tests/verify-resources.test.mjs
+node --test tests/stop-server.test.mjs
 ```
 
 The export suite checks Markdown/MDX generation, publication exclusions,
@@ -140,7 +141,21 @@ The preview serves the generated site; rebuild it to include later edits.
 ## Stop the local server
 
 Press **Ctrl+C** in the terminal running `npm start` or `npm run serve`.
-There is currently no dedicated stop script: `npm stop` is not available.
+Alternatively, from another terminal in this repository, run:
+
+```sh
+npm stop
+```
+
+On macOS and Linux, this command uses `ps` and `lsof` to find Docusaurus
+`start` and `serve` processes whose working directory is this repository.
+It stops all matching servers, including background servers and servers using
+other ports, without stopping servers from other repositories. Both utilities
+must be installed. On other operating systems, use **Ctrl+C**.
+
+The command sends `SIGTERM` and waits up to five seconds. It succeeds if no
+server is running. If a server does not stop, it reports its PID and fails;
+it does not force termination automatically.
 
 If the terminal is gone or the server is stuck, find the processes listening
 on its port. On macOS or Linux, for port 3000:

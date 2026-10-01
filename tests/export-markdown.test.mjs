@@ -14,13 +14,14 @@ async function fixture(t, sources) {
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(path.join(root, 'scripts'));
   await cp(path.join(repository, 'scripts/export-markdown.mjs'), path.join(root, 'scripts/export-markdown.mjs'));
+  await cp(path.join(repository, 'scripts/site-settings.mjs'), path.join(root, 'scripts/site-settings.mjs'));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
     const file = path.join(root, name);
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, body);
   }
-  return { root, run: () => execute(process.execPath, [path.join(root, 'scripts/export-markdown.mjs')]) };
+  return { root, run: (environment = {}) => execute(process.execPath, [path.join(root, 'scripts/export-markdown.mjs')], { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: '', ...environment } }) };
 }
 
 test('exports public Markdown and MDX, excluding drafts and removing stale resources', async (t) => {
@@ -48,4 +49,20 @@ test('generation fails on unsupported MDX expressions', async (t) => {
 test('generation fails on colliding Markdown destinations', async (t) => {
   const { run } = await fixture(t, { 'docs/example.md': '# One', 'docs/example.mdx': '# Two' });
   await assert.rejects(run(), /Duplicate Markdown destination/);
+});
+
+test('development exports identify themselves and rebase internal links without changing code', async (t) => {
+  const { root, run } = await fixture(t, {
+    'docs/home.md': '---\nslug: /\n---\n# Home\n\n[Markdown](/markdown/index.md)\n\n<a href="/markdown/index.md">HTML</a>\n\n`[Code](/unchanged)`\n\n[External](https://example.com/)\n',
+  });
+  await run({ DOCUSAURUS_DEPLOYMENT: 'development' });
+  const markdown = await readFile(path.join(root, 'static/markdown/index.md'), 'utf8');
+  const index = await readFile(path.join(root, 'static/llms.txt'), 'utf8');
+  assert.match(markdown, /Development version — not the official LongitudeOne documentation/);
+  assert.match(markdown, /\[Markdown\]\(\/spatial-docs\/markdown\/index.md\)/);
+  assert.match(markdown, /href="\/spatial-docs\/markdown\/index.md"/);
+  assert.match(markdown, /`\[Code\]\(\/unchanged\)`/);
+  assert.match(markdown, /https:\/\/example.com\//);
+  assert.match(index, /Development version/);
+  assert.match(index, /\/spatial-docs\/markdown\/index.md/);
 });

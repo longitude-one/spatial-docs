@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
+import { baseUrl, isDevelopment, developmentNotice } from './site-settings.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
@@ -17,7 +18,7 @@ const requiredContent = [
   {
     html: 'index.html',
     markdown: 'index.md',
-    href: '/markdown/index.md',
+    href: `${baseUrl}markdown/index.md`,
     text: 'Reference and contributor documentation for the LongitudeOne Spatial ecosystem.',
   },
   {
@@ -99,6 +100,22 @@ function titleFor(sourcePath, metadata, body) {
   return metadata.title || heading?.[1] || path.basename(sourcePath).replace(/\.mdx?$/, '');
 }
 
+function rebaseMarkdown(content) {
+  const processor = unified().use(remarkParse).use(remarkGfm).use(remarkStringify);
+  const tree = processor.parse(content);
+  function visit(node) {
+    if (node.url?.startsWith('/') && !node.url.startsWith('//')) {
+      node.url = `${baseUrl}${node.url.slice(1)}`;
+    }
+    if (node.type === 'html') {
+      node.value = node.value.replace(/((?:href|src)=["'])\/(?!\/)/g, `$1${baseUrl}`);
+    }
+    for (const child of node.children || []) visit(child);
+  }
+  visit(tree);
+  return processor.stringify(tree);
+}
+
 async function exportMarkdown() {
   const sourceFiles = await findDocumentationFiles(docsDirectory);
   await rm(markdownDirectory, { recursive: true, force: true });
@@ -116,7 +133,8 @@ async function exportMarkdown() {
     if (generated.some((page) => page.markdownPath === markdownPath)) {
       throw new Error(`Duplicate Markdown destination: ${markdownPath}`);
     }
-    const content = sourcePath.endsWith('.mdx') ? convertMdxToMarkdown(body) : body;
+    const markdown = sourcePath.endsWith('.mdx') ? convertMdxToMarkdown(body) : body;
+    const content = isDevelopment ? `> ${developmentNotice}\n\n${rebaseMarkdown(markdown)}` : markdown;
     const destination = path.join(markdownDirectory, markdownPath);
 
     await mkdir(path.dirname(destination), { recursive: true });
@@ -127,9 +145,10 @@ async function exportMarkdown() {
   const index = [
     '# LongitudeOne Spatial Documentation',
     '',
+    ...(isDevelopment ? [developmentNotice, ''] : []),
     'Markdown counterparts for the published documentation pages:',
     '',
-    ...generated.map(({ markdownPath, title }) => `- [${title}](/markdown/${markdownPath})`),
+    ...generated.map(({ markdownPath, title }) => `- [${title}](${baseUrl}markdown/${markdownPath})`),
     '',
   ].join('\n');
   await writeFile(path.join(staticDirectory, 'llms.txt'), index);
@@ -137,8 +156,8 @@ async function exportMarkdown() {
 
 async function verifyBuild() {
   const index = await readFile(path.join(buildDirectory, 'llms.txt'), 'utf8');
-  const indexedMarkdownPaths = [...index.matchAll(/\]\(\/markdown\/([^\s)]+\.md)\)/g)]
-    .map((match) => match[1]);
+  const indexedMarkdownPaths = [...index.matchAll(/\]\(([^\s)]+\.md)\)/g)]
+    .map((match) => match[1].slice(`${baseUrl}markdown/`.length));
   const markdownDirectory = path.join(buildDirectory, 'markdown');
   const generatedMarkdownPaths = (await findMarkdownFiles(markdownDirectory))
     .map((file) => path.relative(markdownDirectory, file).split(path.sep).join('/'))
@@ -171,8 +190,8 @@ async function verifyBuild() {
     const html = await readFile(htmlFile, 'utf8');
     const markdownLinks = [...html.matchAll(/href="([^"]+\.md)"/g)];
     for (const [, href] of markdownLinks) {
-      const markdownPath = href.replace(/^\/markdown\//, '');
-      if (href.startsWith('/markdown/')) {
+      const markdownPath = href.slice(`${baseUrl}markdown/`.length);
+      if (href.startsWith(`${baseUrl}markdown/`)) {
         await readFile(path.join(buildDirectory, 'markdown', markdownPath));
       }
     }

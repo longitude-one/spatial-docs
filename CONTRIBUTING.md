@@ -66,6 +66,7 @@ Run each suite independently with:
 node --test tests/export-markdown.test.mjs
 node --test tests/verify-resources.test.mjs
 node --test tests/stop-server.test.mjs
+node --test tests/development-config.test.mjs
 ```
 
 The export suite checks Markdown/MDX generation, publication exclusions,
@@ -181,3 +182,45 @@ kill -TERM 12345
 If the process remains stuck, force it to stop with `kill -KILL 12345`.
 Repeat for any other confirmed server PID, then rerun the port lookup to
 verify that nothing is listening. Substitute the actual port if it is not 3000.
+
+## Development publication on GitHub Pages
+
+The development site is published at
+<https://longitude-one.github.io/spatial-docs/>. It is not the official
+LongitudeOne documentation. Every page displays a permanent development banner;
+the Markdown resources and `llms.txt` carry the same notice.
+
+`Publish Development Documentation` runs when a pull request targeting `main`
+is closed, and builds and deploys only when that pull request was merged.
+The workflow uses `pull_request_target` to support merged fork contributions,
+but checks out only the current trusted `main` branch, never a PR head.
+Closing an unmerged PR skips both jobs. Direct pushes and tags do not publish.
+
+Builds and deployments are serialized without interrupting an active publication.
+GitHub's `queue: max` retains up to 100 pending runs; additional runs beyond that
+platform limit are canceled. Each run checks out the current `main` when it starts.
+The build runs tests and the complete resource validation before uploading the
+whole `build/` directory, including HTML, Markdown, `llms.txt`, and
+`markdown-mapping.json`. The deployment job requires a successful build and uses
+GitHub's Pages artifact deployment. It does not delete the live site before
+publishing, so a failed build or deployment leaves the previous publication in
+place. A deployment error fails the workflow. Rerun a failed workflow from
+GitHub Actions after correcting its cause.
+
+Repository setup: select **Settings → Pages → Source → GitHub Actions** and use
+the `github-pages` environment, restricted to deployments from `main`. Only the
+deployment job receives `pages: write` and `id-token: write`; the build job has
+read-only repository access. The first publication happens after this workflow
+has been merged into `main`; this PR does not publish a preview.
+
+To reproduce the Pages build locally on macOS or Linux:
+
+```sh
+DOCUSAURUS_DEPLOYMENT=development npm run build
+DOCUSAURUS_DEPLOYMENT=development npm run serve
+```
+
+Open <http://localhost:3000/spatial-docs/>. The environment variable selects the
+Pages subpath and development notices. Omit it for the usual local root build.
+PR validation builds both configurations. Publication to official hosting and
+publication triggered by release tags are outside this workflow.

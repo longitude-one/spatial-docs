@@ -1,10 +1,12 @@
 import { themes as prismThemes } from 'prism-react-renderer';
+import { baseUrl, isDevelopment, developmentNotice } from './scripts/site-settings.mjs';
+import remarkBaseUrl from './scripts/remark-base-url.mjs';
 
 const config = {
-  title: 'LongitudeOne Spatial Documentation',
+  title: isDevelopment ? 'LongitudeOne Spatial — Development' : 'LongitudeOne Spatial Documentation',
   tagline: 'Documentation for the LongitudeOne Spatial ecosystem',
   url: 'https://longitude-one.github.io',
-  baseUrl: '/',
+  baseUrl,
   onBrokenLinks: 'throw',
   markdown: {
     hooks: {
@@ -17,6 +19,7 @@ const config = {
       {
         docs: {
           routeBasePath: '/',
+          remarkPlugins: [remarkBaseUrl],
           sidebarPath: './sidebars.js',
         },
         blog: false,
@@ -27,6 +30,15 @@ const config = {
     ],
   ],
   themeConfig: {
+    ...(isDevelopment ? {
+      announcementBar: {
+        id: 'development-site',
+        content: developmentNotice,
+        isCloseable: false,
+        backgroundColor: '#fff3cd',
+        textColor: '#332701',
+      },
+    } : {}),
     navbar: {
       title: 'LongitudeOne Spatial',
       items: [

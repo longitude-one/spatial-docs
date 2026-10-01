@@ -71,3 +71,17 @@ test('supports directory links to Markdown index pages', async (t) => {
   });
   await verifyResources(root);
 });
+
+test('validates Pages subpath links and mappings', async (t) => {
+  const root = await fixture(t, {
+    'docusaurus.config.js': "export default {url: 'https://example.com', baseUrl: '/spatial-docs/'};",
+    'build/index.html': '<h1 id="home">Home</h1><a href="/spatial-docs/markdown/index.md#home">Markdown</a>',
+    'build/markdown/index.md': '# Home\n[Home](/spatial-docs/#home)',
+    'build/llms.txt': '[Home](/spatial-docs/markdown/index.md)',
+    '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/intro.md', permalink: '/spatial-docs/', slug: '/' }),
+  });
+  await verifyResources(root);
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, 'build/markdown-mapping.json'))), [
+    { html: '/spatial-docs/', markdown: '/spatial-docs/markdown/index.md' },
+  ]);
+});

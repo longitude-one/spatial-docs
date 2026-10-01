@@ -28,3 +28,7 @@ jobs:
         run: npm test
       - name: Build and verify publishable documentation
         run: npm run build
+      - name: Build and verify development Pages site
+        run: npm run build
+        env:
+          DOCUSAURUS_DEPLOYMENT: development

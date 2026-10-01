@@ -67,6 +67,7 @@ node --test tests/export-markdown.test.mjs
 node --test tests/verify-resources.test.mjs
 node --test tests/stop-server.test.mjs
 node --test tests/development-config.test.mjs
+node --test tests/deploy-production.test.mjs
 ```
 
 The export suite checks Markdown/MDX generation, publication exclusions,
@@ -224,3 +225,54 @@ Open <http://localhost:3000/spatial-docs/>. The environment variable selects the
 Pages subpath and development notices. Omit it for the usual local root build.
 PR validation builds both configurations. Publication to official hosting and
 publication triggered by release tags are outside this workflow.
+
+## Official publication to LongitudeOne hosting
+
+`Publish Official Documentation` runs only for pushed tags matching `x.y.z`
+(three nonempty decimal numbers, for example `1.0.0` or `12.34.56`). Tags such as
+`v1.0.0` and `1.0.0-rc.1`, branch pushes, pull requests and tag deletions do not
+publish the official site. Create a release tag only when its commit is ready
+for production. The workflow checks out the event's exact commit, runs tests,
+and builds and validates the full official site before opening an SSH connection.
+It publishes the complete `build/` tree, including HTML, Markdown, `llms.txt`,
+and `markdown-mapping.json`.
+
+The GitHub environment is named `production`. Configure `DEPLOY_PATH`, `SSH_HOST`,
+`SSH_PORT`, and `SSH_USER` as environment variables or secrets, and
+`SSH_PRIVATE_KEY` as an environment **secret**. Secrets are never committed.
+The private key must work without an interactive passphrase. The hosting account
+needs a POSIX shell, `tar`, and permission to write in the existing absolute
+`DEPLOY_PATH` directory. The web server must serve `DEPLOY_PATH/public_html`.
+Restrict production environment access to release tags through GitHub settings.
+
+Optionally configure `SSH_KNOWN_HOSTS` with the server's independently verified
+OpenSSH known-hosts entry (use `[host]:port` for a nondefault port). When supplied,
+the connection requires that trusted host key. Otherwise OpenSSH uses
+`StrictHostKeyChecking=accept-new`: the first connection trusts the presented key,
+and subsequent connections in the same run reject a changed key. Hosted runners
+are ephemeral, so this fallback does not authenticate the first connection
+against a previously verified key; supply `SSH_KNOWN_HOSTS` for that protection.
+Private key and known-hosts files are temporary and removed when the script exits.
+
+Publications are serialized without canceling an active run (`queue: max`, up to
+100 pending runs). The deployment performs these operations in order:
+
+1. Remove any interrupted `DEPLOY_PATH/public_html.next` and create it empty.
+2. Transfer the entire build over SSH into `DEPLOY_PATH/public_html.next`.
+3. Require successful local archiving, remote extraction, and expected resources.
+4. Remove `DEPLOY_PATH/public_html.old` if present.
+5. Rename `DEPLOY_PATH/public_html` to `DEPLOY_PATH/public_html.old` if present.
+6. Rename `DEPLOY_PATH/public_html.next` to `DEPLOY_PATH/public_html`.
+
+A build or transfer failure fails the workflow and leaves both the live site
+and its existing backup intact. The first publication works without a live
+directory. After success, `.old` holds the previous version. If the final rename
+fails, the script attempts to restore `.old` to the live path and still fails
+the workflow. The two renames leave a brief interval without `public_html`;
+interruption during that interval can require restoring `.old` manually.
+Inspect a failed run and the remote directories before rerunning that release's
+workflow; rerunning republishes the same event commit. Do not run concurrent
+manual deployments outside the workflow's concurrency group.
+
+The deployment regression suite uses a local SSH substitute and temporary
+directories to test rotation and failure handling. It never contacts production.

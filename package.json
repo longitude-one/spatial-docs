@@ -8,7 +8,8 @@
     "prebuild": "node scripts/export-markdown.mjs",
     "build": "docusaurus build && node scripts/export-markdown.mjs --verify",
     "serve": "docusaurus serve",
-    "test": "node --test"
+    "test": "node --test",
+    "stop": "node scripts/stop-server.mjs"
   },
   "engines": {
     "node": ">=20.0",

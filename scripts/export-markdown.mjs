@@ -1,4 +1,4 @@
-import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unified } from 'unified';
@@ -101,13 +101,21 @@ function titleFor(sourcePath, metadata, body) {
 
 async function exportMarkdown() {
   const sourceFiles = await findDocumentationFiles(docsDirectory);
+  await rm(markdownDirectory, { recursive: true, force: true });
   await mkdir(markdownDirectory, { recursive: true });
 
   const generated = [];
   for (const sourceFile of sourceFiles.sort()) {
     const sourcePath = path.relative(docsDirectory, sourceFile).split(path.sep).join('/');
     const { body, metadata } = parseFrontMatter(await readFile(sourceFile, 'utf8'));
+    if (sourcePath.split('/').some((part) => part.startsWith('_'))
+      || metadata.draft === 'true' || metadata.unlisted === 'true') {
+      continue;
+    }
     const markdownPath = markdownPathFor(sourcePath, metadata);
+    if (generated.some((page) => page.markdownPath === markdownPath)) {
+      throw new Error(`Duplicate Markdown destination: ${markdownPath}`);
+    }
     const content = sourcePath.endsWith('.mdx') ? convertMdxToMarkdown(body) : body;
     const destination = path.join(markdownDirectory, markdownPath);
 
@@ -205,7 +213,9 @@ async function findMarkdownFiles(directory) {
 
 if (process.argv.includes('--verify')) {
   await verifyBuild();
-  console.log('Markdown export checks passed.');
+  const { verifyResources } = await import('./verify-resources.mjs');
+  await verifyResources(rootDirectory);
+  console.log('Publishable resource checks passed.');
 } else {
   await exportMarkdown();
 }

@@ -7,7 +7,9 @@
     "start": "docusaurus start",
     "prebuild": "node scripts/export-markdown.mjs",
     "build": "docusaurus build && node scripts/export-markdown.mjs --verify",
-    "serve": "docusaurus serve"
+    "serve": "docusaurus serve",
+    "test": "node --test",
+    "stop": "node scripts/stop-server.mjs"
   },
   "engines": {
     "node": ">=20.0",
@@ -24,5 +26,9 @@
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "github-slugger": "^2.0.0",
+    "parse5": "^7.3.0"
   }
 }

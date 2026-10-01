@@ -6,6 +6,11 @@ const config = {
   url: 'https://longitude-one.github.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
+  },
   presets: [
     [
       'classic',

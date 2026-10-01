@@ -66,6 +66,7 @@ Run each suite independently with:
 node --test tests/export-markdown.test.mjs
 node --test tests/verify-resources.test.mjs
 node --test tests/stop-server.test.mjs
+node --test tests/development-config.test.mjs
 ```
 
 The export suite checks Markdown/MDX generation, publication exclusions,

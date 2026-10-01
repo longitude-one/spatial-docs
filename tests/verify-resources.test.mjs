@@ -1,0 +1,73 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { verifyResources } from '../scripts/verify-resources.mjs';
+
+async function fixture(t, changes = {}) {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'spatial-docs-check-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const data = {
+    'package.json': '{"type":"module"}',
+    'docusaurus.config.js': "export default {url: 'https://example.com', baseUrl: '/'};",
+    'build/index.html': '<h1 id="home">Home</h1><a href="/markdown/index.md#home">Markdown</a>',
+    'build/markdown/index.md': '# Home\n\n[Home](/#home)\n[External](https://other.example/missing)\n',
+    'build/llms.txt': '# Documentation\n\n[Home](/markdown/index.md)\n',
+    '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/intro.md', permalink: '/', slug: '/' }),
+    ...changes,
+  };
+  for (const [name, content] of Object.entries(data)) {
+    if (content === null) continue;
+    const file = path.join(root, name);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, content);
+  }
+  return root;
+}
+
+test('valid site produces an HTML/Markdown mapping', async (t) => {
+  const root = await fixture(t);
+  await verifyResources(root);
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, 'build/markdown-mapping.json'))), [{ html: '/', markdown: '/markdown/index.md' }]);
+});
+
+for (const [name, changes, message] of [
+  ['HTML link', { 'build/index.html': '<a href="/missing">Broken</a>' }, /Broken internal link/],
+  ['HTML anchor', { 'build/index.html': '<a href="#missing">Broken</a>' }, /Broken anchor/],
+  ['Markdown link', { 'build/markdown/index.md': '# Home\n[Broken](missing.md)' }, /Broken internal link/],
+  ['Markdown anchor', { 'build/markdown/index.md': '# Home\n[Broken](#missing)' }, /Broken anchor/],
+  ['reference link', { 'build/markdown/index.md': '# Home\n[Broken][target]\n\n[target]: /missing' }, /Broken internal link/],
+  ['embedded HTML link', { 'build/markdown/index.md': '# Home\n<a href="/missing">Broken</a>' }, /Broken internal link/],
+  ['same-origin absolute link', { 'build/markdown/index.md': '# Home\n[Broken](https://example.com/missing)' }, /Broken internal link/],
+  ['missing Markdown', { 'build/markdown/index.md': null }, /Broken internal link/],
+  ['external llms entry', { 'build/llms.txt': '[Home](/markdown/index.md)\n[Other](https://other.example/a.md)' }, /must match/],
+  ['duplicate llms entry', { 'build/llms.txt': '[Home](/markdown/index.md)\n[Duplicate](/markdown/index.md)' }, /must match/],
+  ['unindexed Markdown', { 'build/markdown/stale.md': '# Stale' }, /must match/],
+  ['draft publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/intro.md', permalink: '/', slug: '/', draft: true }) }, /must match/],
+  ['unlisted publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/intro.md', permalink: '/', slug: '/', unlisted: true }) }, /must match/],
+  ['missing HTML counterpart', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/intro.md', permalink: '/absent', slug: '/' }) }, /Broken internal link/],
+]) {
+  test(`rejects ${name}`, async (t) => {
+    await assert.rejects(verifyResources(await fixture(t, changes)), message);
+  });
+}
+
+test('accepts relative links, encoded paths, duplicate heading anchors and query strings', async (t) => {
+  const root = await fixture(t, {
+    'build/markdown/index.md': '# Home\n## Repeated\n## Repeated\n[Anchor](#repeated-1)\n[Asset](../image%20one.svg?raw=1)\n',
+    'build/image one.svg': '<svg/>',
+  });
+  await verifyResources(root);
+});
+
+test('supports directory links to Markdown index pages', async (t) => {
+  const root = await fixture(t, {
+    'build/markdown/index.md': '# Home\n[Section](section/)\n',
+    'build/markdown/section/index.md': '# Section',
+    'build/section/index.html': '<h1>Section</h1>',
+    'build/llms.txt': '[Home](/markdown/index.md)\n[Section](/markdown/section/index.md)',
+    '.docusaurus/docusaurus-plugin-content-docs/default/section.json': JSON.stringify({ source: '@site/docs/section/index.md', permalink: '/section/', slug: '/section/' }),
+  });
+  await verifyResources(root);
+});

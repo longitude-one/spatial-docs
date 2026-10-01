@@ -1,0 +1,44 @@
+name: Publish Official Documentation
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-documentation
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  publish:
+    if: github.event.deleted == false
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build and verify complete official site
+        run: npm run build
+        env:
+          DOCUSAURUS_DEPLOYMENT: production
+      - name: Transfer and publish verified site
+        run: bash scripts/deploy-production.sh build
+        env:
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || secrets.DEPLOY_PATH }}
+          SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
+          SSH_PORT: ${{ vars.SSH_PORT || secrets.SSH_PORT }}
+          SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS || secrets.SSH_KNOWN_HOSTS }}

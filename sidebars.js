@@ -5,7 +5,11 @@ const sidebars = {
       type: 'category',
       label: 'Shared',
       link: { type: 'doc', id: 'shared/index' },
-      items: ['shared/index', 'shared/markdown-export-example'],
+      items: [
+        'shared/index',
+        'shared/portable-markdown-publication-contract',
+        'shared/markdown-export-example',
+      ],
     },
     {
       type: 'category',

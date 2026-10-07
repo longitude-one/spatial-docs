@@ -3,7 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
-import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { baseUrl, isDevelopment, developmentNotice } from './site-settings.mjs';
@@ -35,11 +34,38 @@ async function findDocumentationFiles(directory) {
     if (entry.isDirectory()) {
       return findDocumentationFiles(entryPath);
     }
+    if (entry.name.endsWith('.mdx')) {
+      throw new Error(`Unsupported documentation source format: ${path.relative(rootDirectory, entryPath)}. Use .md files only.`);
+    }
 
-    return /\.(md|mdx)$/.test(entry.name) ? [entryPath] : [];
+    return entry.name.endsWith('.md') ? [entryPath] : [];
   }));
 
   return nested.flat();
+}
+
+function stripMarkdownCodeBlocks(content) {
+  return content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '');
+}
+
+function hasUnsupportedSourceConstructs(content) {
+  const sanitized = stripMarkdownCodeBlocks(content);
+  const mdxImportExport = /(?:^|\n)\s*(?:import|export)\s+/m.test(sanitized);
+  const jsxLikeTag = /<(?![A-Za-z][A-Za-z0-9+.-]*:)(?:\/)?[A-Za-z][A-Za-z0-9-]*(?:\s[^>]*)?>/m.test(sanitized);
+  const mdxExpression = /\{[^\n]*[+\-*/=<>!&|?:][^\n]*\}/m.test(sanitized);
+  const rawHtml = /<(?:!--|\/?[A-Za-z][A-Za-z0-9-]*\b(?:\s[^>]*)?\/?>)/m.test(sanitized);
+
+  if (mdxImportExport) {
+    throw new Error('MDX imports and exports are not supported in documentation source files.');
+  }
+  if (mdxExpression) {
+    throw new Error('MDX JavaScript expressions are not supported in documentation source files.');
+  }
+  if (rawHtml || jsxLikeTag) {
+    throw new Error('Raw HTML and JSX are not supported in documentation source files. Use portable Markdown only.');
+  }
+
+  return false;
 }
 
 function parseFrontMatter(content) {
@@ -64,35 +90,6 @@ function markdownPathFor(sourcePath, metadata) {
   }
 
   return sourcePath.replace(/\.mdx?$/, '.md');
-}
-
-function unwrapMdx(node) {
-  if (node.type === 'mdxFlowExpression' || node.type === 'mdxTextExpression') {
-    throw new Error('MDX JavaScript expressions cannot be exported as Markdown.');
-  }
-  if (node.type === 'mdxjsEsm') {
-    return [];
-  }
-  if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
-    return node.children.flatMap(unwrapMdx);
-  }
-  if (node.children) {
-    node.children = node.children.flatMap(unwrapMdx);
-  }
-
-  return [node];
-}
-
-function convertMdxToMarkdown(content) {
-  const processor = unified()
-    .use(remarkParse)
-    .use(remarkMdx)
-    .use(remarkGfm)
-    .use(remarkStringify);
-  const tree = processor.parse(content);
-  tree.children = tree.children.flatMap(unwrapMdx);
-
-  return processor.stringify(tree);
 }
 
 function titleFor(sourcePath, metadata, body) {
@@ -124,7 +121,9 @@ async function exportMarkdown() {
   const generated = [];
   for (const sourceFile of sourceFiles.sort()) {
     const sourcePath = path.relative(docsDirectory, sourceFile).split(path.sep).join('/');
-    const { body, metadata } = parseFrontMatter(await readFile(sourceFile, 'utf8'));
+    const raw = await readFile(sourceFile, 'utf8');
+    hasUnsupportedSourceConstructs(raw);
+    const { body, metadata } = parseFrontMatter(raw);
     if (sourcePath.split('/').some((part) => part.startsWith('_'))
       || metadata.draft === 'true' || metadata.unlisted === 'true') {
       continue;
@@ -133,8 +132,7 @@ async function exportMarkdown() {
     if (generated.some((page) => page.markdownPath === markdownPath)) {
       throw new Error(`Duplicate Markdown destination: ${markdownPath}`);
     }
-    const markdown = sourcePath.endsWith('.mdx') ? convertMdxToMarkdown(body) : body;
-    const content = isDevelopment ? `> ${developmentNotice}\n\n${rebaseMarkdown(markdown)}` : markdown;
+    const content = isDevelopment ? `> ${developmentNotice}\n\n${rebaseMarkdown(body)}` : body;
     const destination = path.join(markdownDirectory, markdownPath);
 
     await mkdir(path.dirname(destination), { recursive: true });

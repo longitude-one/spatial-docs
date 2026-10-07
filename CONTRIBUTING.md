@@ -1,5 +1,12 @@
 # How to contribute
 
+This file explains how to contribute to the architectural development of the
+development and production documentation. For any contribution to the
+documentation corpus, start with the [shared documentation index](docs/shared/index.md),
+which points to guidance and conventions that apply across the documentation.
+Before adding or changing published content, also consult the
+[Portable Markdown publication contract](docs/shared/portable-markdown-publication-contract.md).
+
 ## Set up the project
 
 Run all commands below from the repository root. Use Node.js 20 or newer and

@@ -24,43 +24,49 @@ async function fixture(t, sources) {
   return { root, run: (environment = {}) => execute(process.execPath, [path.join(root, 'scripts/export-markdown.mjs')], { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: '', ...environment } }) };
 }
 
-test('exports public Markdown and MDX, excluding drafts and removing stale resources', async (t) => {
+test('exports public Markdown only, excluding drafts and removing stale resources', async (t) => {
   const { root, run } = await fixture(t, {
     'docs/home.md': '---\nslug: /\n---\n# Home',
-    'docs/example.mdx': '# Example\n\n<aside>Static content</aside>',
     'docs/draft.md': '---\ndraft: true\n---\n# Draft',
     'docs/unlisted.md': '---\nunlisted: true\n---\n# Unlisted',
     'docs/_hidden.md': '# Hidden',
     'static/markdown/stale.md': '# Stale',
   });
   await run();
-  assert.match(await readFile(path.join(root, 'static/markdown/example.md'), 'utf8'), /Static content/);
   assert.equal(await readFile(path.join(root, 'static/markdown/index.md'), 'utf8'), '# Home');
   for (const name of ['draft', 'unlisted', '_hidden', 'stale']) {
     await assert.rejects(access(path.join(root, `static/markdown/${name}.md`)));
   }
 });
 
-test('generation fails on unsupported MDX expressions', async (t) => {
+test('generation fails on MDX source files', async (t) => {
   const { run } = await fixture(t, { 'docs/example.mdx': '# Example\n\n{1 + 1}' });
-  await assert.rejects(run(), /MDX JavaScript expressions cannot be exported/);
+  await assert.rejects(run(), /Unsupported documentation source format: docs\/example\.mdx\. Use \.md files only\./);
+});
+
+test('generation fails on unsupported source constructs', async (t) => {
+  const { run } = await fixture(t, { 'docs/example.md': '# Example\n\n{1 + 1}' });
+  await assert.rejects(run(), /MDX JavaScript expressions are not supported in documentation source files\./);
 });
 
 test('generation fails on colliding Markdown destinations', async (t) => {
-  const { run } = await fixture(t, { 'docs/example.md': '# One', 'docs/example.mdx': '# Two' });
-  await assert.rejects(run(), /Duplicate Markdown destination/);
+  const { run } = await fixture(t, {
+    'docs/first.md': '---\nslug: /\n---\n# First',
+    'docs/second.md': '---\nslug: /\n---\n# Second',
+  });
+  await assert.rejects(run(), /Duplicate Markdown destination: index.md/);
 });
 
 test('development exports identify themselves and rebase internal links without changing code', async (t) => {
   const { root, run } = await fixture(t, {
-    'docs/home.md': '---\nslug: /\n---\n# Home\n\n[Markdown](/markdown/index.md)\n\n<a href="/markdown/index.md">HTML</a>\n\n`[Code](/unchanged)`\n\n[External](https://example.com/)\n',
+    'docs/home.md': '---\nslug: /\n---\n# Home\n\n[Markdown](/markdown/index.md)\n\n[HTML version](/markdown/index.md)\n\n`[Code](/unchanged)`\n\n[External](https://example.com/)\n',
   });
   await run({ DOCUSAURUS_DEPLOYMENT: 'development' });
   const markdown = await readFile(path.join(root, 'static/markdown/index.md'), 'utf8');
   const index = await readFile(path.join(root, 'static/llms.txt'), 'utf8');
   assert.match(markdown, /Development version — not the official LongitudeOne documentation/);
   assert.match(markdown, /\[Markdown\]\(\/spatial-docs\/markdown\/index.md\)/);
-  assert.match(markdown, /href="\/spatial-docs\/markdown\/index.md"/);
+  assert.match(markdown, /\[HTML version\]\(\/spatial-docs\/markdown\/index.md\)/);
   assert.match(markdown, /`\[Code\]\(\/unchanged\)`/);
   assert.match(markdown, /https:\/\/example.com\//);
   assert.match(index, /Development version/);

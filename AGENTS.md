@@ -21,7 +21,7 @@ Use Node.js 20+ and npm 10+ (CI uses Node.js 24).
 
 ## Coding Style & Naming Conventions
 
-Use `.md` for documentation; use `.mdx` only when a page needs React components.
+Use `.md` for documentation sources. The published documentation contract forbids MDX and raw HTML in source docs.
 Keep pages in the appropriate topic directory and use descriptive, lowercase, hyphen-separated filenames
 such as `portable-markdown-publication-contract.md`.
 Follow `.markdownlint.json` (180-character prose lines; 400-character code lines).

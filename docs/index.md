@@ -7,9 +7,10 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 ## Browse the documentation
 
 - [Shared documentation](shared/)
-- [spatial-core](libraries/spatial-core/)
+- [Spatial Core 1.x](spatial-core/v1/index.md)
+- [Spatial Decoder 1.x](spatial-decoder/v1/index.md)
 
-Library documentation lives under `docs/libraries/`; ecosystem-wide topics live
-under `docs/shared/`.
+Versioned library documentation lives under `docs/<library>/v<major>/`; ecosystem-wide
+topics live under `docs/shared/`.
 
 [Read this page as Markdown](pathname:///markdown/index.md)

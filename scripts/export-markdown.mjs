@@ -9,6 +9,7 @@ import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { baseUrl } from './site-settings.mjs';
+import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
@@ -170,7 +171,7 @@ function htmlPathFor(markdownPath) {
   return markdownPath.replace(/\.md$/, '.html');
 }
 
-function publishedDocument(sourcePath, metadata, body) {
+function publishedDocument(sourcePath, metadata, body, libraries) {
   const markdownPath = sourcePath;
   const htmlPath = htmlPathFor(markdownPath);
   const markdownName = path.basename(markdownPath);
@@ -190,13 +191,15 @@ function publishedDocument(sourcePath, metadata, body) {
     sortKeys: false,
   }).trimEnd();
   const htmlLink = `[View HTML version](${htmlHref})`;
+  const info = statusFor(sourcePath, libraries);
+  const status = info ? `${markdownStatus(info, sourcePath)}\n\n` : '';
   const content = body.trim() ? `${body.trimEnd()}\n` : '';
   return {
     markdownPath,
     htmlPath: `/${htmlPath}`,
     markdownUrl: `/${markdownPath}`,
     title: metadata.title.trim(),
-    content: `---\n${frontMatter}\n---\n\n${htmlLink}\n\n${content}`,
+    content: `---\n${frontMatter}\n---\n\n${htmlLink}\n\n${status}${content}`,
   };
 }
 
@@ -278,6 +281,7 @@ async function stagedOutputMatches(stagingDirectory) {
 }
 
 async function exportMarkdown() {
+  const libraries = await resolveLibraries(docsDirectory);
   const sourceFiles = await findDocumentationFiles(docsDirectory);
   const generated = [];
   for (const sourceFile of sourceFiles.sort()) {
@@ -289,7 +293,7 @@ async function exportMarkdown() {
       || metadata.unlisted === true || metadata.unlisted === 'true') {
       continue;
     }
-    const page = publishedDocument(sourcePath, metadata, body);
+    const page = publishedDocument(sourcePath, metadata, body, libraries);
     if (generated.some(({ markdownPath, htmlPath }) => (
       markdownPath === page.markdownPath || htmlPath === page.htmlPath
     ))) {
@@ -325,6 +329,7 @@ async function exportMarkdown() {
   } finally {
     await rm(stagingDirectory, { recursive: true, force: true });
   }
+  await writeManifest(rootDirectory, libraries);
 }
 
 async function verifyBuild() {

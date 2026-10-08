@@ -1,6 +1,26 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import { baseUrl, isDevelopment, developmentNotice } from './scripts/site-settings.mjs';
 import remarkBaseUrl from './scripts/remark-base-url.mjs';
+import remarkVersionStatus from './scripts/remark-version-status.mjs';
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+
+const rootDirectory = process.cwd();
+let libraries = {};
+try { libraries = JSON.parse(readFileSync(path.join(rootDirectory, '.docusaurus/library-versions.json'), 'utf8')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+let siteVersion = 'Development documentation';
+if (process.env.DOCUSAURUS_DEPLOYMENT !== 'development') {
+  try {
+    const tags = execFileSync('git', ['tag', '--points-at', 'HEAD'], { cwd: rootDirectory, encoding: 'utf8' })
+      .trim().split('\n').filter((tag) => /^[0-9]+\.[0-9]+\.[0-9]+$/.test(tag));
+    if (tags.length > 1) throw new Error('Multiple SemVer tags identify the current commit.');
+    if (tags.length === 1) siteVersion = `Documentation version ${tags[0]}`;
+  } catch (error) {
+    if (error.message === 'Multiple SemVer tags identify the current commit.') throw error;
+  }
+}
 
 const config = {
   title: isDevelopment ? 'LongitudeOne Spatial — Development' : 'LongitudeOne Spatial Documentation',
@@ -20,7 +40,7 @@ const config = {
       {
         docs: {
           routeBasePath: '/',
-          remarkPlugins: [remarkBaseUrl],
+          remarkPlugins: [remarkBaseUrl, [remarkVersionStatus, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }]],
           sidebarPath: './sidebars.js',
         },
         blog: false,
@@ -31,6 +51,7 @@ const config = {
     ],
   ],
   themeConfig: {
+    footer: { style: 'dark', copyright: siteVersion },
     ...(isDevelopment ? {
       announcementBar: {
         id: 'development-site',

@@ -108,6 +108,7 @@ for (const [name, source, message] of [
   ['empty title', '---\ntitle: \"\"\ndescription: A description.\n---\n# Home', /must define a non-empty title/],
   ['Docusaurus slug metadata', document('Home', 'Description.', '', 'slug: /custom\n'), /must not define Docusaurus slug metadata/],
   ['MDX expression', document('Home', 'Description.', '{1 + 1}'), /MDX JavaScript expressions are not supported/],
+  ['multiline MDX expression', document('Home', 'Description.', '{\n  1 + 1\n}'), /MDX JavaScript expressions are not supported/],
   ['MDX import', document('Home', 'Description.', 'import Thing from \"thing\";'), /MDX imports and exports are not supported/],
   ['raw HTML', document('Home', 'Description.', '<div>Unsupported</div>'), /Raw HTML and JSX are not supported/],
 ]) {

@@ -5,6 +5,7 @@ import { dump, load } from 'js-yaml';
 import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
+import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { baseUrl } from './site-settings.mjs';
@@ -44,6 +45,10 @@ const markdownProcessor = unified()
     setext: false,
     strong: '*',
   });
+
+const mdxProcessor = unified()
+  .use(remarkParse)
+  .use(remarkMdx);
 
 const reservedPathComponents = new Set([
   'aux',
@@ -87,10 +92,6 @@ async function findDocumentationFiles(directory) {
   return nested.flat();
 }
 
-function stripMarkdownCodeBlocks(content) {
-  return content.replace(/```[\s\S]*?```/g, '').replace(/~~~[\s\S]*?~~~/g, '').replace(/`+[^`]*`+/g, '');
-}
-
 function removeComments(node) {
   if (!node.children) {
     return;
@@ -105,6 +106,23 @@ function removeComments(node) {
   node.children = node.children.filter((child) => (
     !(child.type === 'paragraph' && child.children.length === 0)
   ));
+}
+
+function validateMdxSyntax(body) {
+  const tree = mdxProcessor.parse(body.replace(/<!--[\s\S]*?-->/g, ''));
+  function inspect(node) {
+    if (node.type === 'mdxjsEsm') {
+      throw new Error('MDX imports and exports are not supported in documentation source files.');
+    }
+    if (node.type === 'mdxFlowExpression' || node.type === 'mdxTextExpression') {
+      throw new Error('MDX JavaScript expressions are not supported in documentation source files.');
+    }
+    if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
+      throw new Error('Raw HTML and JSX are not supported in documentation source files. Use portable Markdown only.');
+    }
+    for (const child of node.children || []) inspect(child);
+  }
+  inspect(tree);
 }
 
 function parseSourceDocument(content, sourcePath) {
@@ -128,20 +146,12 @@ function parseSourceDocument(content, sourcePath) {
     }
   }
 
-  const body = source.slice(frontMatter.position.end.offset);
-  const sanitized = stripMarkdownCodeBlocks(body);
-  const withoutComments = sanitized.replace(/<!--[\s\S]*?-->/g, '');
-  if (/(?:^|\n)\s*(?:import|export)\s+/m.test(withoutComments)) {
-    throw new Error('MDX imports and exports are not supported in documentation source files.');
-  }
-  if (/\{[^\n]*[+\-*/=<>!&|?:][^\n]*\}/m.test(withoutComments)) {
-    throw new Error('MDX JavaScript expressions are not supported in documentation source files.');
-  }
+  validateMdxSyntax(source.slice(frontMatter.position.end.offset));
   removeComments(tree);
   const unsupportedHtml = [];
   function inspect(node) {
     if (node.type === 'html' && !/^<!--[\s\S]*-->$/.test(node.value.trim())) {
-      unsupportedHtml.push(node.value);
+      unsupportedHtml.push(node.type);
     }
     for (const child of node.children || []) inspect(child);
   }

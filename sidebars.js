@@ -3,6 +3,11 @@ const sidebars = {
     'intro',
     {
       type: 'category',
+      label: 'About',
+      items: ['about/versioning'],
+    },
+    {
+      type: 'category',
       label: 'Shared',
       link: { type: 'doc', id: 'shared/index' },
       items: [

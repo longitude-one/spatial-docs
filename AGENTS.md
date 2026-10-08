@@ -21,12 +21,16 @@ Use Node.js 20+ and npm 10+ (CI uses Node.js 24).
 
 ## Coding Style & Naming Conventions
 
-Use `.md` for documentation sources. The published documentation contract forbids MDX and raw HTML in source docs.
+Use `.md` for documentation sources. Each published source must have YAML
+front matter with non-empty `title` and `description`; `slug` is forbidden.
+The published documentation contract forbids MDX and raw HTML in source docs.
 Keep pages in the appropriate topic directory and use descriptive, lowercase, hyphen-separated filenames
 such as `portable-markdown-publication-contract.md`.
 Follow `.markdownlint.json` (180-character prose lines; 400-character code lines).
 Follow the existing two-space indentation in JavaScript, JSON, and configuration files.
 Before changing publication behavior, read `docs/shared/portable-markdown-publication-contract.md`.
+Generated HTML resources use explicit `.html` paths; keep Docusaurus routing and
+the generated resource mapping aligned with this contract.
 
 ## Testing Guidelines
 

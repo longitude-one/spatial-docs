@@ -7,6 +7,7 @@ const config = {
   tagline: 'Documentation for the LongitudeOne Spatial ecosystem',
   url: 'https://longitude-one.github.io',
   baseUrl,
+  trailingSlash: false,
   onBrokenLinks: 'throw',
   markdown: {
     hooks: {

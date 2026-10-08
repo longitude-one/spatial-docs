@@ -1,11 +1,8 @@
 ---
 id: intro
-slug: /
+title: LongitudeOne Spatial Documentation
+description: Reference and contributor documentation for the LongitudeOne Spatial ecosystem.
 ---
-
-# LongitudeOne Spatial Documentation
-
-Reference and contributor documentation for the LongitudeOne Spatial ecosystem.
 
 ## Browse the documentation
 

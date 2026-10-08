@@ -1,11 +1,13 @@
-import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { readdir, readFile, mkdir, writeFile, rm, rename, mkdtemp, lstat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dump, load } from 'js-yaml';
 import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
+import remarkFrontmatter from 'remark-frontmatter';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
-import { baseUrl, isDevelopment, developmentNotice } from './site-settings.mjs';
+import { baseUrl } from './site-settings.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
@@ -21,16 +23,57 @@ const requiredContent = [
     text: 'Reference and contributor documentation for the LongitudeOne Spatial ecosystem.',
   },
   {
-    html: 'shared/markdown-export-example/index.html',
+    html: 'shared/markdown-export-example.html',
     markdown: 'shared/markdown-export-example.md',
     text: 'The coordinate sequence is retained in the Markdown counterpart.',
   },
 ];
 
+const markdownProcessor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkFrontmatter, ['yaml'])
+  .use(remarkStringify, {
+    bullet: '-',
+    closeAtx: false,
+    emphasis: '*',
+    fences: true,
+    incrementListMarker: false,
+    listItemIndent: 'one',
+    rule: '-',
+    setext: false,
+    strong: '*',
+  });
+
+const reservedPathComponents = new Set([
+  'aux',
+  'con',
+  'nul',
+  'prn',
+  ...Array.from({ length: 9 }, (_, index) => `com${index + 1}`),
+  ...Array.from({ length: 9 }, (_, index) => `lpt${index + 1}`),
+]);
+
+function validatePathComponent(component, sourcePath) {
+  if (!/^[a-z0-9_-][a-z0-9._-]*$/.test(component)
+    || component.endsWith('.')
+    || reservedPathComponents.has(component.split('.')[0])) {
+    throw new Error(`Unsupported documentation path: ${sourcePath}. Use lowercase, portable path names.`);
+  }
+}
+
 async function findDocumentationFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(directory, entry.name);
+    const relativePath = path.relative(docsDirectory, entryPath).split(path.sep).join('/');
+    const pathComponents = relativePath.split('/');
+    pathComponents.forEach((component, index) => {
+      if (index === pathComponents.length - 1 && !entry.isDirectory()) {
+        component = component.replace(/\.[^.]+$/, '');
+      }
+      validatePathComponent(component, relativePath);
+    });
     if (entry.isDirectory()) {
       return findDocumentationFiles(entryPath);
     }
@@ -45,111 +88,233 @@ async function findDocumentationFiles(directory) {
 }
 
 function stripMarkdownCodeBlocks(content) {
-  return content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '');
+  return content.replace(/```[\s\S]*?```/g, '').replace(/~~~[\s\S]*?~~~/g, '').replace(/`+[^`]*`+/g, '');
 }
 
-function hasUnsupportedSourceConstructs(content) {
-  const sanitized = stripMarkdownCodeBlocks(content);
-  const mdxImportExport = /(?:^|\n)\s*(?:import|export)\s+/m.test(sanitized);
-  const jsxLikeTag = /<(?![A-Za-z][A-Za-z0-9+.-]*:)(?:\/)?[A-Za-z][A-Za-z0-9-]*(?:\s[^>]*)?>/m.test(sanitized);
-  const mdxExpression = /\{[^\n]*[+\-*/=<>!&|?:][^\n]*\}/m.test(sanitized);
-  const rawHtml = /<(?:!--|\/?[A-Za-z][A-Za-z0-9-]*\b(?:\s[^>]*)?\/?>)/m.test(sanitized);
+function removeComments(node) {
+  if (!node.children) {
+    return;
+  }
 
-  if (mdxImportExport) {
+  node.children = node.children.filter((child) => (
+    child.type !== 'html' || !/^<!--[\s\S]*-->$/.test(child.value.trim())
+  ));
+  for (const child of node.children) {
+    removeComments(child);
+  }
+  node.children = node.children.filter((child) => (
+    !(child.type === 'paragraph' && child.children.length === 0)
+  ));
+}
+
+function parseSourceDocument(content, sourcePath) {
+  const source = content.replace(/^\uFEFF/, '');
+  const tree = markdownProcessor.parse(source);
+  const frontMatter = tree.children[0]?.type === 'yaml' ? tree.children.shift() : undefined;
+  if (!frontMatter) {
+    throw new Error(`${sourcePath} must start with YAML front matter containing title and description.`);
+  }
+
+  const metadata = load(frontMatter.value);
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    throw new Error(`${sourcePath} must have a YAML mapping as front matter.`);
+  }
+  if (Object.hasOwn(metadata, 'slug')) {
+    throw new Error(`${sourcePath} must not define Docusaurus slug metadata.`);
+  }
+  for (const field of ['title', 'description']) {
+    if (typeof metadata[field] !== 'string' || metadata[field].trim() === '') {
+      throw new Error(`${sourcePath} must define a non-empty ${field} in front matter.`);
+    }
+  }
+
+  const body = source.slice(frontMatter.position.end.offset);
+  const sanitized = stripMarkdownCodeBlocks(body);
+  const withoutComments = sanitized.replace(/<!--[\s\S]*?-->/g, '');
+  if (/(?:^|\n)\s*(?:import|export)\s+/m.test(withoutComments)) {
     throw new Error('MDX imports and exports are not supported in documentation source files.');
   }
-  if (mdxExpression) {
+  if (/\{[^\n]*[+\-*/=<>!&|?:][^\n]*\}/m.test(withoutComments)) {
     throw new Error('MDX JavaScript expressions are not supported in documentation source files.');
   }
-  if (rawHtml || jsxLikeTag) {
+  removeComments(tree);
+  const unsupportedHtml = [];
+  function inspect(node) {
+    if (node.type === 'html' && !/^<!--[\s\S]*-->$/.test(node.value.trim())) {
+      unsupportedHtml.push(node.value);
+    }
+    for (const child of node.children || []) inspect(child);
+  }
+  tree.children.forEach(inspect);
+  if (unsupportedHtml.length > 0) {
     throw new Error('Raw HTML and JSX are not supported in documentation source files. Use portable Markdown only.');
   }
 
-  return false;
+  return {
+    body: markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n'),
+    metadata,
+  };
 }
 
-function parseFrontMatter(content) {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  if (!match) {
-    return { body: content, metadata: {} };
-  }
+function htmlPathFor(markdownPath) {
+  return markdownPath.replace(/\.md$/, '.html');
+}
 
-  const metadata = Object.fromEntries(
-    match[1].split(/\r?\n/).flatMap((line) => {
-      const field = line.match(/^([\w-]+):\s*(.*?)\s*$/);
-      return field ? [[field[1], field[2].replace(/^['"]|['"]$/g, '')]] : [];
-    }),
+function publishedDocument(sourcePath, metadata, body) {
+  const markdownPath = sourcePath;
+  const htmlPath = htmlPathFor(markdownPath);
+  const markdownName = path.basename(markdownPath);
+  const htmlHref = path.posix.relative(
+    path.posix.dirname(`/markdown/${markdownPath}`),
+    `/${htmlPath}`,
   );
-
-  return { body: content.slice(match[0].length), metadata };
+  const publishedMetadata = {
+    title: metadata.title.trim(),
+    description: metadata.description.trim(),
+    canonical_html: htmlHref,
+    canonical_markdown: `./${markdownName}`,
+  };
+  const frontMatter = dump(publishedMetadata, {
+    lineWidth: -1,
+    noRefs: true,
+    sortKeys: false,
+  }).trimEnd();
+  const htmlLink = `[View HTML version](${htmlHref})`;
+  const content = body.trim() ? `${body.trimEnd()}\n` : '';
+  return {
+    markdownPath,
+    htmlPath: `/${htmlPath}`,
+    markdownUrl: `/${markdownPath}`,
+    title: metadata.title.trim(),
+    content: `---\n${frontMatter}\n---\n\n${htmlLink}\n\n${content}`,
+  };
 }
 
-function markdownPathFor(sourcePath, metadata) {
-  if (metadata.slug === '/') {
-    return 'index.md';
-  }
-
-  return sourcePath.replace(/\.mdx?$/, '.md');
+function escapeMarkdownLabel(value) {
+  return value.replace(/\s+/g, ' ').replace(/[\\[\]]/g, '\\$&');
 }
 
-function titleFor(sourcePath, metadata, body) {
-  const heading = body.match(/^#\s+(.+)$/m);
-  return metadata.title || heading?.[1] || path.basename(sourcePath).replace(/\.mdx?$/, '');
-}
-
-function rebaseMarkdown(content) {
-  const processor = unified().use(remarkParse).use(remarkGfm).use(remarkStringify);
-  const tree = processor.parse(content);
-  function visit(node) {
-    if (node.url?.startsWith('/') && !node.url.startsWith('//')) {
-      node.url = `${baseUrl}${node.url.slice(1)}`;
+async function promoteGeneratedOutput(stagingDirectory) {
+  const destinations = [
+    ['markdown', markdownDirectory],
+    ['llms.txt', path.join(staticDirectory, 'llms.txt')],
+  ];
+  const backupDirectory = `${stagingDirectory}-backup`;
+  await mkdir(backupDirectory);
+  const backedUp = [];
+  const promoted = [];
+  try {
+    for (const [, destination] of destinations) {
+      try {
+        await lstat(destination);
+        const backup = path.join(backupDirectory, path.basename(destination));
+        await rename(destination, backup);
+        backedUp.push([backup, destination]);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
     }
-    if (node.type === 'html') {
-      node.value = node.value.replace(/((?:href|src)=["'])\/(?!\/)/g, `$1${baseUrl}`);
+    for (const [stagedName, destination] of destinations) {
+      await rename(path.join(stagingDirectory, stagedName), destination);
+      promoted.push(destination);
     }
-    for (const child of node.children || []) visit(child);
+  } catch (error) {
+    await Promise.all(promoted.map((destination) => rm(destination, { recursive: true, force: true })));
+    const rollbackErrors = [];
+    for (const [backup, destination] of backedUp.reverse()) {
+      try {
+        await rename(backup, destination);
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+    }
+    if (rollbackErrors.length > 0) {
+      throw new AggregateError([error, ...rollbackErrors], 'Markdown promotion failed and the previous output could not be fully restored.');
+    }
+    await rm(backupDirectory, { recursive: true, force: true });
+    throw error;
   }
-  visit(tree);
-  return processor.stringify(tree);
+  await rm(backupDirectory, { recursive: true, force: true });
+}
+
+async function pathsHaveSameFiles(left, right) {
+  const leftEntries = await readdir(left, { withFileTypes: true });
+  const rightEntries = await readdir(right, { withFileTypes: true });
+  if (leftEntries.length !== rightEntries.length) return false;
+  const rightByName = new Map(rightEntries.map((entry) => [entry.name, entry]));
+  for (const leftEntry of leftEntries) {
+    const rightEntry = rightByName.get(leftEntry.name);
+    if (!rightEntry || leftEntry.isDirectory() !== rightEntry.isDirectory()) return false;
+    const leftPath = path.join(left, leftEntry.name);
+    const rightPath = path.join(right, leftEntry.name);
+    if (leftEntry.isDirectory()) {
+      if (!await pathsHaveSameFiles(leftPath, rightPath)) return false;
+    } else if (!Buffer.from(await readFile(leftPath)).equals(await readFile(rightPath))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function stagedOutputMatches(stagingDirectory) {
+  try {
+    return await pathsHaveSameFiles(path.join(stagingDirectory, 'markdown'), markdownDirectory)
+      && Buffer.from(await readFile(path.join(stagingDirectory, 'llms.txt')))
+        .equals(await readFile(path.join(staticDirectory, 'llms.txt')));
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
 }
 
 async function exportMarkdown() {
   const sourceFiles = await findDocumentationFiles(docsDirectory);
-  await rm(markdownDirectory, { recursive: true, force: true });
-  await mkdir(markdownDirectory, { recursive: true });
-
   const generated = [];
   for (const sourceFile of sourceFiles.sort()) {
     const sourcePath = path.relative(docsDirectory, sourceFile).split(path.sep).join('/');
     const raw = await readFile(sourceFile, 'utf8');
-    hasUnsupportedSourceConstructs(raw);
-    const { body, metadata } = parseFrontMatter(raw);
+    const { body, metadata } = parseSourceDocument(raw, sourcePath);
     if (sourcePath.split('/').some((part) => part.startsWith('_'))
-      || metadata.draft === 'true' || metadata.unlisted === 'true') {
+      || metadata.draft === true || metadata.draft === 'true'
+      || metadata.unlisted === true || metadata.unlisted === 'true') {
       continue;
     }
-    const markdownPath = markdownPathFor(sourcePath, metadata);
-    if (generated.some((page) => page.markdownPath === markdownPath)) {
-      throw new Error(`Duplicate Markdown destination: ${markdownPath}`);
+    const page = publishedDocument(sourcePath, metadata, body);
+    if (generated.some(({ markdownPath, htmlPath }) => (
+      markdownPath === page.markdownPath || htmlPath === page.htmlPath
+    ))) {
+      throw new Error(`Duplicate representation destination for ${sourcePath}.`);
     }
-    const content = isDevelopment ? `> ${developmentNotice}\n\n${rebaseMarkdown(body)}` : body;
-    const destination = path.join(markdownDirectory, markdownPath);
-
-    await mkdir(path.dirname(destination), { recursive: true });
-    await writeFile(destination, content);
-    generated.push({ markdownPath, title: titleFor(sourcePath, metadata, body) });
+    generated.push(page);
   }
 
-  const index = [
-    '# LongitudeOne Spatial Documentation',
-    '',
-    ...(isDevelopment ? [developmentNotice, ''] : []),
-    'Markdown counterparts for the published documentation pages:',
-    '',
-    ...generated.map(({ markdownPath, title }) => `- [${title}](${baseUrl}markdown/${markdownPath})`),
-    '',
-  ].join('\n');
-  await writeFile(path.join(staticDirectory, 'llms.txt'), index);
+  await mkdir(staticDirectory, { recursive: true });
+  const stagingDirectory = await mkdtemp(path.join(staticDirectory, '.markdown-staging-'));
+  const stagingMarkdownDirectory = path.join(stagingDirectory, 'markdown');
+  await mkdir(stagingMarkdownDirectory, { recursive: true });
+  try {
+    for (const page of generated) {
+      const destination = path.join(stagingMarkdownDirectory, page.markdownPath);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await writeFile(destination, page.content, { encoding: 'utf8', flag: 'wx' });
+    }
+    const index = [
+      '# LongitudeOne Spatial Documentation',
+      '',
+      'Markdown counterparts for the published documentation pages:',
+      '',
+      ...generated.map(({ markdownPath, title }) => (
+        `- [${escapeMarkdownLabel(title)}](${baseUrl}markdown/${markdownPath})`
+      )),
+      '',
+    ].join('\n');
+    await writeFile(path.join(stagingDirectory, 'llms.txt'), index, { encoding: 'utf8', flag: 'wx' });
+    if (!await stagedOutputMatches(stagingDirectory)) {
+      await promoteGeneratedOutput(stagingDirectory);
+    }
+  } finally {
+    await rm(stagingDirectory, { recursive: true, force: true });
+  }
 }
 
 async function verifyBuild() {

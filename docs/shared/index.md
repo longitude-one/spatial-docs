@@ -1,6 +1,7 @@
 ---
 id: index
 title: Shared Documentation
+description: Guidance and reference material for the LongitudeOne Spatial ecosystem.
 ---
 
 This section contains guidance and reference material for the entire

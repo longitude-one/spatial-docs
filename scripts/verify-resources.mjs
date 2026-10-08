@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile, copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'parse5';
 import GithubSlugger from 'github-slugger';
@@ -74,7 +74,8 @@ export async function verifyResources(root) {
     const pathname = decodeURIComponent(url.pathname);
     if (!pathname.startsWith(config.baseUrl)) throw new Error(`Outside site: ${href} in ${from}`);
     const resource = pathname.slice(config.baseUrl.length);
-    const candidates = [resource, `${resource.replace(/\/$/, '')}/index.html`, `${resource.replace(/\/$/, '')}/index.md`, `${resource}.html`];
+    const normalizedResource = resource.replace(/\/$/, '');
+    const candidates = [resource, `${normalizedResource}/index.html`, `${normalizedResource}/index.md`, `${normalizedResource}.html`];
     if (!resource) candidates.unshift('index.html');
     const target = candidates.find((candidate) => available.has(candidate));
     if (!target) throw new Error(`Broken internal link: ${href} in ${from}`);
@@ -83,25 +84,42 @@ export async function verifyResources(root) {
     }
     return target;
   }
-  for (const [file, { links }] of parsed) {
-    const from = file.endsWith('/index.html') ? file.slice(0, -10) : file === 'index.html' ? '' : file;
-    for (const href of links) resolve(href, from);
-  }
-
-  // Use Docusaurus's actual production metadata, including slugs and publication flags.
+  // Derive explicit representation paths from source paths, not Docusaurus slugs.
   const metadataDirectory = path.join(root, '.docusaurus/docusaurus-plugin-content-docs/default');
   const pages = [];
-  for (const file of await files(metadataDirectory)) {
+  const representationPaths = new Set();
+  for (const file of (await files(metadataDirectory)).sort()) {
     if (!file.endsWith('.json')) continue;
     const doc = JSON.parse(await readFile(file, 'utf8'));
     if (!doc.source?.startsWith('@site/docs/') || !doc.permalink || doc.draft || doc.unlisted) continue;
     const source = doc.source.slice('@site/docs/'.length);
-    const markdown = doc.slug === '/' ? 'index.md' : source.replace(/\.mdx?$/, '.md');
+    const markdown = source.replace(/\.mdx?$/, '.md');
+    const html = markdown.replace(/\.md$/, '.html');
+    if (representationPaths.has(html) || representationPaths.has(markdown)) {
+      throw new Error(`Duplicate representation path for ${source}.`);
+    }
+    representationPaths.add(html);
+    representationPaths.add(markdown);
     const href = `${config.baseUrl}markdown/${markdown}`;
-    const html = resolve(doc.permalink, '');
-    if (!html?.endsWith('.html')) throw new Error(`Missing HTML counterpart: ${doc.permalink}`);
+    const renderedHtml = resolve(doc.permalink, '');
+    const htmlFile = path.join(build, html);
+    if (!available.has(html)) {
+      await mkdir(path.dirname(htmlFile), { recursive: true });
+      await copyFile(path.join(build, renderedHtml), htmlFile);
+      available.add(html);
+      parsed.set(html, inspect(await readFile(htmlFile, 'utf8'), true));
+    } else if (html !== renderedHtml) {
+      throw new Error(`HTML representation path collides with an existing resource: ${html}.`);
+    }
+    const htmlUrl = `${config.baseUrl}${html}`;
+    resolve(htmlUrl, '');
     resolve(href, '');
-    pages.push({ html: doc.permalink, markdown: href });
+    pages.push({ html: htmlUrl, markdown: href });
+  }
+  pages.sort((left, right) => (left.markdown < right.markdown ? -1 : left.markdown > right.markdown ? 1 : 0));
+  for (const [file, { links }] of parsed) {
+    const from = file.endsWith('/index.html') ? file.slice(0, -10) : file === 'index.html' ? '' : file;
+    for (const href of links) resolve(href, from);
   }
   const expected = pages.map((page) => page.markdown).sort();
   const listed = parsed.get('llms.txt')?.links.slice().sort();

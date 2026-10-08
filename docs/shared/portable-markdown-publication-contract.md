@@ -1,6 +1,7 @@
 ---
 id: portable-markdown-publication-contract
 title: Portable Markdown publication contract
+description: Defines the requirements for portable, deterministic Markdown documentation publication.
 ---
 
 This page defines the portable Markdown publication contract used for
@@ -108,6 +109,24 @@ semantic value for the published document.
 
 Examples of metadata that must not be propagated solely because Docusaurus uses
 them include sidebar ordering and rendering configuration.
+The source `slug` field is not supported: publication paths are derived from the
+source hierarchy. The generated front matter contains only `title`,
+`description`, `canonical_html`, and `canonical_markdown`.
+
+## Deterministic generation
+
+The Markdown representation is generated from the source document using a
+Markdown syntax tree, not by rewriting source text with regular expressions.
+Generation must be deterministic and idempotent: identical source documents
+must produce byte-identical output, and rerunning generation without source
+changes must not modify the published corpus.
+
+Generated Markdown must use UTF-8 without a byte-order mark and LF line endings.
+HTML comments in source are removed; other raw HTML and content that cannot be
+represented without semantic loss must cause generation to fail.
+`index.md` documents retain an explicit `index.html` representation.
+Generated files are staged and promoted as one publication operation so a
+failed generation does not replace the last valid corpus.
 
 ## Representation URLs
 

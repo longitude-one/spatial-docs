@@ -34,9 +34,13 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'spatial-core',
-          link: { type: 'doc', id: 'libraries/spatial-core/index' },
-          items: ['libraries/spatial-core/index'],
+          label: 'Doctrine Spatial',
+          items: [
+            'doctrine-spatial/roadmap',
+            'doctrine-spatial/v4/index',
+            'doctrine-spatial/v5/index',
+            'doctrine-spatial/v6/index',
+          ],
         },
       ],
     },

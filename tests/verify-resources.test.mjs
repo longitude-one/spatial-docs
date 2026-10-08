@@ -14,6 +14,7 @@ async function fixture(t, changes = {}) {
     'build/index.html': '<h1 id="home">Home</h1><a href="/markdown/index.md#home">Markdown</a>',
     'build/markdown/index.md': '# Home\n\n[Home](/#home)\n[External](https://other.example/missing)\n',
     'build/llms.txt': '# Documentation\n\n[Home](/markdown/index.md)\n',
+    'docs/index.md': '---\ntitle: Home\ndescription: Home page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/' }),
     ...changes,
   };
@@ -28,6 +29,19 @@ async function fixture(t, changes = {}) {
 
 test('valid site produces an HTML/Markdown mapping', async (t) => {
   const root = await fixture(t);
+  await verifyResources(root);
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, 'build/markdown-mapping.json'))), [
+    { html: '/index.html', markdown: '/markdown/index.md' },
+  ]);
+});
+
+test('ignores cached metadata for a deleted source document', async (t) => {
+  const root = await fixture(t, {
+    '.docusaurus/docusaurus-plugin-content-docs/default/deleted.json': JSON.stringify({
+      source: '@site/docs/libraries/spatial-core/index.md',
+      permalink: '/libraries/spatial-core/',
+    }),
+  });
   await verifyResources(root);
   assert.deepEqual(JSON.parse(await readFile(path.join(root, 'build/markdown-mapping.json'))), [
     { html: '/index.html', markdown: '/markdown/index.md' },
@@ -69,6 +83,7 @@ test('supports directory links to Markdown index pages', async (t) => {
     'build/markdown/section/index.md': '# Section',
     'build/section.html': '<h1>Section</h1>',
     'build/llms.txt': '[Home](/markdown/index.md)\n[Section](/markdown/section/index.md)',
+    'docs/section/index.md': '---\ntitle: Section\ndescription: Section page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/section.json': JSON.stringify({ source: '@site/docs/section/index.md', permalink: '/section/', slug: '/section/' }),
   });
   await verifyResources(root);

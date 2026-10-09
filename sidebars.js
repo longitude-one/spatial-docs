@@ -13,6 +13,7 @@ const sidebars = {
       items: [
         'shared/index',
         'shared/portable-markdown-publication-contract',
+        'shared/spatial-reference-documentation-architecture',
         'shared/markdown-export-example',
       ],
     },

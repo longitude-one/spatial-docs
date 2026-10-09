@@ -30,6 +30,7 @@ async function fixture(t, sources) {
   await mkdir(path.join(root, 'scripts'));
   await cp(path.join(repository, 'scripts/export-markdown.mjs'), path.join(root, 'scripts/export-markdown.mjs'));
   await cp(path.join(repository, 'scripts/site-settings.mjs'), path.join(root, 'scripts/site-settings.mjs'));
+  await cp(path.join(repository, 'scripts/library-versions.mjs'), path.join(root, 'scripts/library-versions.mjs'));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
     const file = path.join(root, name);

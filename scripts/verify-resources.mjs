@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, copyFile, mkdir } from 'node:fs/promises';
+import { readdir, readFile, writeFile, copyFile, mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'parse5';
 import GithubSlugger from 'github-slugger';
@@ -93,6 +93,12 @@ export async function verifyResources(root) {
     const doc = JSON.parse(await readFile(file, 'utf8'));
     if (!doc.source?.startsWith('@site/docs/') || !doc.permalink || doc.draft || doc.unlisted) continue;
     const source = doc.source.slice('@site/docs/'.length);
+    try {
+      if (!(await stat(path.join(root, 'docs', source))).isFile()) continue;
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
     const markdown = source.replace(/\.mdx?$/, '.md');
     const html = markdown.replace(/\.md$/, '.html');
     if (representationPaths.has(html) || representationPaths.has(markdown)) {

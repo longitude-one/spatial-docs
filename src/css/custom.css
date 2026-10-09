@@ -17,3 +17,12 @@
   --ifm-color-primary-lighter: #7cd2bb;
   --ifm-color-primary-lightest: #a0dece;
 }
+/* The generated version notice follows the page title. */
+.theme-doc-markdown > blockquote:first-of-type {
+  margin-left: auto;
+  max-width: 32rem;
+  text-align: right;
+  border-left: 0;
+  border-right: 4px solid var(--ifm-color-primary);
+  padding-right: 1rem;
+}

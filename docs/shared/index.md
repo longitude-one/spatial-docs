@@ -10,3 +10,7 @@ LongitudeOne Spatial ecosystem.
 The [Portable Markdown publication contract](./portable-markdown-publication-contract.md)
 defines the strict publication rules that keep generated HTML and Markdown
 semantically equivalent while remaining portable and independently usable.
+
+The [Spatial reference documentation architecture](./spatial-reference-documentation-architecture.md)
+defines the Standards, Concepts and DBMS domains, their responsibilities,
+and their relationship to versioned library documentation.

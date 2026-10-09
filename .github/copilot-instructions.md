@@ -10,7 +10,9 @@ site artifacts are created from that source and then validated.
 
 - `docs/` contains the authored documentation source.
   - `docs/shared/` holds reusable ecosystem-wide docs and conventions.
-  - `docs/libraries/` holds library-specific documentation.
+  - `docs/standards/`, `docs/concepts/` and `docs/dbms/` are the spatial reference domains
+    defined in `docs/shared/spatial-reference-documentation-architecture.md`.
+  - `docs/<library>/v<major>/` holds versioned library documentation, with optional roadmaps outside the version directories.
 - `inbox/` contains draft content that is not part of the published site.
 - `static/` is the generated publication surface for Markdown and `llms.txt`.
 - `build/` is the verified production/development build output.

@@ -3,7 +3,10 @@
 ## Project Structure & Module Organization
 
 This repository publishes the LongitudeOne Spatial documentation with Docusaurus.
-Author pages in `docs/shared/` for ecosystem-wide topics and `docs/libraries/` for library-specific topics.
+Author ecosystem-wide contracts in `docs/shared/`; author spatial references in
+`docs/standards/`, `docs/concepts/` and `docs/dbms/` according to
+`docs/shared/spatial-reference-documentation-architecture.md`.
+Library documentation retains its existing `docs/<library>/v<major>/` structure and optional roadmaps.
 Keep unpublished drafts in `inbox/`. Site configuration lives in `docusaurus.config.js` and `sidebars.js`;
 styles and other assets live in `src/` and `static/`. Automation is in `scripts/`, with regression tests in `tests/`.
 Treat `build/`, `static/markdown/`, and `static/llms.txt` as generated output; edit their source pages or generator instead.

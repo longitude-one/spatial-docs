@@ -38,7 +38,7 @@ test('stable versions ignore prereleases and classify two libraries independentl
   const libraries = await resolveLibraries(docs, async (url) => {
     requested.push(url);
     return url.includes('spatial-core')
-      ? reply(200, ['1.8.2', '2.0.0-beta.1', '2.0.0-RC1', '2.0.x-dev'])
+      ? reply(200, ['1.8.2', '2.0.0-beta.1', '2.0.0-RC1', '2.0.0-preview.1', '2.0.0-M1', '2.0.0.RC.0', '2.0.x-dev'])
       : { status: 404, ok: false };
   });
   assert.deepEqual(requested, [
@@ -61,8 +61,9 @@ test('a new stable major changes status without source edits', async (t) => {
 });
 
 test('package without stable releases has only Next documentation', async () => {
-  assert.equal(await fetchStableMajor('spatial-core', async () => reply(200, ['dev-main', '1.0.0-beta.1'])), null);
-  assert.equal(currentStableMajor(['1.2.0', '1.11.0', '2.0.0-RC1'].map((version) => ({ version }))), 1);
+  assert.equal(await fetchStableMajor('spatial-core', async () => reply(200, ['dev-main', '1.0.0-beta.1', '1.0.0-preview.1', '1.0.0-M1', '1.0.0.RC4', '1.0.0.RC'])), null);
+  assert.equal(currentStableMajor(['1.2.0', '1.11.0', '2.0.0-RC1', '3.0.0-preview.1', '3.0.0-M1']
+    .map((version) => ({ version }))), 1);
 });
 
 test('missing current stable major fails', async (t) => {
@@ -77,6 +78,9 @@ for (const [name, fetcher] of [
   ['invalid JSON', async () => ({ status: 200, ok: true, json: async () => { throw new Error('bad JSON'); } })],
   ['unusable response', async () => ({ status: 200, ok: true, json: async () => ({ packages: {} }) })],
   ['uninterpretable version', async () => reply(200, ['unusual-release'])],
+  ['malformed prerelease', async () => reply(200, ['1.0.0-preview..1'])],
+  ['invalid numeric prerelease', async () => reply(200, ['1.0.0-01'])],
+  ['malformed Composer prerelease', async () => reply(200, ['1.0.0.RC..1'])],
 ]) {
   test(`rejects Packagist ${name}`, async () => {
     await assert.rejects(fetchStableMajor('spatial-core', fetcher));

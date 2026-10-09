@@ -5,7 +5,8 @@ import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
 const versionDirectory = /^v([1-9][0-9]*)$/;
-const stableVersion = /^v?([1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\+[^\s]+)?$/;
+const semverVersion = /^v?([1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+const composerPrerelease = /^v?[1-9][0-9]*\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:alpha|beta|rc|dev)(?:[.-]?[0-9]+)?$/i;
 
 export async function discoverLibraries(docsDirectory) {
   const libraries = {};
@@ -33,9 +34,12 @@ export function currentStableMajor(versions) {
   for (const release of versions) {
     if (!release || typeof release.version !== 'string') throw new Error('Packagist release version is unusable.');
     const version = release.version;
-    if (/(?:^dev-|-dev$)/i.test(version) || /(?:alpha|beta|rc|dev|snapshot)/i.test(version)) continue;
-    const match = stableVersion.exec(version);
-    if (!match) throw new Error(`Packagist release version cannot be interpreted: ${version}`);
+    if (/(?:^dev-|-dev$)/i.test(version) || composerPrerelease.test(version)) continue;
+    const match = semverVersion.exec(version);
+    if (!match || match[4]?.split('.').some((identifier) => /^0[0-9]+$/.test(identifier))) {
+      throw new Error(`Packagist release version cannot be interpreted: ${version}`);
+    }
+    if (match[4]) continue;
     const parts = match.slice(1, 4).map(Number);
     if (parts.some((part) => !Number.isSafeInteger(part))) throw new Error(`Packagist release version is unsafe: ${version}`);
     if (!current || parts.some((part, index) => part !== current[index] && parts.slice(0, index).every((value, i) => value === current[i]) && part > current[index])) {

@@ -41,6 +41,7 @@ const sidebars = {
             'doctrine-spatial/v4/index',
             'doctrine-spatial/v5/index',
             'doctrine-spatial/v6/index',
+            'doctrine-spatial/v7/index',
           ],
         },
       ],

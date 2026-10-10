@@ -14,12 +14,16 @@ if [[ $DEPLOY_PATH != /* || $DEPLOY_PATH =~ ^/+$ || ! $SSH_PORT =~ ^[0-9]+$ ||
 fi
 
 site=${1:-build}
-for resource in index.html llms.txt markdown-mapping.json markdown; do
+for resource in index.html index.md llms.txt markdown-mapping.json; do
   if [[ ! -e $site/$resource ]]; then
     echo 'The complete verified site is required before deployment.' >&2
     exit 1
   fi
 done
+if [[ -e $site/markdown ]]; then
+  echo 'Markdown counterparts must be published alongside HTML, without a markdown directory.' >&2
+  exit 1
+fi
 
 umask 077
 ssh_directory=$(mktemp -d)
@@ -53,9 +57,10 @@ tar -C "$site" -cf - . | remote '
   mkdir -- public_html.next
   tar -xf - -C public_html.next
   test -f public_html.next/index.html
+  test -f public_html.next/index.md
   test -f public_html.next/llms.txt
   test -f public_html.next/markdown-mapping.json
-  test -d public_html.next/markdown
+  test ! -e public_html.next/markdown
 '
 
 remote '

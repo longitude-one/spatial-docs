@@ -8,20 +8,21 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
-import { baseUrl } from './site-settings.mjs';
+import { baseUrl, siteUrl } from './site-settings.mjs';
+import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
 const staticDirectory = path.join(rootDirectory, 'static');
-const markdownDirectory = path.join(staticDirectory, 'markdown');
+const markdownDirectory = path.join(rootDirectory, '.generated-markdown');
 const buildDirectory = path.join(rootDirectory, 'build');
 
 const requiredContent = [
   {
     html: 'index.html',
     markdown: 'index.md',
-    href: `${baseUrl}markdown/index.md`,
+    href: `${baseUrl}index.md`,
     text: 'Reference and contributor documentation for the LongitudeOne Spatial ecosystem.',
   },
   {
@@ -73,11 +74,11 @@ async function findDocumentationFiles(directory) {
   const nested = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(directory, entry.name);
     const relativePath = path.relative(docsDirectory, entryPath).split(path.sep).join('/');
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symbolic links are not supported in the documentation hierarchy: docs/${relativePath}.`);
+    }
     const pathComponents = relativePath.split('/');
-    pathComponents.forEach((component, index) => {
-      if (index === pathComponents.length - 1 && !entry.isDirectory()) {
-        component = component.replace(/\.[^.]+$/, '');
-      }
+    pathComponents.forEach((component) => {
       validatePathComponent(component, relativePath);
     });
     if (entry.isDirectory()) {
@@ -162,7 +163,7 @@ function parseSourceDocument(content, sourcePath) {
   }
 
   return {
-    body: markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n'),
+    tree,
     metadata,
   };
 }
@@ -175,10 +176,7 @@ function publishedDocument(sourcePath, metadata, body, libraries) {
   const markdownPath = sourcePath;
   const htmlPath = htmlPathFor(markdownPath);
   const markdownName = path.basename(markdownPath);
-  const htmlHref = path.posix.relative(
-    path.posix.dirname(`/markdown/${markdownPath}`),
-    `/${htmlPath}`,
-  );
+  const htmlHref = `./${path.posix.basename(htmlPath)}`;
   const publishedMetadata = {
     title: metadata.title.trim(),
     description: metadata.description.trim(),
@@ -209,8 +207,7 @@ function escapeMarkdownLabel(value) {
 
 async function promoteGeneratedOutput(stagingDirectory) {
   const destinations = [
-    ['markdown', markdownDirectory],
-    ['llms.txt', path.join(staticDirectory, 'llms.txt')],
+    ['.', markdownDirectory],
   ];
   const backupDirectory = `${stagingDirectory}-backup`;
   await mkdir(backupDirectory);
@@ -271,9 +268,7 @@ async function pathsHaveSameFiles(left, right) {
 
 async function stagedOutputMatches(stagingDirectory) {
   try {
-    return await pathsHaveSameFiles(path.join(stagingDirectory, 'markdown'), markdownDirectory)
-      && Buffer.from(await readFile(path.join(stagingDirectory, 'llms.txt')))
-        .equals(await readFile(path.join(staticDirectory, 'llms.txt')));
+    return await pathsHaveSameFiles(stagingDirectory, markdownDirectory);
   } catch (error) {
     if (error.code === 'ENOENT') return false;
     throw error;
@@ -281,18 +276,24 @@ async function stagedOutputMatches(stagingDirectory) {
 }
 
 async function exportMarkdown() {
-  const libraries = await resolveLibraries(docsDirectory);
   const sourceFiles = await findDocumentationFiles(docsDirectory);
   const generated = [];
+  const documents = new Map();
   for (const sourceFile of sourceFiles.sort()) {
     const sourcePath = path.relative(docsDirectory, sourceFile).split(path.sep).join('/');
     const raw = await readFile(sourceFile, 'utf8');
-    const { body, metadata } = parseSourceDocument(raw, sourcePath);
+    const { tree, metadata } = parseSourceDocument(raw, sourcePath);
     if (sourcePath.split('/').some((part) => part.startsWith('_'))
       || metadata.draft === true || metadata.draft === 'true'
       || metadata.unlisted === true || metadata.unlisted === 'true') {
       continue;
     }
+    documents.set(sourcePath, { tree, metadata, anchors: documentationAnchors(tree, sourcePath) });
+  }
+  await processDocumentationLinks(documents, { staticDirectory, siteUrl });
+  const libraries = await resolveLibraries(docsDirectory);
+  for (const [sourcePath, { tree, metadata }] of documents) {
+    const body = markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n');
     const page = publishedDocument(sourcePath, metadata, body, libraries);
     if (generated.some(({ markdownPath, htmlPath }) => (
       markdownPath === page.markdownPath || htmlPath === page.htmlPath
@@ -303,12 +304,10 @@ async function exportMarkdown() {
   }
 
   await mkdir(staticDirectory, { recursive: true });
-  const stagingDirectory = await mkdtemp(path.join(staticDirectory, '.markdown-staging-'));
-  const stagingMarkdownDirectory = path.join(stagingDirectory, 'markdown');
-  await mkdir(stagingMarkdownDirectory, { recursive: true });
+  const stagingDirectory = await mkdtemp(path.join(rootDirectory, '.generated-markdown-staging-'));
   try {
     for (const page of generated) {
-      const destination = path.join(stagingMarkdownDirectory, page.markdownPath);
+      const destination = path.join(stagingDirectory, page.markdownPath);
       await mkdir(path.dirname(destination), { recursive: true });
       await writeFile(destination, page.content, { encoding: 'utf8', flag: 'wx' });
     }
@@ -318,7 +317,7 @@ async function exportMarkdown() {
       'Markdown counterparts for the published documentation pages:',
       '',
       ...generated.map(({ markdownPath, title }) => (
-        `- [${escapeMarkdownLabel(title)}](${baseUrl}markdown/${markdownPath})`
+        `- [${escapeMarkdownLabel(title)}](${baseUrl}${markdownPath})`
       )),
       '',
     ].join('\n');
@@ -329,14 +328,18 @@ async function exportMarkdown() {
   } finally {
     await rm(stagingDirectory, { recursive: true, force: true });
   }
+  // Retire the old generated publication surface only after a valid replacement
+  // exists. Shared static assets remain untouched.
+  await rm(path.join(staticDirectory, 'markdown'), { recursive: true, force: true });
+  await rm(path.join(staticDirectory, 'llms.txt'), { force: true });
   await writeManifest(rootDirectory, libraries);
 }
 
 async function verifyBuild() {
   const index = await readFile(path.join(buildDirectory, 'llms.txt'), 'utf8');
   const indexedMarkdownPaths = [...index.matchAll(/\]\(([^\s)]+\.md)\)/g)]
-    .map((match) => match[1].slice(`${baseUrl}markdown/`.length));
-  const markdownDirectory = path.join(buildDirectory, 'markdown');
+    .map((match) => match[1].slice(baseUrl.length));
+  const markdownDirectory = buildDirectory;
   const generatedMarkdownPaths = (await findMarkdownFiles(markdownDirectory))
     .map((file) => path.relative(markdownDirectory, file).split(path.sep).join('/'))
     .sort();
@@ -353,7 +356,7 @@ async function verifyBuild() {
 
   for (const requirement of requiredContent) {
     const html = await readFile(path.join(buildDirectory, requirement.html), 'utf8');
-    const markdown = await readFile(path.join(buildDirectory, 'markdown', requirement.markdown), 'utf8');
+    const markdown = await readFile(path.join(buildDirectory, requirement.markdown), 'utf8');
 
     if (requirement.href && !html.includes(`href="${requirement.href}"`)) {
       throw new Error(`${requirement.html} does not link to ${requirement.href}.`);
@@ -368,9 +371,9 @@ async function verifyBuild() {
     const html = await readFile(htmlFile, 'utf8');
     const markdownLinks = [...html.matchAll(/href="([^"]+\.md)"/g)];
     for (const [, href] of markdownLinks) {
-      const markdownPath = href.slice(`${baseUrl}markdown/`.length);
-      if (href.startsWith(`${baseUrl}markdown/`)) {
-        await readFile(path.join(buildDirectory, 'markdown', markdownPath));
+      const markdownPath = href.slice(baseUrl.length);
+      if (href.startsWith(baseUrl)) {
+        await readFile(path.join(buildDirectory, markdownPath));
       }
     }
   }

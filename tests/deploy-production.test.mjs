@@ -15,10 +15,10 @@ async function fixture(t, mode = '') {
   const destination = join(root, "hosting's directory");
   const build = join(root, 'build');
   const bin = join(root, 'bin');
-  await Promise.all([mkdir(destination), mkdir(join(build, 'markdown'), { recursive: true }), mkdir(bin)]);
+  await Promise.all([mkdir(destination), mkdir(build, { recursive: true }), mkdir(bin)]);
   for (const [name, content] of Object.entries({
     'index.html': 'new HTML', 'llms.txt': 'new index', 'markdown-mapping.json': '{}',
-    'markdown/index.md': 'new Markdown', '.hidden': 'complete tree',
+    'index.md': 'new Markdown', '.hidden': 'complete tree',
   })) await writeFile(join(build, name), content);
   for (const suffix of ['', '.old', '.next']) {
     await mkdir(join(destination, `public_html${suffix}`));
@@ -58,7 +58,7 @@ exec "${realMv.trim()}" "$@"
 test('publishes the complete site and retains the previous live version', async t => {
   const f = await fixture(t);
   await f.run();
-  for (const file of ['index.html', 'llms.txt', 'markdown-mapping.json', 'markdown/index.md', '.hidden']) {
+  for (const file of ['index.html', 'llms.txt', 'markdown-mapping.json', 'index.md', '.hidden']) {
     assert.equal(await readFile(join(f.destination, 'public_html', file), 'utf8'), await readFile(join(f.build, file), 'utf8'));
   }
   assert.equal(await readFile(join(f.destination, 'public_html.old/version'), 'utf8'), 'current');
@@ -106,6 +106,20 @@ test('incomplete build fails before any SSH connection', async t => {
   const f = await fixture(t);
   await rm(join(f.build, 'llms.txt'));
   await assert.rejects(f.run());
+  await assert.rejects(access(join(f.root, 'calls')));
+});
+
+test('missing sibling Markdown fails before any SSH connection', async t => {
+  const f = await fixture(t);
+  await rm(join(f.build, 'index.md'));
+  await assert.rejects(f.run());
+  await assert.rejects(access(join(f.root, 'calls')));
+});
+
+test('legacy public Markdown prefix is rejected before deployment', async t => {
+  const f = await fixture(t);
+  await mkdir(join(f.build, 'markdown'));
+  await assert.rejects(f.run(), /without a markdown directory/);
   await assert.rejects(access(join(f.root, 'calls')));
 });
 

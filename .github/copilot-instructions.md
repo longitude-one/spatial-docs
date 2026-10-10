@@ -14,7 +14,8 @@ site artifacts are created from that source and then validated.
     defined in `docs/shared/spatial-reference-documentation-architecture.md`.
   - `docs/<library>/v<major>/` holds versioned library documentation, with optional roadmaps outside the version directories.
 - `inbox/` contains draft content that is not part of the published site.
-- `static/` is the generated publication surface for Markdown and `llms.txt`.
+- `static/` holds shared assets. `.generated-markdown/` holds generated Markdown and `llms.txt`;
+  Docusaurus copies its contents to the site root, alongside HTML resources.
 - `build/` is the verified production/development build output.
 - `scripts/export-markdown.mjs` generates Markdown counterparts for the site and
   enforces publication rules such as excluding drafts, hidden pages, and
@@ -67,7 +68,7 @@ sh .githooks/pre-commit
   published content.
 - Use `.md` as the default source format; reserve `.mdx` for pages that require
   interactive React components.
-- Do not manually edit files in `build/`, `static/markdown/`, or `static/llms.txt`;
+- Do not manually edit files in `build/` or `.generated-markdown/`;
   they are generated from source.
 - `inbox/` content is draft-only and is not published.
 - Pages with `draft: true`, `unlisted: true`, or underscore-prefixed filenames are

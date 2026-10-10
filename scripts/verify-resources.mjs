@@ -5,6 +5,8 @@ import GithubSlugger from 'github-slugger';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
+import remarkFrontmatter from 'remark-frontmatter';
+import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 
 async function files(directory) {
   return (await Promise.all((await readdir(directory, { withFileTypes: true })).map(async (entry) => {
@@ -63,21 +65,41 @@ export async function verifyResources(root) {
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
   const parsed = new Map();
+  const markdownDocuments = new Map();
   for (const file of available) {
+    if (file.endsWith('.md')) {
+      const sourcePath = file;
+      const tree = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ['yaml'])
+        .parse(await readFile(path.join(build, file), 'utf8'));
+      tree.children = tree.children.filter((node) => node.type !== 'yaml');
+      const paragraph = tree.children[0];
+      const link = paragraph?.type === 'paragraph' && paragraph.children.length === 1 ? paragraph.children[0] : null;
+      const expectedHtml = `./${path.posix.basename(sourcePath.replace(/\.md$/, '.html'))}`;
+      if (link?.type === 'link' && link.url === expectedHtml
+        && link.children.length === 1 && link.children[0].value === 'View HTML version') {
+        tree.children.shift();
+      }
+      markdownDocuments.set(sourcePath, { tree, anchors: documentationAnchors(tree, sourcePath, 'build/') });
+    }
     if (/\.(html|md)$/.test(file) || file === 'llms.txt') {
       parsed.set(file, inspect(await readFile(path.join(build, file), 'utf8'), file.endsWith('.html')));
     }
   }
-  function resolve(href, from) {
+  await processDocumentationLinks(markdownDocuments, {
+    staticDirectory: build,
+    siteUrl: config.url,
+    diagnosticPrefix: 'build/',
+  });
+  function resolve(href, from, htmlOnly = false) {
     const url = new URL(href, `${origin}${config.baseUrl}${from}`);
     if (url.origin !== origin) return null;
     const pathname = decodeURIComponent(url.pathname);
     if (!pathname.startsWith(config.baseUrl)) throw new Error(`Outside site: ${href} in ${from}`);
     const resource = pathname.slice(config.baseUrl.length);
     const normalizedResource = resource.replace(/\/$/, '');
-    const candidates = [resource, `${normalizedResource}/index.html`, `${normalizedResource}/index.md`, `${normalizedResource}.html`];
+    const candidates = [resource, `${normalizedResource}/index.html`, `${normalizedResource}.html`, `${normalizedResource}/index.md`];
     if (!resource) candidates.unshift('index.html');
-    const target = candidates.find((candidate) => available.has(candidate));
+    const target = candidates.find((candidate) => available.has(candidate) && (!htmlOnly || candidate.endsWith('.html')));
     if (!target) throw new Error(`Broken internal link: ${href} in ${from}`);
     if (url.hash && parsed.has(target) && !parsed.get(target).ids.has(decodeURIComponent(url.hash.slice(1)))) {
       throw new Error(`Broken anchor: ${href} in ${from}`);
@@ -106,8 +128,8 @@ export async function verifyResources(root) {
     }
     representationPaths.add(html);
     representationPaths.add(markdown);
-    const href = `${config.baseUrl}markdown/${markdown}`;
-    const renderedHtml = resolve(doc.permalink, '');
+    const href = `${config.baseUrl}${markdown}`;
+    const renderedHtml = resolve(doc.permalink, '', true);
     const htmlFile = path.join(build, html);
     if (!available.has(html)) {
       await mkdir(path.dirname(htmlFile), { recursive: true });
@@ -129,7 +151,7 @@ export async function verifyResources(root) {
   }
   const expected = pages.map((page) => page.markdown).sort();
   const listed = parsed.get('llms.txt')?.links.slice().sort();
-  const exported = [...available].filter((file) => file.startsWith('markdown/') && file.endsWith('.md'))
+  const exported = [...available].filter((file) => file.endsWith('.md'))
     .map((file) => `${config.baseUrl}${file}`).sort();
   if (!expected.length || JSON.stringify(expected) !== JSON.stringify(listed)
     || JSON.stringify(expected) !== JSON.stringify(exported)) {

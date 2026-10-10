@@ -39,6 +39,13 @@ Every published documentation resource must have two explicit representations:
 The publication contract does not use directory-style document identities or
 implicit `index.html` resolution.
 
+HTML and Markdown counterparts are published in the same directory and differ
+only by their representation extension. An internal staging or generation
+directory must not introduce a public `markdown/` prefix. For example,
+`/shared/index.html` is paired with `/shared/index.md`, not
+`/markdown/shared/index.md`. This rule also applies to `llms.txt`, resource
+mappings, download links and deployed files, including development base URLs.
+
 For example:
 
 ```text
@@ -234,6 +241,25 @@ Internal documentation links must:
 Absolute URLs are forbidden for links whose destination belongs to the same
 published documentation corpus.
 
+Validation resolves AST link nodes against the published source hierarchy under
+`docs/`, before canonical serialization or replacement of the published corpus.
+Directory targets and extensionless links are source errors; the generator never
+adds `.md`, infers `index.md`, repairs casing or falls back to HTML. Documentation
+targets cannot escape `docs/` or use symbolic links. A target must be an included,
+real source document; drafts, unlisted and hidden pages cannot be linked as
+published documentation.
+
+Inline and reference-style links follow the same rules. Their paths are
+canonicalized relative to the source document; external URLs, query strings,
+fragments, code and literal text retain their meaning. Shared asset references
+are distinguished from documentation links and are not rewritten by this step.
+An outside relative resource requires an existing shared static publication
+resource; arbitrary files outside `docs/` are not documentation targets.
+
+Errors identify the source path, original and resolved target, reason, and line
+and column when available. Invalid links fail generation before publication,
+leaving the previous generated corpus intact.
+
 The explicit `View HTML version` link remains the intentional exception that
 allows navigation from Markdown to the corresponding HTML representation.
 
@@ -250,6 +276,12 @@ For example:
 Generated anchor values must be predictable according to the chosen GFM rules.
 Internal fragment links must be validated during the documentation build.
 A link targeting a nonexistent generated anchor must fail validation.
+
+Same-document links remain fragment-only links. Cross-document fragments must
+resolve against the target's GFM headings. Heading-anchor collisions are errors,
+including headings with different formatting that produce the same anchor.
+Authors must use distinct headings rather than relying on automatically generated
+numeric suffixes to distinguish repeated headings.
 
 ## Shared assets
 

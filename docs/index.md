@@ -9,7 +9,7 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 - [Shared documentation](shared/index.md)
 - [Spatial Core 1.x](spatial-core/v1/index.md)
 - [Spatial Decoder 1.x](spatial-decoder/v1/index.md)
-- [Doctrine Spatial 5.x](doctrine-spatial/v5/index.md)
+- [Doctrine Spatial 6.x](doctrine-spatial/v6/index.md)
 
 Versioned library documentation lives under `docs/<library>/v<major>/`; ecosystem-wide
 topics live under `docs/shared/`.

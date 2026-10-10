@@ -2,8 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import path from 'node:path';
+import remarkHomeMarkdownLink from '../scripts/remark-home-markdown-link.mjs';
+import { baseUrl } from '../scripts/site-settings.mjs';
 
 const execute = promisify(execFile);
+
+test('HTML home Markdown link is generated from the source path without changing other documents', () => {
+  const docsDirectory = path.join(process.cwd(), 'docs');
+  const transform = remarkHomeMarkdownLink({ docsDirectory });
+  const home = { children: [] };
+  transform(home, { path: path.join(docsDirectory, 'index.md') });
+  assert.equal(home.children[0].children[0].url, `pathname://${baseUrl}markdown/index.md`);
+  const other = { children: [] };
+  transform(other, { path: path.join(docsDirectory, 'shared/index.md') });
+  assert.deepEqual(other.children, []);
+});
 
 for (const development of [false, true]) {
   test(`${development ? 'development' : 'default'} configuration keeps routes and notices consistent`, async () => {

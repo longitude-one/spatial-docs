@@ -5,6 +5,8 @@ import GithubSlugger from 'github-slugger';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
+import remarkFrontmatter from 'remark-frontmatter';
+import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 
 async function files(directory) {
   return (await Promise.all((await readdir(directory, { withFileTypes: true })).map(async (entry) => {
@@ -63,11 +65,31 @@ export async function verifyResources(root) {
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
   const parsed = new Map();
+  const markdownDocuments = new Map();
   for (const file of available) {
+    if (file.startsWith('markdown/') && file.endsWith('.md')) {
+      const sourcePath = file.slice('markdown/'.length);
+      const tree = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ['yaml'])
+        .parse(await readFile(path.join(build, file), 'utf8'));
+      tree.children = tree.children.filter((node) => node.type !== 'yaml');
+      const paragraph = tree.children[0];
+      const link = paragraph?.type === 'paragraph' && paragraph.children.length === 1 ? paragraph.children[0] : null;
+      const expectedHtml = path.posix.relative(path.posix.dirname(`markdown/${sourcePath}`), sourcePath.replace(/\.md$/, '.html'));
+      if (link?.type === 'link' && link.url === expectedHtml
+        && link.children.length === 1 && link.children[0].value === 'View HTML version') {
+        tree.children.shift();
+      }
+      markdownDocuments.set(sourcePath, { tree, anchors: documentationAnchors(tree, sourcePath, 'build/markdown/') });
+    }
     if (/\.(html|md)$/.test(file) || file === 'llms.txt') {
       parsed.set(file, inspect(await readFile(path.join(build, file), 'utf8'), file.endsWith('.html')));
     }
   }
+  await processDocumentationLinks(markdownDocuments, {
+    staticDirectory: build,
+    siteUrl: config.url,
+    diagnosticPrefix: 'build/markdown/',
+  });
   function resolve(href, from) {
     const url = new URL(href, `${origin}${config.baseUrl}${from}`);
     if (url.origin !== origin) return null;

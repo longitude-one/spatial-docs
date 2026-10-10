@@ -1,7 +1,8 @@
 import { themes as prismThemes } from 'prism-react-renderer';
-import { baseUrl, isDevelopment, developmentNotice } from './scripts/site-settings.mjs';
+import { baseUrl, isDevelopment, developmentNotice, siteUrl } from './scripts/site-settings.mjs';
 import remarkBaseUrl from './scripts/remark-base-url.mjs';
 import remarkVersionStatus from './scripts/remark-version-status.mjs';
+import remarkHomeMarkdownLink from './scripts/remark-home-markdown-link.mjs';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -25,7 +26,7 @@ if (process.env.DOCUSAURUS_DEPLOYMENT !== 'development') {
 const config = {
   title: isDevelopment ? 'LongitudeOne Spatial — Development' : 'LongitudeOne Spatial Documentation',
   tagline: 'Documentation for the LongitudeOne Spatial ecosystem',
-  url: 'https://longitude-one.github.io',
+  url: siteUrl,
   baseUrl,
   trailingSlash: false,
   onBrokenLinks: 'throw',
@@ -40,7 +41,11 @@ const config = {
       {
         docs: {
           routeBasePath: '/',
-          remarkPlugins: [remarkBaseUrl, [remarkVersionStatus, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }]],
+          remarkPlugins: [
+            remarkBaseUrl,
+            [remarkVersionStatus, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }],
+            [remarkHomeMarkdownLink, { docsDirectory: path.join(rootDirectory, 'docs') }],
+          ],
           sidebarPath: './sidebars.js',
         },
         blog: false,

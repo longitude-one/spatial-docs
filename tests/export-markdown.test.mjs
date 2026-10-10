@@ -31,6 +31,7 @@ async function fixture(t, sources) {
   await cp(path.join(repository, 'scripts/export-markdown.mjs'), path.join(root, 'scripts/export-markdown.mjs'));
   await cp(path.join(repository, 'scripts/site-settings.mjs'), path.join(root, 'scripts/site-settings.mjs'));
   await cp(path.join(repository, 'scripts/library-versions.mjs'), path.join(root, 'scripts/library-versions.mjs'));
+  await cp(path.join(repository, 'scripts/documentation-links.mjs'), path.join(root, 'scripts/documentation-links.mjs'));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
     const file = path.join(root, name);
@@ -121,6 +122,7 @@ for (const [name, source, message] of [
 
 for (const invalidPath of [
   'docs/Uppercase.md',
+  'docs/uppercase-extension.MD',
   'docs/has space.md',
   'docs/shared/Uppercase/index.md',
   'docs/shared/con.md',
@@ -193,7 +195,7 @@ test('a failed generation leaves the last valid corpus and index untouched', asy
 
 test('development deployment settings do not change generated document content', async (t) => {
   const { root, run } = await fixture(t, {
-    'docs/index.md': document('Home', 'The documentation home page.', '[Markdown](/markdown/index.md)\n'),
+    'docs/index.md': document('Home', 'The documentation home page.', '[Markdown](./index.md)\n'),
   });
   await run();
   const productionMarkdown = await readFile(path.join(root, 'static/markdown/index.md'));
@@ -201,4 +203,159 @@ test('development deployment settings do not change generated document content',
   const developmentMarkdown = await readFile(path.join(root, 'static/markdown/index.md'));
   assert.deepEqual(developmentMarkdown, productionMarkdown);
   assert.doesNotMatch(developmentMarkdown.toString('utf8'), /Development version/);
+});
+
+test('resolves source links structurally and preserves fragments, external URLs, assets and literals', async (t) => {
+  const { root, run } = await fixture(t, {
+    'docs/index.md': document('Home', 'Home page.', '## Home\n'),
+    'docs/shared/point.md': document('Point', 'Point page.', '## **Coordinates** and `values`\n## Café\n'),
+    'docs/shared/nested/example.md': document('Example', 'Nested example.', [
+      '## Local section',
+      '',
+      '[Point](.././point.md?raw=1#coordinates-and-values)',
+      '[Unicode](../point.md#caf%C3%A9)',
+      '[Home](../../index.md)',
+      '[Local](#local-section)',
+      'See [Point][point-doc] and [Home].',
+      '',
+      '[point-doc]: ../point.md#coordinates-and-values',
+      '[Home]: ../../index.md',
+      '',
+      '[External](https://example.org/Point.html?raw=1#Coordinates)',
+      '[Same-host external](https://longitude-one.github.io/another-project/help.html)',
+      '[Mail](mailto:docs@example.org)',
+      '[Protocol relative](//example.org/Point.html)',
+      '[Schema](../../../assets/schema.json)',
+      '![Model](../../../assets/model.svg)',
+      '![Reference model][model-asset]',
+      '',
+      '[model-asset]: ../../../assets/model.svg',
+      '',
+      'Literal `../Point.html`, https://example.org/Point.html and ./point/ remain text.',
+      '',
+      '```json',
+      '{"url":"../Point.html","markdown":"[Point](../Point.html)"}',
+      '```',
+      '',
+      '```sql',
+      "SELECT '../Point.html';",
+      '```',
+    ].join('\n')),
+    'static/assets/schema.json': '{}',
+    'static/assets/model.svg': '<svg/>',
+  });
+  await run();
+  const outputPath = path.join(root, 'static/markdown/shared/nested/example.md');
+  const first = await readFile(outputPath, 'utf8');
+  assert.match(first, /\[Point\]\(\.\.\/point\.md\?raw=1#coordinates-and-values\)/);
+  assert.match(first, /\[Unicode\]\(\.\.\/point\.md#caf%C3%A9\)/);
+  assert.match(first, /\[Home\]\(\.\.\/\.\.\/index\.md\)/);
+  assert.match(first, /\[Local\]\(#local-section\)/);
+  assert.match(first, /\[point-doc\]: \.\.\/point\.md#coordinates-and-values/);
+  for (const literal of ['https://example.org/Point.html?raw=1#Coordinates',
+    'https://longitude-one.github.io/another-project/help.html', 'mailto:docs@example.org',
+    '//example.org/Point.html', '../../../assets/schema.json', '../../../assets/model.svg',
+    '{"url":"../Point.html","markdown":"[Point](../Point.html)"}', "SELECT '../Point.html';"]) {
+    assert.ok(first.includes(literal), `Preserves ${literal}`);
+  }
+  await run({ DOCUSAURUS_DEPLOYMENT: 'development' });
+  assert.equal(await readFile(outputPath, 'utf8'), first);
+});
+
+for (const [name, target, reason] of [
+  ['missing document', './missing.md', /Missing or unpublished source document/],
+  ['wrong casing', './Point.md', /lowercase, portable and case-sensitive/],
+  ['wrong extension casing', './point.MD', /lowercase, portable and case-sensitive/],
+  ['spaces', './point%20example.md', /lowercase, portable and case-sensitive/],
+  ['reserved name', './con.md', /lowercase, portable and case-sensitive/],
+  ['unsupported characters', './point%3F.md', /lowercase, portable and case-sensitive/],
+  ['backslash', './folder%5Cpoint.md', /lowercase, portable and case-sensitive/],
+  ['extensionless target', './point', /explicitly target .md files/],
+  ['directory target', './shared/', /explicitly target .md files|lowercase, portable/],
+  ['HTML target', './point.html', /explicitly target .md files/],
+  ['manually written HTML exception', './index.html', /explicitly target .md files/],
+  ['root-relative Markdown', '/point.md', /must be relative/],
+  ['absolute Markdown', 'https://longitude-one.github.io/point.md', /Absolute URLs/],
+  ['absolute HTML', 'https://longitude-one.github.io/point.html', /Absolute URLs/],
+  ['absolute URL with encoded path', 'https://longitude-one.github.io/%70oint.md', /Absolute URLs/],
+  ['absolute URL with invalid case', 'https://longitude-one.github.io/Point.md', /Absolute URLs/],
+  ['absolute directory', 'https://longitude-one.github.io/shared/', /Absolute URLs/],
+  ['absolute exported Markdown', 'https://longitude-one.github.io/markdown/point.md', /Absolute URLs/],
+  ['development absolute Markdown', 'https://longitude-one.github.io/spatial-docs/markdown/point.md', /Absolute URLs/],
+  ['protocol-relative internal URL', '//longitude-one.github.io/point.md', /Absolute URLs/],
+  ['Docusaurus pathname URL', 'pathname:///markdown/index.md', /relative explicit .md/],
+  ['outside document', '../outside.md', /must not escape docs/],
+  ['outside license', '../LICENSE', /lowercase, portable|must not escape docs/],
+  ['unpublished outside asset', '../secret.json', /not a published shared asset/],
+  ['missing cross-document anchor', './point.md#missing', /Missing GFM heading anchor/],
+  ['missing local anchor', '#missing', /Missing GFM heading anchor/],
+  ['numeric suffix for duplicate heading', './point.md#coordinates-1', /Missing GFM heading anchor/],
+  ['malformed URL encoding', './point.md#bad%zz', /Malformed percent encoding/],
+]) {
+  test(`rejects ${name} before publication with source diagnostics`, async (t) => {
+    const { run } = await fixture(t, {
+      'docs/index.md': document('Home', 'Home page.', `\n[Target](${target})\n`),
+      'docs/point.md': document('Point', 'Point page.', '## Coordinates\n'),
+      'docs/shared/index.md': document('Shared', 'Shared page.'),
+    });
+    await assert.rejects(run(), (error) => {
+      assert.match(error.stderr, /docs\/index\.md:6:1: Invalid internal documentation link/);
+      assert.ok(error.stderr.includes(target));
+      assert.match(error.stderr, /Resolved target:/);
+      assert.match(error.stderr, reason);
+      return true;
+    });
+  });
+}
+
+for (const metadata of ['draft: true\n', 'unlisted: true\n']) {
+  test(`rejects links to excluded page ${metadata.trim()}`, async (t) => {
+    const { run } = await fixture(t, {
+      'docs/index.md': document('Home', 'Home page.', '[Hidden](./hidden.md)'),
+      'docs/hidden.md': document('Hidden', 'Excluded page.', '', metadata),
+    });
+    await assert.rejects(run(), /Missing or unpublished source document/);
+  });
+}
+
+test('rejects reference-style invalid targets at their source definition', async (t) => {
+  const { run } = await fixture(t, {
+    'docs/index.md': document('Home', 'Home page.', '\n[Point][point-doc]\n\n[point-doc]: ./Point.md\n'),
+  });
+  await assert.rejects(run(), /docs\/index\.md:8:1: Invalid internal documentation link: \.\/Point\.md/);
+});
+
+test('rejects links to hidden source documents', async (t) => {
+  const { run } = await fixture(t, {
+    'docs/index.md': document('Home', 'Home page.', '[Hidden](./_hidden.md)'),
+    'docs/_hidden.md': document('Hidden', 'Excluded page.'),
+  });
+  await assert.rejects(run(), /Missing or unpublished source document/);
+});
+
+for (const headings of ['## Coordinates\n## Coordinates\n', '## **Coordinates**\n## Coordinates\n']) {
+  test(`rejects ambiguous heading anchors in ${JSON.stringify(headings)}`, async (t) => {
+    const { run } = await fixture(t, { 'docs/index.md': document('Home', 'Home page.', headings) });
+    await assert.rejects(run(), /Duplicate or ambiguous GFM heading anchor/);
+  });
+}
+
+for (const kind of ['file', 'directory']) {
+  test(`rejects a symbolic ${kind} in the source hierarchy`, async (t) => {
+    const { root, run } = await fixture(t, {
+      'docs/index.md': document('Home', 'Home page.', kind === 'file' ? '[Point](./alias.md)' : '[Point](./alias/point.md)'),
+      'docs/shared/point.md': document('Point', 'Point page.'),
+    });
+    await symlink(kind === 'file' ? 'shared/point.md' : 'shared', path.join(root, 'docs', kind === 'file' ? 'alias.md' : 'alias'));
+    await assert.rejects(run(), /Symbolic links are not supported/);
+  });
+}
+
+test('invalid source links leave the last published corpus untouched', async (t) => {
+  const { root, run } = await fixture(t, { 'docs/index.md': document('Home', 'Home page.') });
+  await run();
+  const before = await readFile(path.join(root, 'static/markdown/index.md'));
+  await writeFile(path.join(root, 'docs/index.md'), document('Home', 'Home page.', '[Missing](./missing.md)'));
+  await assert.rejects(run(), /Missing or unpublished source document/);
+  assert.deepEqual(await readFile(path.join(root, 'static/markdown/index.md')), before);
 });

@@ -8,7 +8,8 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
-import { baseUrl } from './site-settings.mjs';
+import { baseUrl, siteUrl } from './site-settings.mjs';
+import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -73,11 +74,11 @@ async function findDocumentationFiles(directory) {
   const nested = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(directory, entry.name);
     const relativePath = path.relative(docsDirectory, entryPath).split(path.sep).join('/');
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symbolic links are not supported in the documentation hierarchy: docs/${relativePath}.`);
+    }
     const pathComponents = relativePath.split('/');
-    pathComponents.forEach((component, index) => {
-      if (index === pathComponents.length - 1 && !entry.isDirectory()) {
-        component = component.replace(/\.[^.]+$/, '');
-      }
+    pathComponents.forEach((component) => {
       validatePathComponent(component, relativePath);
     });
     if (entry.isDirectory()) {
@@ -162,7 +163,7 @@ function parseSourceDocument(content, sourcePath) {
   }
 
   return {
-    body: markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n'),
+    tree,
     metadata,
   };
 }
@@ -281,18 +282,24 @@ async function stagedOutputMatches(stagingDirectory) {
 }
 
 async function exportMarkdown() {
-  const libraries = await resolveLibraries(docsDirectory);
   const sourceFiles = await findDocumentationFiles(docsDirectory);
   const generated = [];
+  const documents = new Map();
   for (const sourceFile of sourceFiles.sort()) {
     const sourcePath = path.relative(docsDirectory, sourceFile).split(path.sep).join('/');
     const raw = await readFile(sourceFile, 'utf8');
-    const { body, metadata } = parseSourceDocument(raw, sourcePath);
+    const { tree, metadata } = parseSourceDocument(raw, sourcePath);
     if (sourcePath.split('/').some((part) => part.startsWith('_'))
       || metadata.draft === true || metadata.draft === 'true'
       || metadata.unlisted === true || metadata.unlisted === 'true') {
       continue;
     }
+    documents.set(sourcePath, { tree, metadata, anchors: documentationAnchors(tree, sourcePath) });
+  }
+  await processDocumentationLinks(documents, { staticDirectory, siteUrl });
+  const libraries = await resolveLibraries(docsDirectory);
+  for (const [sourcePath, { tree, metadata }] of documents) {
+    const body = markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n');
     const page = publishedDocument(sourcePath, metadata, body, libraries);
     if (generated.some(({ markdownPath, htmlPath }) => (
       markdownPath === page.markdownPath || htmlPath === page.htmlPath

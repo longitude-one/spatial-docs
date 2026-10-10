@@ -39,6 +39,13 @@ Every published documentation resource must have two explicit representations:
 The publication contract does not use directory-style document identities or
 implicit `index.html` resolution.
 
+HTML and Markdown counterparts are published in the same directory and differ
+only by their representation extension. An internal staging or generation
+directory must not introduce a public `markdown/` prefix. For example,
+`/shared/index.html` is paired with `/shared/index.md`, not
+`/markdown/shared/index.md`. This rule also applies to `llms.txt`, resource
+mappings, download links and deployed files, including development base URLs.
+
 For example:
 
 ```text

@@ -24,16 +24,21 @@ npm run build
 ## Documentation sources
 
 - `docs/shared/` contains documentation shared across the ecosystem.
-- `docs/libraries/` contains documentation for individual libraries.
-- Use `.md` for documentation by default. Reserve `.mdx` for pages that need
-  interactive React components.
+- `docs/<library>/v<major>/` contains versioned library documentation.
+- `docs/standards/`, `docs/concepts/` and `docs/dbms/` contain spatial references.
+- Use portable `.md` sources with `title` and `description` front matter;
+  MDX and raw HTML are not supported in published documentation.
 - `inbox/` contains drafts that are not yet part of the published site.
 
 ## Markdown counterparts
 
-`npm run build` exports every `.md` and `.mdx` page to `build/markdown/` and
-generates a root `build/llms.txt` index. Markdown pages are copied without
-front matter. MDX output preserves Markdown and static JSX child content while
-omitting JSX wrappers, imports, props, and rendered component behavior. MDX
-JavaScript expressions are not supported and fail the build. HTML remains the
-authoritative output for interactive content and presentation.
+`npm run build` exports published `.md` pages alongside their HTML counterparts
+in `build/` and generates a root `build/llms.txt` index. For example,
+`build/shared/index.html` and `build/shared/index.md` represent the same document;
+there is no public `markdown/` prefix.
+
+The internal `.generated-markdown/` directory contains generated Markdown with
+portable metadata and the matching relative HTML link. Docusaurus copies its
+contents directly to the publication root. Source-relative documentation links
+and heading anchors are validated before publication; invalid targets fail the
+build. See the [portable publication contract](docs/shared/portable-markdown-publication-contract.md).

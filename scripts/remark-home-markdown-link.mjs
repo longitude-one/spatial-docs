@@ -10,7 +10,7 @@ export default function remarkHomeMarkdownLink({ docsDirectory }) {
       type: 'paragraph',
       children: [{
         type: 'link',
-        url: `pathname://${baseUrl}markdown/${sourcePath}`,
+        url: `pathname://${baseUrl}${sourcePath}`,
         children: [{ type: 'text', value: 'Read this page as Markdown' }],
       }],
     });

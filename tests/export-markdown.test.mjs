@@ -65,17 +65,17 @@ test('exports canonical Markdown with only portable metadata and explicit repres
   });
   await run();
 
-  const home = await readFile(path.join(root, 'static/markdown/index.md'), 'utf8');
-  const point = await readFile(path.join(root, 'static/markdown/shared/point.md'), 'utf8');
-  assert.match(home, /^---\ntitle: Home\ndescription: The documentation home page\.\ncanonical_html: \.\.\/index\.html\ncanonical_markdown: \.\/index\.md\n---\n\n\[View HTML version\]\(\.\.\/index\.html\)/);
+  const home = await readFile(path.join(root, '.generated-markdown/index.md'), 'utf8');
+  const point = await readFile(path.join(root, '.generated-markdown/shared/point.md'), 'utf8');
+  assert.match(home, /^---\ntitle: Home\ndescription: The documentation home page\.\ncanonical_html: \.\/index\.html\ncanonical_markdown: \.\/index\.md\n---\n\n\[View HTML version\]\(\.\/index\.html\)/);
   assert.doesNotMatch(home, /sidebar_position|^id:/m);
   assert.doesNotMatch(home, /^# Home$/m);
   assert.match(home, /## Browse/);
-  assert.match(point, /canonical_html: \.\.\/\.\.\/shared\/point\.html/);
+  assert.match(point, /canonical_html: \.\/point\.html/);
   assert.match(point, /canonical_markdown: \.\/point\.md/);
-  assert.match(point, /\[View HTML version\]\(\.\.\/\.\.\/shared\/point\.html\)/);
+  assert.match(point, /\[View HTML version\]\(\.\/point\.html\)/);
   assert.match(point, /```wkt\nPOINT \(1 2\)\n```/);
-  assert.match(await readFile(path.join(root, 'static/llms.txt'), 'utf8'), /- \[Point \\\[coordinates\\\]\]\(\/markdown\/shared\/point\.md\)/);
+  assert.match(await readFile(path.join(root, '.generated-markdown/llms.txt'), 'utf8'), /- \[Point \\\[coordinates\\\]\]\(\/shared\/point\.md\)/);
 });
 
 test('preserves the source hierarchy and excludes drafts, unlisted, and hidden pages', async (t) => {
@@ -85,14 +85,20 @@ test('preserves the source hierarchy and excludes drafts, unlisted, and hidden p
     'docs/draft.md': document('Draft', 'An unpublished draft.', '', 'draft: true\n'),
     'docs/unlisted.md': document('Unlisted', 'An unpublished page.', '', 'unlisted: true\n'),
     'docs/_hidden.md': document('Hidden', 'A hidden page.'),
-    'static/markdown/stale.md': '# Stale',
+    '.generated-markdown/stale.md': '# Stale',
+    'static/markdown/legacy.md': '# Old public prefix',
+    'static/llms.txt': 'Old index',
+    'static/assets/retained.json': '{}',
   });
   await run();
 
-  assert.match(await readFile(path.join(root, 'static/markdown/shared/index.md'), 'utf8'), /title: Shared/);
+  assert.match(await readFile(path.join(root, '.generated-markdown/shared/index.md'), 'utf8'), /title: Shared/);
   for (const name of ['draft.md', 'unlisted.md', '_hidden.md', 'stale.md']) {
-    await assert.rejects(access(path.join(root, 'static/markdown', name)));
+    await assert.rejects(access(path.join(root, '.generated-markdown', name)));
   }
+  await assert.rejects(access(path.join(root, 'static/markdown')));
+  await assert.rejects(access(path.join(root, 'static/llms.txt')));
+  assert.equal(await readFile(path.join(root, 'static/assets/retained.json'), 'utf8'), '{}');
 });
 
 test('rejects MDX source files', async (t) => {
@@ -141,7 +147,7 @@ test('removes Markdown comments and canonicalizes CRLF and UTF-8 BOM input', asy
   const source = `\uFEFF---\r\ntitle: Home\r\ndescription: The documentation home page.\r\nid: home\r\n---\r\n\r\n<!-- source-only comment -->\r\n\r\nParagraph with two trailing spaces.  \r\n\r\n\`\`\`json\r\n{"ok": true}\r\n\`\`\`\r\n`;
   const { root, run } = await fixture(t, { 'docs/index.md': source });
   await run();
-  const output = await readFile(path.join(root, 'static/markdown/index.md'));
+  const output = await readFile(path.join(root, '.generated-markdown/index.md'));
   const markdown = output.toString('utf8');
   assert.equal(output.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])), false);
   assert.equal(markdown.includes('\r'), false);
@@ -155,9 +161,9 @@ test('accepts a metadata-only document without inserting placeholder body conten
     'docs/index.md': document('Reserved geometry type', 'This page documents a reserved geometry type.'),
   });
   await run();
-  const output = await readFile(path.join(root, 'static/markdown/index.md'), 'utf8');
-  assert.match(output, /canonical_html: \.\.\/index\.html/);
-  assert.match(output, /\[View HTML version\]\(\.\.\/index\.html\)/);
+  const output = await readFile(path.join(root, '.generated-markdown/index.md'), 'utf8');
+  assert.match(output, /canonical_html: \.\/index\.html/);
+  assert.match(output, /\[View HTML version\]\(\.\/index\.html\)/);
   assert.doesNotMatch(output, /No content|TODO|placeholder/i);
 });
 
@@ -167,13 +173,13 @@ test('generation is deterministic and idempotent for unchanged sources', async (
     'docs/shared/point.md': document('Point', 'Represents a point.'),
   });
   await run();
-  const firstOutput = await readFile(path.join(root, 'static/markdown/index.md'));
-  const firstIndex = await readFile(path.join(root, 'static/llms.txt'));
-  const firstInode = (await lstat(path.join(root, 'static/markdown/index.md'))).ino;
+  const firstOutput = await readFile(path.join(root, '.generated-markdown/index.md'));
+  const firstIndex = await readFile(path.join(root, '.generated-markdown/llms.txt'));
+  const firstInode = (await lstat(path.join(root, '.generated-markdown/index.md'))).ino;
   await run();
-  assert.deepEqual(await readFile(path.join(root, 'static/markdown/index.md')), firstOutput);
-  assert.deepEqual(await readFile(path.join(root, 'static/llms.txt')), firstIndex);
-  assert.equal((await lstat(path.join(root, 'static/markdown/index.md'))).ino, firstInode);
+  assert.deepEqual(await readFile(path.join(root, '.generated-markdown/index.md')), firstOutput);
+  assert.deepEqual(await readFile(path.join(root, '.generated-markdown/llms.txt')), firstIndex);
+  assert.equal((await lstat(path.join(root, '.generated-markdown/index.md'))).ino, firstInode);
 });
 
 test('a failed generation leaves the last valid corpus and index untouched', async (t) => {
@@ -181,16 +187,16 @@ test('a failed generation leaves the last valid corpus and index untouched', asy
     'docs/index.md': document('Home', 'The documentation home page.'),
   });
   await run();
-  const firstOutput = await readFile(path.join(root, 'static/markdown/index.md'));
-  const firstIndex = await readFile(path.join(root, 'static/llms.txt'));
+  const firstOutput = await readFile(path.join(root, '.generated-markdown/index.md'));
+  const firstIndex = await readFile(path.join(root, '.generated-markdown/llms.txt'));
   await writeFile(
     path.join(root, 'docs/invalid.md'),
     '---\ntitle: Invalid\nslug: /invalid\ndescription: Invalid slug.\n---\n',
   );
 
   await assert.rejects(run(), /must not define Docusaurus slug metadata/);
-  assert.deepEqual(await readFile(path.join(root, 'static/markdown/index.md')), firstOutput);
-  assert.deepEqual(await readFile(path.join(root, 'static/llms.txt')), firstIndex);
+  assert.deepEqual(await readFile(path.join(root, '.generated-markdown/index.md')), firstOutput);
+  assert.deepEqual(await readFile(path.join(root, '.generated-markdown/llms.txt')), firstIndex);
 });
 
 test('development deployment settings do not change generated document content', async (t) => {
@@ -198,9 +204,9 @@ test('development deployment settings do not change generated document content',
     'docs/index.md': document('Home', 'The documentation home page.', '[Markdown](./index.md)\n'),
   });
   await run();
-  const productionMarkdown = await readFile(path.join(root, 'static/markdown/index.md'));
+  const productionMarkdown = await readFile(path.join(root, '.generated-markdown/index.md'));
   await run({ DOCUSAURUS_DEPLOYMENT: 'development' });
-  const developmentMarkdown = await readFile(path.join(root, 'static/markdown/index.md'));
+  const developmentMarkdown = await readFile(path.join(root, '.generated-markdown/index.md'));
   assert.deepEqual(developmentMarkdown, productionMarkdown);
   assert.doesNotMatch(developmentMarkdown.toString('utf8'), /Development version/);
 });
@@ -225,11 +231,11 @@ test('resolves source links structurally and preserves fragments, external URLs,
       '[Same-host external](https://longitude-one.github.io/another-project/help.html)',
       '[Mail](mailto:docs@example.org)',
       '[Protocol relative](//example.org/Point.html)',
-      '[Schema](../../../assets/schema.json)',
-      '![Model](../../../assets/model.svg)',
+      '[Schema](../../assets/schema.json)',
+      '![Model](../../assets/model.svg)',
       '![Reference model][model-asset]',
       '',
-      '[model-asset]: ../../../assets/model.svg',
+      '[model-asset]: ../../assets/model.svg',
       '',
       'Literal `../Point.html`, https://example.org/Point.html and ./point/ remain text.',
       '',
@@ -245,7 +251,7 @@ test('resolves source links structurally and preserves fragments, external URLs,
     'static/assets/model.svg': '<svg/>',
   });
   await run();
-  const outputPath = path.join(root, 'static/markdown/shared/nested/example.md');
+  const outputPath = path.join(root, '.generated-markdown/shared/nested/example.md');
   const first = await readFile(outputPath, 'utf8');
   assert.match(first, /\[Point\]\(\.\.\/point\.md\?raw=1#coordinates-and-values\)/);
   assert.match(first, /\[Unicode\]\(\.\.\/point\.md#caf%C3%A9\)/);
@@ -254,7 +260,7 @@ test('resolves source links structurally and preserves fragments, external URLs,
   assert.match(first, /\[point-doc\]: \.\.\/point\.md#coordinates-and-values/);
   for (const literal of ['https://example.org/Point.html?raw=1#Coordinates',
     'https://longitude-one.github.io/another-project/help.html', 'mailto:docs@example.org',
-    '//example.org/Point.html', '../../../assets/schema.json', '../../../assets/model.svg',
+    '//example.org/Point.html', '../../assets/schema.json', '../../assets/model.svg',
     '{"url":"../Point.html","markdown":"[Point](../Point.html)"}', "SELECT '../Point.html';"]) {
     assert.ok(first.includes(literal), `Preserves ${literal}`);
   }
@@ -354,8 +360,8 @@ for (const kind of ['file', 'directory']) {
 test('invalid source links leave the last published corpus untouched', async (t) => {
   const { root, run } = await fixture(t, { 'docs/index.md': document('Home', 'Home page.') });
   await run();
-  const before = await readFile(path.join(root, 'static/markdown/index.md'));
+  const before = await readFile(path.join(root, '.generated-markdown/index.md'));
   await writeFile(path.join(root, 'docs/index.md'), document('Home', 'Home page.', '[Missing](./missing.md)'));
   await assert.rejects(run(), /Missing or unpublished source document/);
-  assert.deepEqual(await readFile(path.join(root, 'static/markdown/index.md')), before);
+  assert.deepEqual(await readFile(path.join(root, '.generated-markdown/index.md')), before);
 });

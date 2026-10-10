@@ -9,7 +9,7 @@ Author ecosystem-wide contracts in `docs/shared/`; author spatial references in
 Library documentation retains its existing `docs/<library>/v<major>/` structure and optional roadmaps.
 Keep unpublished drafts in `inbox/`. Site configuration lives in `docusaurus.config.js` and `sidebars.js`;
 styles and other assets live in `src/` and `static/`. Automation is in `scripts/`, with regression tests in `tests/`.
-Treat `build/`, `static/markdown/`, and `static/llms.txt` as generated output; edit their source pages or generator instead.
+Treat `build/` and `.generated-markdown/` as generated output; edit their source pages or generator instead.
 
 ## Build, Test, and Development Commands
 

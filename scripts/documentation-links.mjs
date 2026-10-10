@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { lstat } from 'node:fs/promises';
 import { slug } from 'github-slugger';
 
 function walk(node, callback) {
@@ -104,14 +103,10 @@ export async function processDocumentationLinks(documents, { staticDirectory, si
       const isDocument = !extension || extension === '.md' || extension === '.html'
         || /\.(?:md|html)$/i.test(decodedPath);
       if (!isDocument) {
-        // Assets are not transformed here. An escape is permitted only for an
-        // existing resource on the shared static publication surface.
+        // The public Markdown and source hierarchies have the same depth.
+        // An escaping path would also escape the site's shared asset surface.
         if (escapes) {
-          const asset = path.posix.normalize(path.posix.join('markdown', path.posix.dirname(sourcePath), decodedPath));
-          if (asset === '..' || asset.startsWith('../')) fail(resolved, 'Relative target escapes docs/ and the shared asset surface.');
-          try {
-            if (!(await lstat(path.join(staticDirectory, asset))).isFile()) throw new Error('Not a regular asset');
-          } catch { fail(resolved, 'Relative target escapes docs/ and is not a published shared asset.'); }
+          fail(resolved, 'Relative target escapes docs/ and is not a published shared asset.');
         }
         continue;
       }

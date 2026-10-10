@@ -3,3 +3,4 @@ node_modules/
 build/
 static/llms.txt
 static/markdown/
+.generated-markdown*/

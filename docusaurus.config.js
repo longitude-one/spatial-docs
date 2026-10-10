@@ -28,6 +28,7 @@ const config = {
   tagline: 'Documentation for the LongitudeOne Spatial ecosystem',
   url: siteUrl,
   baseUrl,
+  staticDirectories: ['static', '.generated-markdown'],
   trailingSlash: false,
   onBrokenLinks: 'throw',
   markdown: {

@@ -34,6 +34,18 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Concepts',
+      link: { type: 'doc', id: 'concepts/index' },
+      items: [
+        'concepts/index',
+        'concepts/geometries/index',
+        'concepts/dimensions/index',
+        'concepts/crs/index',
+        'concepts/formats/index',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Libraries',
       items: [
         {

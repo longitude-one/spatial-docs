@@ -39,7 +39,6 @@ const sidebars = {
       items: [
         'concepts/index',
         'concepts/geometries/index',
-        'concepts/geometries/geometry-model',
         'concepts/dimensions/index',
         'concepts/crs/index',
         'concepts/formats/index',

@@ -59,7 +59,7 @@ does not turn a point into a curve or a surface into a solid.
 
 The phrase “three-dimensional geometry” can therefore be ambiguous. Specify
 whether it means a Z-bearing coordinate layout, an intrinsic dimension, or an
-operation that actually uses Z. The [geometry model](../geometries/geometry-model.md#dimension-boundaries-and-geometric-properties)
+operation that actually uses Z. The [geometry model](../geometries/index.md#dimension-boundaries-and-geometric-properties)
 explains intrinsic dimensions and collection behavior.
 
 ### Reading and using a layout

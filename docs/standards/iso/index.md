@@ -10,7 +10,7 @@ This section introduces the ISO standards in LongitudeOne's spatial reference sc
 - [ISO 19111 — Referencing by coordinates](iso-19111.md);
 - [ISO 19136 — Geography Markup Language](iso-19136.md).
 
-Detailed references will identify the relevant editions, requirements and
+The references identify the assessed editions, requirements and
 LongitudeOne support, limitations and extensions. Inclusion here does not imply
 support or conformance.
 

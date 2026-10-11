@@ -20,7 +20,12 @@ const sidebars = {
     {
       type: 'category',
       label: 'Standards',
-      items: ['standards/iso/index', 'standards/ogc/index', 'standards/rfc/index'],
+      items: [
+        'standards/iso/index',
+        'standards/iso/iso-iec-13249-3',
+        'standards/ogc/index',
+        'standards/rfc/index',
+      ],
     },
     {
       type: 'category',

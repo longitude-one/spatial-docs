@@ -5,7 +5,7 @@ description: Introduces the ISO spatial standards included in the LongitudeOne r
 
 This section introduces the ISO standards in LongitudeOne's spatial reference scope:
 
-- ISO/IEC 13249-3;
+- [ISO/IEC 13249-3 — SQL/MM Spatial](iso-iec-13249-3.md);
 - ISO 19107;
 - ISO 19111;
 - ISO 19136.

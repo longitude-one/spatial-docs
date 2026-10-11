@@ -150,8 +150,10 @@ establish a LongitudeOne compatibility matrix.
 
 The Microsoft driver page also records API-specific format caveats. Do not
 infer a byte layout from a method name or transfer a driver contract to a SQL
-function. Detailed product compatibility and version matrices belong in DBMS
-references, outside this concept page.
+function. See the [DBMS overview](../../dbms/index.md) and the scoped
+[PostGIS](../../dbms/postgis.md), [MySQL](../../dbms/mysql.md),
+[MariaDB](../../dbms/mariadb.md) and [SQL Server](../../dbms/sql-server.md)
+references for platform behavior and evidenced integration limits.
 
 ### LongitudeOne capabilities
 

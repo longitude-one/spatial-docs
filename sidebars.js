@@ -46,6 +46,12 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'DBMS',
+      link: { type: 'doc', id: 'dbms/index' },
+      items: ['dbms/index', 'dbms/postgis', 'dbms/mysql', 'dbms/mariadb', 'dbms/sql-server'],
+    },
+    {
+      type: 'category',
       label: 'Libraries',
       items: [
         {

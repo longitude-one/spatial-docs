@@ -29,10 +29,11 @@ docs/
 │   ├── crs/
 │   └── formats/
 └── dbms/
-    ├── postgis/
-    ├── mysql/
-    ├── mariadb/
-    └── sql-server/
+    ├── index.md
+    ├── postgis.md
+    ├── mysql.md
+    ├── mariadb.md
+    └── sql-server.md
 ```
 
 These paths define the initial content structure, not a requirement to publish
@@ -113,9 +114,11 @@ and vendor representations without defining new support promises.
 
 ## DBMS reference
 
-The initial platform scope is PostGIS, MySQL, MariaDB and SQL Server, each in its
-own directory. Create an `index.md` platform overview when content is available;
-place focused topics alongside it, such as `dbms/mysql/srid.md`.
+The initial platform scope is PostGIS, MySQL, MariaDB and SQL Server. The
+[DBMS overview](../dbms/index.md) describes these platforms; each has one
+reference file directly under `docs/dbms/`: `postgis.md`, `mysql.md`, `mariadb.md`
+and `sql-server.md`. This layout follows Alexandre's approved direction for
+[Story #63](https://github.com/longitude-one/spatial-docs/issues/63).
 
 Each platform reference identifies the product and applicable release/version
 range, authoritative vendor documentation and the LongitudeOne library versions
@@ -187,7 +190,7 @@ and implementation evidence. Use section links where they identify the relevant
 requirement or support record precisely.
 
 For example, a future `concepts/crs/srid.md` page could link to a verified section
-in `standards/iso/iso-19111.md`, to `dbms/mysql/srid.md`, and to the relevant
+in `standards/iso/iso-19111.md`, to `dbms/mysql.md#spatial-behavior`, and to the relevant
 versioned library page. Authors must create or verify those target pages before
 publishing links; the paths here are illustrative, not existing resources.
 

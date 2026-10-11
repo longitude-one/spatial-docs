@@ -28,6 +28,7 @@ const sidebars = {
         'standards/ogc/index',
         'standards/ogc/ogc-06-103r4',
         'standards/rfc/index',
+        'standards/rfc/rfc-7946',
       ],
     },
     {

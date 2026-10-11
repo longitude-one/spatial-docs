@@ -23,6 +23,7 @@ const sidebars = {
       items: [
         'standards/iso/index',
         'standards/iso/iso-iec-13249-3',
+        'standards/iso/iso-19107',
         'standards/ogc/index',
         'standards/rfc/index',
       ],

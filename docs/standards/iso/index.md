@@ -8,7 +8,7 @@ This section introduces the ISO standards in LongitudeOne's spatial reference sc
 - [ISO/IEC 13249-3 — SQL/MM Spatial](iso-iec-13249-3.md);
 - [ISO 19107 — Spatial schema](iso-19107.md);
 - ISO 19111;
-- ISO 19136.
+- [ISO 19136 — Geography Markup Language](iso-19136.md).
 
 Detailed references will identify the relevant editions, requirements and
 LongitudeOne support, limitations and extensions. Inclusion here does not imply

@@ -32,6 +32,12 @@ Integration records are pinned to **Doctrine Spatial 6.0.0**, a released version
 whose platform adapters were inspected. They do not claim that every 6.x release,
 older major, future 7.x integration or standalone parser behaves identically.
 [Doctrine Spatial 6.x](../doctrine-spatial/v6/index.md) owns library usage details.
+The [6.0.0 dependency manifest][dependencies] requires `geo-parser` ^4.0.0,
+`wkt-parser` ^3.0.1 and `wkb-parser` ^3.0.1. It does **not** depend on
+`spatial-types`; the PHP geometry and geography classes assessed here belong to
+Doctrine Spatial itself. Standalone library capabilities and future integrations
+are not evidence of support in this release.
+
 Native DBMS support for a type, dimension or format does not imply PHP round-trip
 support, and an adapter mapping does not establish whole-standard conformance.
 
@@ -47,3 +53,5 @@ support, and an adapter mapping does not establish whole-standard conformance.
 These standards pages own normative analysis. Platform restrictions and vendor
 extensions in this domain remain DBMS behavior, even when their SQL names use
 an `ST_` prefix.
+
+[dependencies]: https://github.com/longitude-one/doctrine-spatial/blob/42387d65d860b10e3a531b6b347c0e4f3025184e/composer.json

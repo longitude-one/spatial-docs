@@ -26,6 +26,7 @@ const sidebars = {
         'standards/iso/iso-19107',
         'standards/iso/iso-19136',
         'standards/ogc/index',
+        'standards/ogc/ogc-06-103r4',
         'standards/rfc/index',
       ],
     },

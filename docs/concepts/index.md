@@ -11,5 +11,4 @@ of LongitudeOne APIs and database platforms.
 - [Coordinate reference systems](crs/index.md): spatial referencing and identification.
 - [Formats](formats/index.md): spatial representations and their relationship to the model.
 
-These section indexes establish the documentation structure. Detailed concept
-pages are not yet published.
+Each section index links to its available concept pages.

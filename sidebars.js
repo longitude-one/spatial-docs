@@ -19,6 +19,21 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Standards',
+      items: [
+        'standards/iso/index',
+        'standards/iso/iso-iec-13249-3',
+        'standards/iso/iso-19107',
+        'standards/iso/iso-19111',
+        'standards/iso/iso-19136',
+        'standards/ogc/index',
+        'standards/ogc/ogc-06-103r4',
+        'standards/rfc/index',
+        'standards/rfc/rfc-7946',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Libraries',
       items: [
         {

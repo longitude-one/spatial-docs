@@ -56,6 +56,20 @@ cross-reference adopts the target document's context; choosing a version in one
 library does not change another library. Standards, Concepts and DBMS pages do
 not display a library version menu or status.
 
+## Contextual sidebars
+
+Each documented library major has an independent sidebar generated from its
+Markdown directory. Its library overview link returns to the stable, unversioned
+entry page. Entry pages and roadmaps share a separate menu for that library.
+Following a cross-reference or switching major selects the target page's sidebar.
+Standards, Concepts and DBMS each have their own independent sidebar.
+
+Authors customize native sidebar labels and order with `sidebar_label` and
+`sidebar_position` front matter, and directory categories with `_category_.json`.
+Categories remain collapsible. Category overview links use existing Markdown
+index pages; navigation does not create generated index pages or change source
+paths. Add sections only when corresponding documentation exists.
+
 ## Published releases and status
 
 At build time, determine each library's current production major version automatically from its

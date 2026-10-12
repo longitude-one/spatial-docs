@@ -1,6 +1,8 @@
 ---
 title: WKT Parser 3.x
 description: Documentation for the 3.x major release of LongitudeOne WKT Parser.
+sidebar_label: Overview
+sidebar_position: 1
 ---
 
 WKT Parser provides a lexer and parser for Well-Known Text (WKT) and Extended Well-Known Text (EWKT) spatial strings.

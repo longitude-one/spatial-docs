@@ -1,6 +1,8 @@
 ---
 title: WKB Parser 3.x
 description: Documentation for the 3.x major release of LongitudeOne WKB Parser.
+sidebar_label: Overview
+sidebar_position: 1
 ---
 
 WKB Parser parses Well-Known Binary (WKB) and PostGIS Extended Well-Known Binary (EWKB) spatial data.

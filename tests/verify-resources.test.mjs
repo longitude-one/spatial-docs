@@ -39,6 +39,21 @@ test('valid site produces an HTML/Markdown mapping', async (t) => {
   ]);
 });
 
+test('publication rejects an internal link opening a new tab', async (t) => {
+  const root = await fixture(t, {
+    'build/index.html': '<h1 id="home">Home</h1><a href="/index.md#home" target="_blank" rel="noopener noreferrer">Markdown</a>',
+  });
+  await assert.rejects(verifyResources(root), /Internal link must use the current tab/);
+});
+
+test('publication permits safe external links and same-tab internal links', async (t) => {
+  const root = await fixture(t, {
+    'build/index.html': '<h1 id="home">Home</h1><a href="/index.md#home" target="_self">Markdown</a>'
+      + '<a href="https://www.iso.org/" target="_blank" rel="noopener noreferrer">ISO</a>',
+  });
+  await verifyResources(root);
+});
+
 test('every nested resource mapping differs only by representation extension', async (t) => {
   const root = await fixture(t, {
     'build/shared/reference.md': '---\ntitle: Reference\ndescription: Shared reference\ncanonical_html: ./reference.html\ncanonical_markdown: ./reference.md\n---\n\n[View HTML version](./reference.html)\n\n## Scope\n',

@@ -5,7 +5,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 // Use ordinary anchors: SPA navigation cannot resolve the explicit HTML paths.
 export function CanonicalLink({ to, children, ...props }) {
   const href = useBaseUrl(to);
-  return <a href={href} {...props}>{children}</a>;
+  return <a href={href} {...props} target="_self" rel={undefined}>{children}</a>;
 }
 
 export default function CanonicalNavbarItem({ to, label, mobile, isDropdownItem, onClick }) {

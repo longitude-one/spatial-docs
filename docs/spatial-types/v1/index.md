@@ -1,6 +1,8 @@
 ---
 title: Spatial Types 1.x
 description: Documentation for the 1.x major release of LongitudeOne Spatial Types.
+sidebar_label: Overview
+sidebar_position: 1
 ---
 
 Spatial Types provides PHP spatial types with geometric and geographic classes.

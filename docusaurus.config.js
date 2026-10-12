@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { createNavbarItems } from './scripts/navbar-items.mjs';
+import remarkLibraryLandingPages from './scripts/library-landing-pages.mjs';
 
 const rootDirectory = process.cwd();
 let libraries = {};
@@ -43,6 +44,9 @@ const config = {
       {
         docs: {
           routeBasePath: '/',
+          beforeDefaultRemarkPlugins: [
+            [remarkLibraryLandingPages, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }],
+          ],
           remarkPlugins: [
             remarkBaseUrl,
             [remarkVersionStatus, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }],

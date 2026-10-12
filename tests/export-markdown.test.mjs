@@ -31,6 +31,7 @@ async function fixture(t, sources) {
   await cp(path.join(repository, 'scripts/export-markdown.mjs'), path.join(root, 'scripts/export-markdown.mjs'));
   await cp(path.join(repository, 'scripts/site-settings.mjs'), path.join(root, 'scripts/site-settings.mjs'));
   await cp(path.join(repository, 'scripts/library-versions.mjs'), path.join(root, 'scripts/library-versions.mjs'));
+  await cp(path.join(repository, 'scripts/library-landing-pages.mjs'), path.join(root, 'scripts/library-landing-pages.mjs'));
   await cp(path.join(repository, 'scripts/documentation-links.mjs'), path.join(root, 'scripts/documentation-links.mjs'));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
@@ -76,6 +77,38 @@ test('exports canonical Markdown with only portable metadata and explicit repres
   assert.match(point, /\[View HTML version\]\(\.\/point\.html\)/);
   assert.match(point, /```wkt\nPOINT \(1 2\)\n```/);
   assert.match(await readFile(path.join(root, '.generated-markdown/llms.txt'), 'utf8'), /- \[Point \\\[coordinates\\\]\]\(\/shared\/point\.md\)/);
+});
+
+async function landingFixture(t, entryDocument = 'index.md') {
+  const result = await fixture(t, {
+    'docs/spatial-core/index.md': document('Spatial Core', 'Library entry point.', 'Library summary.\n\n## Requirements\n'),
+    [`docs/spatial-core/v1/${entryDocument}`]: document('Spatial Core 1.x', 'Stable documentation.'),
+    'docs/spatial-core/v2/index.md': document('Spatial Core 2.x', 'Next documentation.'),
+    'docs/about/versioning.md': document('Versioning', 'Versioning contract.'),
+  });
+  const preload = path.join(result.root, 'mock-fetch.mjs');
+  await writeFile(preload, `globalThis.fetch = async () => ({
+    status: 200, ok: true, json: async () => ({ packages: {
+      'longitude-one/spatial-core': [{ version: '1.5.0' }, { version: '2.0.0-beta.1' }],
+    } }),
+  });\n`);
+  return { ...result, exportLanding: () => result.run({ NODE_OPTIONS: `--import=${preload}` }) };
+}
+
+test('exports library entry navigation as portable Markdown using the discovered stable major', async (t) => {
+  const { root, exportLanding } = await landingFixture(t);
+  await exportLanding();
+  const landing = await readFile(path.join(root, '.generated-markdown/spatial-core/index.md'), 'utf8');
+  assert.match(landing, /current stable documentation \(v1\)\]\(v1\/index\.md\)/);
+  assert.match(landing, /composer require longitude-one\/spatial-core:\^1\.0@stable/);
+  assert.match(landing, /\[v2\].*Next/);
+  assert.match(landing, /\[v1\].*Current/);
+  assert.doesNotMatch(landing, /pathname:|<a|> \*\*Current version/);
+});
+
+test('fails publication if generated library entry navigation has no documentation destination', async (t) => {
+  const { exportLanding } = await landingFixture(t, 'geometry.md');
+  await assert.rejects(exportLanding(), /Missing or unpublished source document/);
 });
 
 test('preserves the source hierarchy and excludes drafts, unlisted, and hidden pages', async (t) => {

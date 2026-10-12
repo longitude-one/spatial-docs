@@ -7,15 +7,15 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 ## Browse the documentation
 
 - [Shared documentation](shared/index.md)
-- [Spatial Core 1.x](spatial-core/v1/index.md)
-- [Spatial Decoder 1.x](spatial-decoder/v1/index.md)
-- [Geo Parser 4.x](geo-parser/v4/index.md)
-- [Spatial Encoder 1.x](spatial-encoder/v1/index.md)
-- [Spatial Types 1.x](spatial-types/v1/index.md)
-- [WKB Parser 3.x](wkb-parser/v3/index.md)
-- [WKT Parser 3.x](wkt-parser/v3/index.md)
-- [Spatial Transformer 1.x](spatial-transformer/v1/index.md)
-- [Doctrine Spatial 6.x](doctrine-spatial/v6/index.md)
+- [Spatial Core](spatial-core/index.md)
+- [Spatial Decoder](spatial-decoder/index.md)
+- [Geo Parser](geo-parser/index.md)
+- [Spatial Encoder](spatial-encoder/index.md)
+- [Spatial Types](spatial-types/index.md)
+- [WKB Parser](wkb-parser/index.md)
+- [WKT Parser](wkt-parser/index.md)
+- [Spatial Transformer](spatial-transformer/index.md)
+- [Doctrine Spatial](doctrine-spatial/index.md)
 
 Versioned library documentation lives under `docs/<library>/v<major>/`; ecosystem-wide
 topics live under `docs/shared/`.

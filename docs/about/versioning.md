@@ -23,6 +23,23 @@ When documentation for a new major version is created, copy the preceding docume
 if one exists. After that initial copy, edit each tree independently. Creating the new tree does not
 end maintenance of the preceding one.
 
+## Library entry points
+
+Each documented library has a non-versioned entry point at `<library>/index.md`,
+published as `/<library>/index.html` and `/<library>/index.md`. This page introduces
+the library and remains stable when a new major version is released.
+
+The publication pipeline adds a Getting Started entry point for the Current major
+and a table of all documented majors with their Current, Older or Next status.
+It uses the same Packagist discovery as versioned documentation. A library with no
+stable release exposes its Next documentation without choosing it as a stable
+installation target. Composer commands on entry pages explicitly require stable
+packages.
+
+Requirements on an entry page identify the inspected release or development
+snapshot. They do not apply automatically to every documented major. Use the
+manifest for the selected release when checking PHP and dependency compatibility.
+
 ## Published releases and status
 
 At build time, determine each library's current production major version automatically from its

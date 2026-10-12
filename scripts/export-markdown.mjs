@@ -11,6 +11,7 @@ import remarkStringify from 'remark-stringify';
 import { baseUrl, siteUrl } from './site-settings.mjs';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
+import { appendLibraryLandingNavigation } from './library-landing-pages.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
@@ -290,8 +291,12 @@ async function exportMarkdown() {
     }
     documents.set(sourcePath, { tree, metadata, anchors: documentationAnchors(tree, sourcePath) });
   }
-  await processDocumentationLinks(documents, { staticDirectory, siteUrl });
   const libraries = await resolveLibraries(docsDirectory);
+  for (const [sourcePath, document] of documents) {
+    appendLibraryLandingNavigation(document.tree, sourcePath, libraries);
+    document.anchors = documentationAnchors(document.tree, sourcePath);
+  }
+  await processDocumentationLinks(documents, { staticDirectory, siteUrl });
   for (const [sourcePath, { tree, metadata }] of documents) {
     const body = markdownProcessor.stringify(tree).replace(/\r\n/g, '\n').replace(/\n*$/, '\n');
     const page = publishedDocument(sourcePath, metadata, body, libraries);

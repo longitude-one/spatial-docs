@@ -18,6 +18,9 @@ export function createLibraryCategories(libraries, docsDirectory) {
   return libraryCategories.map(({ label, libraries: entries }) => ({
     label,
     items: entries.map(([name, title]) => {
+      if (existsSync(path.join(docsDirectory, name, 'index.md'))) {
+        return { label: title, to: `/${name}/index.html` };
+      }
       const current = Object.entries(libraries[name]?.versions ?? {}).find(([, status]) => status === 'Current')?.[0];
       const currentSource = current && `${name}/${current}/index.md`;
       if (currentSource && existsSync(path.join(docsDirectory, currentSource))) {

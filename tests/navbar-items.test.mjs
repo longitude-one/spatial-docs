@@ -31,6 +31,16 @@ test('missing discovery or a missing Current document falls back to an existing 
     '/doctrine-spatial/roadmap.html');
 });
 
+test('library landing pages remain the menu destinations when the current major changes', (t) => {
+  const docs = mkdtempSync(path.join(os.tmpdir(), 'navbar-docs-'));
+  t.after(() => rmSync(docs, { recursive: true, force: true }));
+  mkdirSync(path.join(docs, 'doctrine-spatial'));
+  writeFileSync(path.join(docs, 'doctrine-spatial/index.md'), 'fixture');
+  for (const versions of [{ v6: 'Current', v7: 'Next' }, { v6: 'Older', v7: 'Current' }, { v7: 'Next' }]) {
+    assert.equal(createLibraryCategories({ 'doctrine-spatial': { versions } }, docs)[0].items[0].to, '/doctrine-spatial/index.html');
+  }
+});
+
 test('global navigation preserves the agreed order and links only to real HTML resources', () => {
   const docs = path.join(process.cwd(), 'docs');
   const items = createNavbarItems({}, docs);

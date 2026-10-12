@@ -5,8 +5,8 @@ import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
 const versionDirectory = /^v([1-9][0-9]*)$/;
-const semverVersion = /^v?([1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
-const composerPrerelease = /^v?[1-9][0-9]*\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:alpha|beta|rc|dev)(?:[.-]?[0-9]+)?$/i;
+const semverVersion = /^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+const composerPrerelease = /^v?(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:alpha|beta|rc|dev)(?:[.-]?[0-9]+)?$/i;
 
 export async function discoverLibraries(docsDirectory) {
   const libraries = {};

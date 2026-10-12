@@ -4,3 +4,5 @@ description: Documentation prepared for the first major release of LongitudeOne 
 ---
 
 This documentation is being prepared ahead of the first stable Spatial Decoder release.
+
+- [Library roadmap](../roadmap.md)

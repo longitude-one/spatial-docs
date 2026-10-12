@@ -6,6 +6,7 @@ import remarkHomeMarkdownLink from './scripts/remark-home-markdown-link.mjs';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { createNavbarItems } from './scripts/navbar-items.mjs';
 
 const rootDirectory = process.cwd();
 let libraries = {};
@@ -74,14 +75,7 @@ const config = {
     } : {}),
     navbar: {
       title: 'LongitudeOne Spatial',
-      items: [
-        {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
-          label: 'Documentation',
-        },
-      ],
+      items: createNavbarItems(libraries, path.join(rootDirectory, 'docs')),
     },
     prism: {
       theme: prismThemes.github,

@@ -43,10 +43,10 @@ support, and an adapter mapping does not establish whole-standard conformance.
 
 ## Related references
 
-- [Geometry families](../concepts/geometries/index.md)
-- [Coordinate dimensions](../concepts/dimensions/index.md)
-- [CRS and SRID](../concepts/crs/index.md)
-- [Spatial formats](../concepts/formats/index.md)
+- [Geometry families](../concepts/geometries.md)
+- [Coordinate dimensions](../concepts/dimensions.md)
+- [CRS and SRID](../concepts/crs.md)
+- [Spatial formats](../concepts/formats.md)
 - [OGC Simple Feature Access 1.2.1](../standards/ogc/ogc-06-103r4.md)
 - [SQL/MM Spatial source and support scope](../standards/iso/iso-iec-13249-3.md)
 

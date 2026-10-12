@@ -35,7 +35,7 @@ meaning unspecified. Interpreting it as metres in a local survey and as angular
 coordinates would describe different locations. Before combining coordinate
 sets, establish their references rather than comparing bare numbers.
 
-The [coordinate layouts reference](../dimensions/index.md) explains XY, XYZ,
+The [coordinate layouts reference](./dimensions.md) explains XY, XYZ,
 XYM and XYZM. A layout identifies stored components; it does not define a CRS.
 An application measure M is not automatically a CRS axis or a coordinate epoch.
 
@@ -88,30 +88,30 @@ can perform that operation or that suitable operation data is available.
 - **ISO 19111:2019 through the adopted OGC 18-005r5 corrigendum, version 5.0.1:**
   7.2 covers identification; 7.3.1–7.3.2 cover coordinate metadata; 9.1.1 covers
   CRS components; 10.1 covers axes and tuples; 12.1 covers coordinate operations.
-  See the [source and verified requirement record](../../standards/iso/iso-19111.md#relevant-requirements)
+  See the [source and verified requirement record](../standards/iso/iso-19111.md#relevant-requirements)
   and [official OGC text](https://docs.ogc.org/as/18-005r5/18-005r5.html).
   The standard page records the adopted corrigendum's provenance and scope;
   this page does not claim direct inspection of the ISO publication.
 - **OGC 06-103r4, Simple Feature Access 1.2.1:** 6.1.2.1 associates geometry
   coordinates with a reference system; 6.1.2.2 describes SRID. See the
-  [geometry and reference-system requirement record](../../standards/ogc/ogc-06-103r4.md#geometry-model-reference-systems-and-empty-values).
+  [geometry and reference-system requirement record](../standards/ogc/ogc-06-103r4.md#geometry-model-reference-systems-and-empty-values).
 - **ISO/IEC CD 13249-3:201x(E), 2009-01-16 Committee Draft:** 5.1.5 and 5.1.6
   distinguish reference-identifier assignment and transformation. See the
-  [SQL/MM reference](../../standards/iso/iso-iec-13249-3.md#spatial-references-and-empty-values).
+  [SQL/MM reference](../standards/iso/iso-iec-13249-3.md#spatial-references-and-empty-values).
   These citations identify the project-held draft, not a final ISO edition.
 
 ## Related implementations
 
-The [ISO 19111 support record](../../standards/iso/iso-19111.md#longitudeone-support)
+The [ISO 19111 support record](../standards/iso/iso-19111.md#longitudeone-support)
 identifies LongitudeOne's assessed reference metadata, axis-validation and
 coordinate-operation limitations. The
-[SQL/MM support record](../../standards/iso/iso-iec-13249-3.md#longitudeone-support)
+[SQL/MM support record](../standards/iso/iso-iec-13249-3.md#longitudeone-support)
 separately records transformation support. The
-[Spatial Core 1.x guide](../../spatial-core/v1/geometry/index.md) owns library
+[Spatial Core 1.x guide](../spatial-core/v1/geometry/index.md) owns library
 primitive usage. Identifier storage is not complete CRS conformance.
 
 No DBMS behavior is assessed here. Platform-specific catalogue mappings, axis
 conventions and SRID restrictions belong in database references. Reference
-encoding belongs in the [Formats section](../formats/index.md).
+encoding belongs in the [Formats section](./formats.md).
 
-Return to the [Spatial concepts overview](../index.md).
+Return to the [Spatial concepts overview](./index.md).

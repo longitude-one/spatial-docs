@@ -16,6 +16,16 @@ function sidebarDocuments(items) {
   });
 }
 
+test('Concepts uses an overview and flat topic pages like DBMS', async () => {
+  const concepts = sidebars.docsSidebar.find((item) => item.label === 'Concepts');
+  const topics = ['geometries', 'dimensions', 'crs', 'formats'];
+  assert.deepEqual(concepts.link, { type: 'doc', id: 'concepts/index' });
+  assert.deepEqual(concepts.items, ['concepts/index', ...topics.map((topic) => `concepts/${topic}`)]);
+  const entries = await readdir(new URL('../docs/concepts/', import.meta.url), { withFileTypes: true });
+  assert.deepEqual(entries.map((entry) => entry.name).sort(), ['index.md', ...topics.map((topic) => `${topic}.md`)].sort());
+  assert.ok(entries.every((entry) => entry.isFile()), 'Concept references must be files directly under docs/concepts/');
+});
+
 test('the documentation menu includes every published source page and no missing pages', async () => {
   const docsDirectory = new URL('../docs/', import.meta.url);
   const publishedIds = [];

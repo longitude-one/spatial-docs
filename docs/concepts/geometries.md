@@ -116,7 +116,7 @@ A geometry's intrinsic dimension describes its shape, rather than how many
 coordinate components are stored. A Point with an elevation remains a point;
 a surface embedded in three-dimensional space remains a surface. For a
 non-homogeneous collection, Simple Features uses the greatest intrinsic dimension
-among its members (6.1.2.2). The [Dimensions section](../dimensions/index.md)
+among its members (6.1.2.2). The [Dimensions section](./dimensions.md)
 owns the separate coordinate-dimensionality topic.
 
 Boundary, emptiness, closure and simplicity answer different questions:
@@ -138,36 +138,36 @@ Spatial relationships compare geometric objects. Simple Features' DE-9IM examine
 intersections of their interiors, boundaries and exteriors (6.1.15.2); named
 predicates such as Disjoint and Touches have precise conditions (6.1.15.3).
 Coordinate-list equality and ordinary-language guesses do not define those
-predicates. The [Simple Features reference](../../standards/ogc/ogc-06-103r4.md)
+predicates. The [Simple Features reference](../standards/ogc/ogc-06-103r4.md)
 records their normative scope and implementation-assessment limits.
 
 ## Normative foundations
 
 - **OGC 06-103r4, Simple Feature Access 1.2.1:** the hierarchy and concepts above
   use 6.1.1–6.1.14; spatial relationships use 6.1.15. See the
-  [source and requirement record](../../standards/ogc/ogc-06-103r4.md) and its
+  [source and requirement record](../standards/ogc/ogc-06-103r4.md) and its
   [official specification](https://docs.ogc.org/is/06-103r4/06-103r4.pdf).
 - **ISO/IEC CD 13249-3:201x(E), 2009-01-16 Committee Draft:** curved objects use
   4.2.6–4.2.10. These citations identify the project-held draft, not a final ISO
-  edition. Its [SQL/MM reference](../../standards/iso/iso-iec-13249-3.md)
+  edition. Its [SQL/MM reference](../standards/iso/iso-iec-13249-3.md)
   owns the source provenance and implementation comparisons.
 - **ISO 19107:2019, identified by OGC 19-092:** this is the selected broader
   spatial-schema reference. Its complete normative clauses remain unavailable;
   this page does not infer their contents from older profiles. See the
-  [edition and evidence limits](../../standards/iso/iso-19107.md).
+  [edition and evidence limits](../standards/iso/iso-19107.md).
 
 ## Related implementations
 
 The geometric meanings above do not imply that every class, validity check,
 spatial operation or representation is available in a particular implementation.
-LongitudeOne's release-scoped [SQL/MM support record](../../standards/iso/iso-iec-13249-3.md#longitudeone-support)
-and [Simple Features support record](../../standards/ogc/ogc-06-103r4.md#longitudeone-support)
+LongitudeOne's release-scoped [SQL/MM support record](../standards/iso/iso-iec-13249-3.md#longitudeone-support)
+and [Simple Features support record](../standards/ogc/ogc-06-103r4.md#longitudeone-support)
 identify evidenced capabilities and limitations. The
-[Spatial Core geometry guide](../../spatial-core/v1/geometry/index.md) explains
+[Spatial Core geometry guide](../spatial-core/v1/geometry/index.md) explains
 library primitives. Class availability is not complete normative conformance.
 
 Database behavior belongs in platform-specific references when available; it
 cannot redefine the concepts here. Formats and spatial referencing belong in the
-[Formats](../formats/index.md) and [CRS](../crs/index.md) sections.
+[Formats](./formats.md) and [CRS](./crs.md) sections.
 
-Return to the [Spatial concepts overview](../index.md).
+Return to the [Spatial concepts overview](./index.md).

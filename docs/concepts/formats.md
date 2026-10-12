@@ -44,7 +44,7 @@ little-endian; integers use 32 bits and ordinates use 64-bit IEEE 754 doubles
 The cited OGC edition covers XY, XYZ, XYM and XYZM: WKT distinguishes `Z`, `M`
 and `ZM`; WKB distinguishes dimensional type codes (7.2.2–7.2.5, 8.2.8).
 Z support is therefore not inherently an extension. The
-[coordinate dimensions reference](../dimensions/index.md) explains why XYZ and
+[coordinate dimensions reference](./dimensions.md) explains why XYZ and
 XYM are distinct despite both having three components.
 
 **Informative WKT examples:** these illustrate the OGC Point grammars, not a
@@ -61,7 +61,7 @@ POINT EMPTY
 Geometry WKT and CRS WKT describe different objects. The former describes a
 geometry; the latter describes a reference system. Neither a geometry's numeric
 tuple nor its layout supplies a complete CRS definition. See the
-[CRS reference](../crs/index.md).
+[CRS reference](./crs.md).
 
 ### Extended representations
 
@@ -121,16 +121,16 @@ exchange preserved Z, M, reference metadata or the geometry's meaning.
 
 - **OGC 06-103r4, Simple Feature Access 1.2.1:** geometry WKT is defined by
   7.2.2–7.2.5; WKB by 8.2.1–8.2.8; reference-system WKT is separate in clause 9.
-  See the [representation requirement record](../../standards/ogc/ogc-06-103r4.md#geometry-representations)
+  See the [representation requirement record](../standards/ogc/ogc-06-103r4.md#geometry-representations)
   and [official specification](https://docs.ogc.org/is/06-103r4/06-103r4.pdf).
 - **ISO/IEC CD 13249-3:201x(E), 2009-01-16 Committee Draft:** 5.1.57 and 5.1.58
   define SQL/MM geometry WKT and WKB. See the
-  [SQL/MM representation reference](../../standards/iso/iso-iec-13249-3.md#representations).
+  [SQL/MM representation reference](../standards/iso/iso-iec-13249-3.md#representations).
   These citations identify the project-held draft, not a final ISO edition;
   SQL/MM and OGC grammars are assessed separately.
 - **RFC 7946, August 2016:** 3.1–3.3 define geometries and features; 3.1.1 defines
   positions; 4 defines the reference system; 6–7 cover extensions and type
-  semantics. See the [GeoJSON requirement record](../../standards/rfc/rfc-7946.md#relevant-requirements)
+  semantics. See the [GeoJSON requirement record](../standards/rfc/rfc-7946.md#relevant-requirements)
   and [published RFC](https://www.rfc-editor.org/rfc/rfc7946.html).
 
 ## Related implementations
@@ -150,23 +150,23 @@ establish a LongitudeOne compatibility matrix.
 
 The Microsoft driver page also records API-specific format caveats. Do not
 infer a byte layout from a method name or transfer a driver contract to a SQL
-function. See the [DBMS overview](../../dbms/index.md) and the scoped
-[PostGIS](../../dbms/postgis.md), [MySQL](../../dbms/mysql.md),
-[MariaDB](../../dbms/mariadb.md) and [SQL Server](../../dbms/sql-server.md)
+function. See the [DBMS overview](../dbms/index.md) and the scoped
+[PostGIS](../dbms/postgis.md), [MySQL](../dbms/mysql.md),
+[MariaDB](../dbms/mariadb.md) and [SQL Server](../dbms/sql-server.md)
 references for platform behavior and evidenced integration limits.
 
 ### LongitudeOne capabilities
 
-The [OGC support record](../../standards/ogc/ogc-06-103r4.md#longitudeone-support),
-[SQL/MM support record](../../standards/iso/iso-iec-13249-3.md#longitudeone-support)
-and [GeoJSON support record](../../standards/rfc/rfc-7946.md#longitudeone-support)
+The [OGC support record](../standards/ogc/ogc-06-103r4.md#longitudeone-support),
+[SQL/MM support record](../standards/iso/iso-iec-13249-3.md#longitudeone-support)
+and [GeoJSON support record](../standards/rfc/rfc-7946.md#longitudeone-support)
 identify assessed implementations and their limitations. Their scoped evidence
 does not imply every format, type or dimension is supported by every library.
-The [Spatial Decoder 1.x guide](../../spatial-decoder/v1/index.md) owns
+The [Spatial Decoder 1.x guide](../spatial-decoder/v1/index.md) owns
 release-specific documentation; this page defines no new encoder or decoder
 support promise or LongitudeOne extension.
 
-Return to the [Spatial concepts overview](../index.md).
+Return to the [Spatial concepts overview](./index.md).
 
 [postgis]: https://postgis.net/docs/using_postgis_dbmanagement.html#EWKB_EWKT
 [mysql]: https://dev.mysql.com/doc/refman/8.4/en/gis-data-formats.html

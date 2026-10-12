@@ -38,7 +38,7 @@ conformance or a blanket claim that every unlisted feature is rejected. See the
 
 **Vendor behavior:** SRID metadata with planar calculation and legacy
 bounding-rectangle predicates remain MariaDB implementation choices. They do
-not redefine [CRS concepts](../concepts/crs/index.md) or the
+not redefine [CRS concepts](../concepts/crs.md) or the
 [OGC predicate requirements](../standards/ogc/ogc-06-103r4.md#dimensions-and-spatial-operations).
 
 ## LongitudeOne integration and support
@@ -58,8 +58,8 @@ records and complete function-by-function integration are not assessed.
 ## Related references
 
 [DBMS overview](./index.md), [MySQL differences](./mysql.md),
-[geometry families](../concepts/geometries/index.md),
-[dimensions](../concepts/dimensions/index.md), [formats](../concepts/formats/index.md),
+[geometry families](../concepts/geometries.md),
+[dimensions](../concepts/dimensions.md), [formats](../concepts/formats.md),
 [SQL/MM Spatial](../standards/iso/iso-iec-13249-3.md) and
 [Doctrine Spatial 6.x usage](../doctrine-spatial/v6/index.md).
 

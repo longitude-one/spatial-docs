@@ -38,10 +38,10 @@ const sidebars = {
       link: { type: 'doc', id: 'concepts/index' },
       items: [
         'concepts/index',
-        'concepts/geometries/index',
-        'concepts/dimensions/index',
-        'concepts/crs/index',
-        'concepts/formats/index',
+        'concepts/geometries',
+        'concepts/dimensions',
+        'concepts/crs',
+        'concepts/formats',
       ],
     },
     {

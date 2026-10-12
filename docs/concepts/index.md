@@ -6,9 +6,7 @@ description: Introduces the spatial concept reference and its geometry, dimensio
 The Concepts reference organizes explanations of the spatial model independently
 of LongitudeOne APIs and database platforms.
 
-- [Geometries](geometries/index.md): geometry families, relationships and properties.
-- [Dimensions](dimensions/index.md): coordinate dimensions and coordinate components.
-- [Coordinate reference systems](crs/index.md): spatial referencing and identification.
-- [Formats](formats/index.md): spatial representations and their relationship to the model.
-
-Each section index links to its available concept pages.
+- [Geometries](./geometries.md): geometry families, relationships and properties.
+- [Dimensions](./dimensions.md): coordinate dimensions and coordinate components.
+- [Coordinate reference systems](./crs.md): spatial referencing and identification.
+- [Formats](./formats.md): spatial representations and their relationship to the model.

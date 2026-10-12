@@ -2,6 +2,7 @@
 title: Spatial Encoder 1.x
 description: Documentation for the 1.x major release of LongitudeOne Spatial Encoder.
 sidebar_label: Overview
+pagination_label: Spatial Encoder 1.x
 sidebar_position: 1
 ---
 

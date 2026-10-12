@@ -2,6 +2,7 @@
 title: Spatial concepts
 description: Introduces the spatial concept reference and its geometry, dimension, coordinate reference system and format sections.
 sidebar_label: Overview
+pagination_label: Spatial concepts
 sidebar_position: 1
 ---
 

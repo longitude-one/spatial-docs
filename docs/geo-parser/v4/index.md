@@ -2,6 +2,7 @@
 title: Geo Parser 4.x
 description: Documentation for the 4.x major release of LongitudeOne Geo Parser.
 sidebar_label: Overview
+pagination_label: Geo Parser 4.x
 sidebar_position: 1
 ---
 

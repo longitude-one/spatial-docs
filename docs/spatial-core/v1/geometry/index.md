@@ -1,7 +1,8 @@
 ---
 title: Spatial Core geometry primitives
 description: Shared geometry-related technical primitives in Spatial Core 1.x.
-sidebar_label: Overview
+sidebar_label: Geometry primitives
+pagination_label: Spatial Core geometry primitives
 sidebar_position: 1
 ---
 

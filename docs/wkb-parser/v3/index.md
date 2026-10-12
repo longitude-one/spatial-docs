@@ -2,6 +2,7 @@
 title: WKB Parser 3.x
 description: Documentation for the 3.x major release of LongitudeOne WKB Parser.
 sidebar_label: Overview
+pagination_label: WKB Parser 3.x
 sidebar_position: 1
 ---
 

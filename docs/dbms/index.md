@@ -2,6 +2,7 @@
 title: DBMS spatial support
 description: Compares PostGIS, MySQL, MariaDB and SQL Server spatial behavior and links to evidenced LongitudeOne integration records.
 sidebar_label: Overview
+pagination_label: DBMS spatial support
 sidebar_position: 1
 ---
 

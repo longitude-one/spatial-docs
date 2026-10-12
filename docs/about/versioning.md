@@ -70,6 +70,13 @@ Categories remain collapsible. Category overview links use existing Markdown
 index pages; navigation does not create generated index pages or change source
 paths. Add sections only when corresponding documentation exists.
 
+Breadcrumbs express the logical domain, library name and consulted major before
+the topic hierarchy. Reference breadcrumbs identify their own domain and
+specification family. Previous and next links follow the native sidebar order
+within the same library major or reference domain; overview pages and roadmaps
+remain in their library's unversioned context. Use `pagination_label` when a
+short sidebar label such as Overview needs a fuller adjacent-page title.
+
 ## Published releases and status
 
 At build time, determine each library's current production major version automatically from its

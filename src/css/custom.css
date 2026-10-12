@@ -250,6 +250,98 @@ html[data-theme='dark'] {
   color: var(--ifm-heading-color);
 }
 
+.library-version-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+}
+
+.library-version-nav__name {
+  font-weight: 650;
+}
+
+.library-version-nav__context {
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.9rem;
+}
+
+.library-version-nav__selector {
+  position: relative;
+}
+
+.library-version-nav__selector summary {
+  padding: 0.4rem 0.75rem;
+  color: var(--ifm-font-color-base);
+  background: var(--ifm-code-background);
+  border-radius: var(--ifm-global-radius);
+  cursor: pointer;
+}
+
+.library-version-nav__selector ul {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  width: 16rem;
+  max-width: calc(100vw - 4rem);
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem;
+  list-style: none;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: var(--ifm-global-shadow-md);
+}
+
+.library-version-nav__selector a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--ifm-global-radius);
+}
+
+.library-version-nav__selector a[aria-current='page'] {
+  color: var(--ifm-menu-color-active);
+  background: var(--ifm-menu-color-background-active);
+  font-weight: 650;
+}
+
+.library-version-nav__selector a:hover {
+  text-decoration: underline;
+}
+
+.library-version-nav a:focus-visible,
+.library-version-nav summary:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 3px;
+}
+
+.library-version-nav__current {
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+@media (max-width: 600px) {
+  .library-version-nav__selector {
+    width: 100%;
+  }
+
+  .library-version-nav__selector ul {
+    width: 100%;
+    max-width: none;
+  }
+}
+
 /* The generated version notice follows the page title. */
 .theme-doc-markdown > blockquote:first-of-type {
   margin-left: auto;

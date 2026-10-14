@@ -22,6 +22,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Validate shared assets and source references
+        run: npm run validate:assets
       - name: Test resource validation
         run: npm test
       - name: Build and verify publishable documentation

@@ -81,3 +81,12 @@ an index with missing or unpublished documents. Replace these adapters and the
 single theme registration when changing providers; documentation sources and
 publication paths do not depend on its index format. Provider upgrades must
 pass the local-search regression tests and both publication builds.
+
+## Shared documentation assets
+
+Store documentation images, diagrams, schemas, examples and downloads in
+`static/assets/`. See [the contributor guide](docs/shared/using-documentation-assets.md)
+and [asset contract](docs/shared/shared-assets-publication-contract.md).
+Run `npm run validate:assets` for offline source validation. The normal build
+checks the generated manifest and shared bytes in a staging directory before
+replacing `build/`; deployment requires the complete verified directory.

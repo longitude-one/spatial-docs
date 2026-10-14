@@ -6,10 +6,11 @@
     "prestart": "node scripts/export-markdown.mjs",
     "start": "docusaurus start",
     "prebuild": "node scripts/export-markdown.mjs",
-    "build": "docusaurus build && node scripts/export-markdown.mjs --verify",
+    "build": "node scripts/build-publication.mjs",
     "serve": "node scripts/serve-publication.mjs",
     "test": "node --test",
-    "stop": "node scripts/stop-server.mjs"
+    "stop": "node scripts/stop-server.mjs",
+    "validate:assets": "node scripts/export-markdown.mjs --validate-assets"
   },
   "engines": {
     "node": ">=20.0",
@@ -29,6 +30,7 @@
     "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
+    "sax": "1.6.1",
     "unified": "^11.0.5"
   },
   "devDependencies": {

@@ -17,6 +17,7 @@ async function fixture(t, changes = {}) {
     'docusaurus.config.js': "export default {url: 'https://example.com', baseUrl: '/'};",
     'build/index.html': '<h1 id="home">Home</h1><a href="/index.md#home">Markdown</a>',
     'build/index.md': '# Home\n\n[Home](#home)\n[External](https://other.example/missing)\n',
+    'build/asset-manifest.json': '{}',
     'build/llms.txt': '# Documentation\n\n[Home](/index.md)\n',
     'docs/index.md': '---\ntitle: Home\ndescription: Home page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/' }),
@@ -147,11 +148,15 @@ for (const [name, changes, message] of [
   });
 }
 
-test('accepts relative asset links, encoded paths and query strings', async (t) => {
+test('accepts shared asset links with encoded portable paths and query strings', async (t) => {
+  const { collectSharedAssets } = await import('../scripts/shared-assets.mjs');
   const root = await fixture(t, {
-    'build/index.md': '# Home\n## Section\n[Anchor](#section)\n[Asset](./image%20one.svg?raw=1)\n',
-    'build/image one.svg': '<svg/>',
+    'build/index.md': '# Home\n## Section\n[Anchor](#section)\n[Asset](./assets/image%2done.svg?raw=1)\n',
+    'build/index.html': '<h1>Home</h1><a href="./assets/image-one.svg?raw=1">Asset</a>',
+    'build/assets/image-one.svg': '<svg/>',
+    'static/assets/image-one.svg': '<svg/>',
   });
+  await writeFile(path.join(root, 'build/asset-manifest.json'), JSON.stringify(await collectSharedAssets(root)));
   await verifyResources(root);
 });
 

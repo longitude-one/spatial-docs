@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="180" viewBox="0 0 520 180" role="img" aria-labelledby="title desc">
+  <title id="title">One asset shared by two representations</title>
+  <desc id="desc">HTML and Markdown documentation both reference the same published asset.</desc>
+  <g fill="none" stroke="#42556b" stroke-width="2">
+    <path d="M170 45 L330 90 M170 135 L330 90"/>
+    <rect x="10" y="15" width="160" height="60" rx="8" fill="#edf4fc"/>
+    <rect x="10" y="105" width="160" height="60" rx="8" fill="#edf4fc"/>
+    <rect x="330" y="60" width="180" height="60" rx="8" fill="#e5f4e9"/>
+  </g>
+  <g font-family="sans-serif" font-size="18" text-anchor="middle" fill="#182b40">
+    <text x="90" y="52">HTML page</text>
+    <text x="90" y="142">Markdown page</text>
+    <text x="420" y="97">Shared asset</text>
+  </g>
+</svg>

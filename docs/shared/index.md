@@ -21,3 +21,9 @@ preserved in both published representations.
 The [Documentation migration rules](./documentation-migration-rules.md) define
 how collected sources retain their ownership and version context when converted
 into published pages, while the original migration corpus remains unchanged.
+
+[Using documentation assets](./using-documentation-assets.md) shows how to add
+and reference shared images, diagrams, schemas, examples and downloads.
+
+The [Shared assets publication contract](./shared-assets-publication-contract.md)
+defines supported formats, validation, the generated manifest and atomic publication.

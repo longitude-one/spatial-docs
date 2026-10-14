@@ -44,14 +44,14 @@ test('library landing pages remain the menu destinations when the current major 
 test('global navigation preserves the agreed order and links only to real HTML resources', () => {
   const docs = path.join(process.cwd(), 'docs');
   const items = createNavbarItems({}, docs);
-  assert.deepEqual(items.map(({ label }) => label), ['Overview', 'Libraries', 'Guides', 'Standards', 'Search', 'GitHub']);
+  assert.deepEqual(items.map(({ label, type }) => label ?? (type === 'search' ? 'Search' : undefined)), ['Overview', 'Libraries', 'Guides', 'Standards', 'Search', 'GitHub']);
   assert.equal(items.at(-1).href, 'https://github.com/longitude-one');
   assert.equal(items[2].type, items[1].type);
   assert.deepEqual(items[2].categories.map(({ label }) => label), ['DBMS', 'Concepts']);
   assert.deepEqual(items[2].categories[0].items.map(({ label }) => label), ['DBMS overview', 'PostGIS', 'MySQL', 'MariaDB', 'SQL Server']);
   assert.deepEqual(items[2].categories[1].items.map(({ label }) => label),
     ['Concepts overview', 'Geometries', 'Dimensions', 'Coordinate reference systems', 'Formats']);
-  assert.equal(items[4].type, 'custom-unavailable');
+  assert.equal(items[4].type, 'search');
   assert.equal(items[3].type, items[1].type);
   assert.deepEqual(items[3].categories.map(({ label }) => label), ['ISO', 'OGC', 'RFC']);
   assert.deepEqual(items[3].categories.flatMap(({ items }) => items.map(({ to }) => to)), [

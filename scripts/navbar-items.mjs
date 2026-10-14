@@ -82,7 +82,7 @@ export function createNavbarItems(libraries, docsDirectory) {
         ] },
       ],
     },
-    { type: 'custom-unavailable', label: 'Search', note: 'Documentation search is not available yet.', position: 'right' },
+    { type: 'search', position: 'right' },
     { label: 'GitHub', href: 'https://github.com/longitude-one', position: 'right' },
   ];
 }

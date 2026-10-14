@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { createNavbarItems, libraryCategories } from './scripts/navbar-items.mjs';
 import remarkLibraryLandingPages from './scripts/library-landing-pages.mjs';
+import localSearch from './scripts/local-search.mjs';
 
 const rootDirectory = process.cwd();
 let libraries = {};
@@ -49,6 +50,7 @@ const config = {
       onBrokenMarkdownLinks: 'throw',
     },
   },
+  themes: [localSearch],
   presets: [
     [
       'classic',

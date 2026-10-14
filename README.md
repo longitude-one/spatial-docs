@@ -60,3 +60,24 @@ Each Markdown page displays `View HTML version` immediately after front matter.
 These links and representation metadata are build-managed; source documents
 must not maintain them manually. The build and CI reject missing counterparts,
 invalid routes, inconsistent targets, and duplicate switching links.
+
+## Global search
+
+The navbar search searches all published library majors, Standards, Concepts,
+DBMS and shared documentation together. Results identify the library, major and
+release status; choosing another library or version does not restrict the search.
+Use the search field or `Ctrl+K` (`Cmd+K` on macOS), then arrow keys and Enter.
+
+Search is local to the browser. `npm run build` generates one hashed JSON index
+beside the site assets; deploy the complete `build/` directory from that build.
+Preview with `npm run serve`; the plugin does not generate an index during
+`npm start`. No search account, API key or server-side service is required.
+Portable Markdown, drafts, unlisted pages and `inbox/` are not indexed.
+
+The pinned `@easyops-cn/docusaurus-search-local` provider is integrated only in
+`scripts/local-search.mjs` and `scripts/search-route-loader.cjs`. This adapter
+preserves the site's explicit `.html` routes, adds version context and rejects
+an index with missing or unpublished documents. Replace these adapters and the
+single theme registration when changing providers; documentation sources and
+publication paths do not depend on its index format. Provider upgrades must
+pass the local-search regression tests and both publication builds.

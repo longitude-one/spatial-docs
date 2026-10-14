@@ -86,7 +86,8 @@ them under that library and apply the same version-assignment rules.
 Material explicitly associated with 5.x retains `docs/doctrine-spatial/v5/`.
 Non-historical material without an explicit historical association follows the
 resolved `Current` major, or the appropriate `Next` when no stable release exists.
-The major number in an earlier migration example does not pin `Current`.
+For the current migration, general non-historical Doctrine Spatial documentation
+belongs under `docs/doctrine-spatial/v6/`, as specified by Story #48.
 Extract a reference only when it genuinely belongs independently to multiple
 libraries and satisfies the approved reference architecture.
 

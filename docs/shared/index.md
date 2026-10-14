@@ -17,3 +17,7 @@ and their relationship to versioned library documentation.
 
 The [Markdown export example](./markdown-export-example.md) demonstrates content
 preserved in both published representations.
+
+The [Documentation migration rules](./documentation-migration-rules.md) define
+how collected sources retain their ownership and version context when converted
+into published pages, while the original migration corpus remains unchanged.

@@ -33,6 +33,7 @@ async function fixture(t, sources) {
   await cp(path.join(repository, 'scripts/library-versions.mjs'), path.join(root, 'scripts/library-versions.mjs'));
   await cp(path.join(repository, 'scripts/library-landing-pages.mjs'), path.join(root, 'scripts/library-landing-pages.mjs'));
   await cp(path.join(repository, 'scripts/documentation-links.mjs'), path.join(root, 'scripts/documentation-links.mjs'));
+  await cp(path.join(repository, 'scripts/shared-assets.mjs'), path.join(root, 'scripts/shared-assets.mjs'));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
     const file = path.join(root, name);
@@ -416,3 +417,19 @@ for (const field of ['canonical_html', 'canonical_markdown']) {
     await assert.rejects(run(), /representation metadata is exclusively build-managed/);
   });
 }
+
+test('invalid assets and manifest collisions never replace the last valid generated corpus', async (t) => {
+  const { root, run } = await fixture(t, {
+    'docs/index.md': document('Home', 'Home page', '![Diagram](./assets/diagram.svg)'),
+    'static/assets/diagram.svg': '<svg/>',
+  });
+  await run();
+  const previous = await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8');
+  await writeFile(path.join(root, 'static/assets/diagram.svg'), '<svg onload="alert(1)"/>');
+  await assert.rejects(run(), /Unsafe SVG/);
+  assert.equal(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8'), previous);
+  await writeFile(path.join(root, 'static/assets/diagram.svg'), '<svg/>');
+  await writeFile(path.join(root, 'static/asset-manifest.json'), '{}');
+  await assert.rejects(run(), /Published path collision/);
+  assert.equal(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8'), previous);
+});

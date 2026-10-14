@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Illustrative two-coordinate position",
+  "description": "An authoring example, not a spatial validation or conformance schema.",
+  "type": "array",
+  "prefixItems": [{ "type": "number" }, { "type": "number" }],
+  "items": false,
+  "minItems": 2
+}

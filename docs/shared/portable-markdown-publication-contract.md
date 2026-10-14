@@ -320,6 +320,10 @@ This rule applies to all shared resources, including:
 The resulting Markdown corpus remains navigable when moved together with its
 shared asset hierarchy.
 
+The [shared assets publication contract](./shared-assets-publication-contract.md)
+defines the dedicated source hierarchy, allowed formats, safety validation,
+manifest and atomic publication requirements.
+
 ## Raw HTML and unsupported content
 
 Raw HTML must not be part of the portable Markdown publication format. Content

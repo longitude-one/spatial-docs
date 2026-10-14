@@ -9,6 +9,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { verifyLinkTarget } from './link-target-policy.mjs';
 import { verifyRepresentationLinks } from './representation-links.mjs';
+import { verifyPublishedAssets } from './verify-assets.mjs';
 import { verifyMarkdownReachability } from './markdown-reachability.mjs';
 
 async function files(directory) {
@@ -62,8 +63,7 @@ function inspect(content, html) {
   return { links, ids };
 }
 
-export async function verifyResources(root) {
-  const build = path.join(root, 'build');
+export async function verifyResources(root, build = path.join(root, 'build')) {
   const config = (await import(`${path.join(root, 'docusaurus.config.js')}?verify`)).default;
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
@@ -178,6 +178,7 @@ export async function verifyResources(root) {
     });
     if (documentationPage) throw new Error(`HTML documentation outside the one-to-one representation mapping: ${file}.`);
   }
+  await verifyPublishedAssets(root, build, markdownDocuments, config.baseUrl, config.url);
   verifyMarkdownReachability(markdownDocuments);
   await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
 }

@@ -11,13 +11,15 @@ import remarkStringify from 'remark-stringify';
 import { baseUrl, siteUrl } from './site-settings.mjs';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
+import { collectSharedAssets, validateAssetReferences } from './shared-assets.mjs';
 import { appendLibraryLandingNavigation } from './library-landing-pages.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
 const staticDirectory = path.join(rootDirectory, 'static');
 const markdownDirectory = path.join(rootDirectory, '.generated-markdown');
-const buildDirectory = path.join(rootDirectory, 'build');
+const buildArgument = process.argv.indexOf('--build-directory');
+const buildDirectory = buildArgument < 0 ? path.join(rootDirectory, 'build') : path.resolve(process.argv[buildArgument + 1]);
 
 const requiredContent = [
   {
@@ -301,6 +303,17 @@ async function exportMarkdown() {
     }
     documents.set(sourcePath, { tree, metadata, anchors: documentationAnchors(tree, sourcePath) });
   }
+  const assetManifest = await collectSharedAssets(rootDirectory);
+  await processDocumentationLinks(documents, { staticDirectory, siteUrl });
+  await validateAssetReferences(documents, { staticDirectory, manifest: assetManifest, siteUrl });
+  try {
+    await lstat(path.join(staticDirectory, 'asset-manifest.json'));
+    throw new Error('Published path collision: static/asset-manifest.json conflicts with the generated asset manifest.');
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (process.argv.includes('--validate-assets')) {
+    console.log(`Validated ${Object.keys(assetManifest).length} shared assets and their published documentation references.`);
+    return;
+  }
   const libraries = await resolveLibraries(docsDirectory);
   for (const [sourcePath, document] of documents) {
     appendLibraryLandingNavigation(document.tree, sourcePath, libraries);
@@ -321,6 +334,7 @@ async function exportMarkdown() {
   await mkdir(staticDirectory, { recursive: true });
   const stagingDirectory = await mkdtemp(path.join(rootDirectory, '.generated-markdown-staging-'));
   try {
+    await writeFile(path.join(stagingDirectory, 'asset-manifest.json'), `${JSON.stringify(assetManifest, null, 2)}\n`, { flag: 'wx' });
     for (const page of generated) {
       const destination = path.join(stagingDirectory, page.markdownPath);
       await mkdir(path.dirname(destination), { recursive: true });
@@ -429,7 +443,7 @@ async function findMarkdownFiles(directory) {
 if (process.argv.includes('--verify')) {
   await verifyBuild();
   const { verifyResources } = await import('./verify-resources.mjs');
-  await verifyResources(rootDirectory);
+  await verifyResources(rootDirectory, buildDirectory);
   console.log('Publishable resource checks passed.');
 } else {
   await exportMarkdown();

@@ -4,3 +4,4 @@ build/
 static/llms.txt
 static/markdown/
 .generated-markdown*/
+.publication-staging-*/

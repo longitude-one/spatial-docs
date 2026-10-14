@@ -63,7 +63,7 @@ function inspect(content, html) {
   return { links, ids };
 }
 
-export async function verifyResources(root, build = path.join(root, 'build')) {
+export async function verifyResources(root, build = path.join(root, 'build'), { writeMapping = true } = {}) {
   const config = (await import(`${path.join(root, 'docusaurus.config.js')}?verify`)).default;
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
@@ -180,5 +180,5 @@ export async function verifyResources(root, build = path.join(root, 'build')) {
   }
   await verifyPublishedAssets(root, build, markdownDocuments, config.baseUrl, config.url);
   verifyMarkdownReachability(markdownDocuments);
-  await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
+  if (writeMapping) await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
 }

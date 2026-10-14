@@ -1,0 +1,15 @@
+{
+  "config": {
+    "default": true,
+    "MD001": false,
+    "MD013": false,
+    "MD025": false,
+    "MD028": false,
+    "MD033": true,
+    "MD040": false,
+    "MD041": false,
+    "MD046": { "style": "fenced" },
+    "MD048": { "style": "backtick" },
+    "MD060": false
+  }
+}

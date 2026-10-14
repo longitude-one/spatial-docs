@@ -10,7 +10,9 @@
     "serve": "node scripts/serve-publication.mjs",
     "test": "node --test",
     "stop": "node scripts/stop-server.mjs",
-    "validate:assets": "node scripts/export-markdown.mjs --validate-assets"
+    "validate:assets": "node scripts/export-markdown.mjs --validate-assets",
+    "validate:corpus": "node scripts/validate-corpus.mjs",
+    "validate:determinism": "node scripts/check-determinism.mjs"
   },
   "engines": {
     "node": ">=20.0",
@@ -34,6 +36,7 @@
     "unified": "^11.0.5"
   },
   "devDependencies": {
+    "markdownlint-cli2": "0.23.3",
     "parse5": "^7.3.0"
   }
 }

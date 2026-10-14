@@ -27,3 +27,6 @@ and reference shared images, diagrams, schemas, examples and downloads.
 
 The [Shared assets publication contract](./shared-assets-publication-contract.md)
 defines supported formats, validation, the generated manifest and atomic publication.
+
+[Validating generated documentation](./validating-generated-documentation.md)
+explains the final publication gate, integrity manifests, reports and reproducibility checks.

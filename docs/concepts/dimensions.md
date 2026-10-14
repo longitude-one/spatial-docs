@@ -35,7 +35,7 @@ format, geometry type or implementation.
 X and Y locate a point in its reference system. Z is an additional spatial
 ordinate, often elevation or altitude, but its meaning depends on that reference
 system. The letters alone do not establish axis direction, order or units; see
-the [CRS section](../crs/index.md).
+the [CRS section](./crs.md).
 
 M associates a measurement with a location. For example, a road survey might
 attach distance along a route to each sampled point. The application defines
@@ -59,7 +59,7 @@ does not turn a point into a curve or a surface into a solid.
 
 The phrase “three-dimensional geometry” can therefore be ambiguous. Specify
 whether it means a Z-bearing coordinate layout, an intrinsic dimension, or an
-operation that actually uses Z. The [geometry model](../geometries/index.md#dimension-boundaries-and-geometric-properties)
+operation that actually uses Z. The [geometry model](./geometries.md#dimension-boundaries-and-geometric-properties)
 explains intrinsic dimensions and collection behavior.
 
 ### Reading and using a layout
@@ -77,8 +77,8 @@ XYZM: (10, 20, 30, 5) x=10, y=20, z=30, m=5
 
 Retain the layout when interpreting or exchanging coordinates. Counting three
 values cannot distinguish a spatial height from a measure. Format declarations
-and dimensional markers belong to the [Formats section](../formats/index.md)
-and the [verified representation reference](../../standards/ogc/ogc-06-103r4.md#geometry-representations).
+and dimensional markers belong to the [Formats section](./formats.md)
+and the [verified representation reference](../standards/ogc/ogc-06-103r4.md#geometry-representations).
 
 Storage and calculation are separate capabilities. In Simple Features 1.2.1,
 map-geometry operations use the horizontal projection and ignore Z and M
@@ -92,12 +92,12 @@ Check the operation's specification and implementation scope.
 - **OGC 06-103r4, Simple Feature Access 1.2.1:** 6.1.2.1 identifies the four
   coordinate layouts and the meanings of Z and M; 6.1.2.2 distinguishes intrinsic
   geometry dimension; 6.1.2.5 explains measures and map-geometry operations.
-  See the [dimensions requirement record](../../standards/ogc/ogc-06-103r4.md#dimensions-and-spatial-operations)
+  See the [dimensions requirement record](../standards/ogc/ogc-06-103r4.md#dimensions-and-spatial-operations)
   and [official specification](https://docs.ogc.org/is/06-103r4/06-103r4.pdf).
 - **ISO/IEC CD 13249-3:201x(E), 2009-01-16 Committee Draft:** 4.2.1 defines
   coordinate layouts and Z/M meanings; 4.2.1.1 distinguishes dimension,
   coordinate dimension, Z presence, measured state and ordinary/3D operations.
-  See the [SQL/MM dimensions reference](../../standards/iso/iso-iec-13249-3.md#geometry-model-and-dimensions).
+  See the [SQL/MM dimensions reference](../standards/iso/iso-iec-13249-3.md#geometry-model-and-dimensions).
   These citations identify the project-held draft, not a final ISO edition;
   the standard page records the source and evidence limits.
 
@@ -106,14 +106,14 @@ that all operations or representation rules of the two sources are equivalent.
 
 ## Related implementations
 
-The release-scoped [Simple Features support record](../../standards/ogc/ogc-06-103r4.md#longitudeone-support)
-and [SQL/MM support record](../../standards/iso/iso-iec-13249-3.md#longitudeone-support)
+The release-scoped [Simple Features support record](../standards/ogc/ogc-06-103r4.md#longitudeone-support)
+and [SQL/MM support record](../standards/iso/iso-iec-13249-3.md#longitudeone-support)
 identify verified LongitudeOne capabilities and limitations. The
-[Spatial Core 1.x primitives guide](../../spatial-core/v1/geometry/index.md)
+[Spatial Core 1.x primitives guide](../spatial-core/v1/geometry/index.md)
 owns the corresponding library usage details. Layout metadata alone does not
 establish geometry, serializer or spatial-operation conformance.
 
 Database restrictions and extensions require platform-specific evidence; they
 do not redefine the coordinate concepts above. No DBMS support is assessed here.
 
-Return to the [Spatial concepts overview](../index.md).
+Return to the [Spatial concepts overview](./index.md).

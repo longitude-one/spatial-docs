@@ -23,6 +23,60 @@ When documentation for a new major version is created, copy the preceding docume
 if one exists. After that initial copy, edit each tree independently. Creating the new tree does not
 end maintenance of the preceding one.
 
+## Library entry points
+
+Each documented library has a non-versioned entry point at `<library>/index.md`,
+published as `/<library>/index.html` and `/<library>/index.md`. This page introduces
+the library and remains stable when a new major version is released.
+
+The publication pipeline adds a Getting Started entry point for the Current major
+and a table of all documented majors with their Current, Older or Next status.
+It uses the same Packagist discovery as versioned documentation. A library with no
+stable release exposes its Next documentation without choosing it as a stable
+installation target. Composer commands on entry pages explicitly require stable
+packages.
+
+Requirements on an entry page identify the inspected release or development
+snapshot. They do not apply automatically to every documented major. Use the
+manifest for the selected release when checking PHP and dependency compatibility.
+
+## Navigation between versions
+
+Library pages identify the library and, for versioned documentation, the consulted
+major and its status. Their version menu lists the documented majors independently
+for that library. Overview pages and roadmaps remain unversioned entry points.
+
+Switching major opens the corresponding page when it is published in that major;
+otherwise it opens that major's documentation index. Links remain explicit HTML
+representations, and older direct links retain their identity. The Current
+documentation entry always uses the stable discovery described below.
+
+The consulted document determines its library and version context. Following a
+cross-reference adopts the target document's context; choosing a version in one
+library does not change another library. Standards, Concepts and DBMS pages do
+not display a library version menu or status.
+
+## Contextual sidebars
+
+Each documented library major has an independent sidebar generated from its
+Markdown directory. Its library overview link returns to the stable, unversioned
+entry page. Entry pages and roadmaps share a separate menu for that library.
+Following a cross-reference or switching major selects the target page's sidebar.
+Standards, Concepts and DBMS each have their own independent sidebar.
+
+Authors customize native sidebar labels and order with `sidebar_label` and
+`sidebar_position` front matter, and directory categories with `_category_.json`.
+Categories remain collapsible. Category overview links use existing Markdown
+index pages; navigation does not create generated index pages or change source
+paths. Add sections only when corresponding documentation exists.
+
+Breadcrumbs express the logical domain, library name and consulted major before
+the topic hierarchy. Reference breadcrumbs identify their own domain and
+specification family. Previous and next links follow the native sidebar order
+within the same library major or reference domain; overview pages and roadmaps
+remain in their library's unversioned context. Use `pagination_label` when a
+short sidebar label such as Overview needs a fuller adjacent-page title.
+
 ## Published releases and status
 
 At build time, determine each library's current production major version automatically from its
@@ -85,5 +139,4 @@ The [portable Markdown publication contract](../shared/portable-markdown-publica
 applies to versioned pages, roadmaps, and this page. Each published document has explicit `.html`
 and `.md` representations, with the same technical information in both. Existing HTML, Markdown,
 content-negotiation, SEO, and `llms.txt` publication rules continue to apply. This versioning
-contract does not define version selectors, status-based navigation, search across versions, or
-automatic documentation updates when libraries release.
+contract does not define search across versions or automatic documentation updates when libraries release.

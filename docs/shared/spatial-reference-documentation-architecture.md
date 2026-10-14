@@ -24,10 +24,11 @@ docs/
 │   ├── ogc/
 │   └── rfc/
 ├── concepts/
-│   ├── geometries/
-│   ├── dimensions/
-│   ├── crs/
-│   └── formats/
+│   ├── index.md
+│   ├── geometries.md
+│   ├── dimensions.md
+│   ├── crs.md
+│   └── formats.md
 └── dbms/
     ├── index.md
     ├── postgis.md
@@ -95,12 +96,14 @@ inferred from database behavior.
 
 ## Concepts reference
 
-Use topic pages in the four initial groups:
+The [Concepts overview](../concepts/index.md) introduces the four initial topics.
+Each topic has one reference file directly under `docs/concepts/`, following the
+same flat layout as `docs/dbms/`:
 
-- `geometries/`: geometry families, relationships and geometric properties.
-- `dimensions/`: coordinate dimensions and the meaning of coordinate components.
-- `crs/`: coordinate reference systems and reference-system identification.
-- `formats/`: spatial representation formats and their relationships to the model.
+- `geometries.md`: geometry families, relationships and geometric properties.
+- `dimensions.md`: coordinate dimensions and the meaning of coordinate components.
+- `crs.md`: coordinate reference systems and reference-system identification.
+- `formats.md`: spatial representation formats and their relationships to the model.
 
 Each concept page contains **Meaning and scope**, **Informative explanation**,
 **Normative foundations** and **Related implementations**. Explain the concept in
@@ -189,10 +192,12 @@ DBMS pages link to concepts and standards; standard pages link to related concep
 and implementation evidence. Use section links where they identify the relevant
 requirement or support record precisely.
 
-For example, a future `concepts/crs/srid.md` page could link to a verified section
-in `standards/iso/iso-19111.md`, to `dbms/mysql.md#spatial-behavior`, and to the relevant
-versioned library page. Authors must create or verify those target pages before
-publishing links; the paths here are illustrative, not existing resources.
+For example, `concepts/crs.md` links to the verified
+[ISO 19111 requirement record](../standards/iso/iso-19111.md#relevant-requirements)
+and the [Spatial Core geometry guide](../spatial-core/v1/geometry/index.md).
+DBMS behavior can be referenced through sections such as
+[MySQL spatial behavior](../dbms/mysql.md#spatial-behavior). Authors must create or
+verify target pages and sections before publishing links.
 
 All domains follow the
 [portable Markdown publication contract](./portable-markdown-publication-contract.md).

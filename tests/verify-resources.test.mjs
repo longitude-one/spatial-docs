@@ -39,8 +39,24 @@ test('valid site produces an HTML/Markdown mapping', async (t) => {
   ]);
 });
 
+test('publication rejects an internal link opening a new tab', async (t) => {
+  const root = await fixture(t, {
+    'build/index.html': '<h1 id="home">Home</h1><a href="/index.md#home" target="_blank" rel="noopener noreferrer">Markdown</a>',
+  });
+  await assert.rejects(verifyResources(root), /Internal link must use the current tab/);
+});
+
+test('publication permits safe external links and same-tab internal links', async (t) => {
+  const root = await fixture(t, {
+    'build/index.html': '<h1 id="home">Home</h1><a href="/index.md#home" target="_self">Markdown</a>'
+      + '<a href="https://www.iso.org/" target="_blank" rel="noopener noreferrer">ISO</a>',
+  });
+  await verifyResources(root);
+});
+
 test('every nested resource mapping differs only by representation extension', async (t) => {
   const root = await fixture(t, {
+    'build/index.md': '# Home\n\n[Reference](shared/reference.md)\n',
     'build/shared/reference.md': '---\ntitle: Reference\ndescription: Shared reference\ncanonical_html: ./reference.html\ncanonical_markdown: ./reference.md\n---\n\n[View HTML version](./reference.html)\n\n## Scope\n',
     'build/shared/reference.html': '<h1>Reference</h1><h2 id="scope">Scope</h2>',
     'build/llms.txt': '[Home](/index.md)\n[Reference](/shared/reference.md)',
@@ -57,6 +73,19 @@ test('every nested resource mapping differs only by representation extension', a
     assert.ok(!(markdown.startsWith('/markdown/')));
     assert.ok((await readFile(path.join(root, 'build', markdown.slice(1)), 'utf8')).length > 0);
   }
+});
+
+test('publication rejects an indexed Markdown page unreachable from the entry point', async (t) => {
+  const root = await fixture(t, {
+    'build/orphan.md': '# Orphan',
+    'build/orphan.html': '<h1>Orphan</h1>',
+    'build/llms.txt': '[Home](/index.md)\n[Orphan](/orphan.md)',
+    'docs/orphan.md': '---\ntitle: Orphan\ndescription: Orphan page\n---\n',
+    '.docusaurus/docusaurus-plugin-content-docs/default/orphan.json': JSON.stringify({
+      source: '@site/docs/orphan.md', permalink: '/orphan',
+    }),
+  });
+  await assert.rejects(verifyResources(root), /Markdown pages unreachable from index.md: orphan.md/);
 });
 
 test('rejects a build that retains the legacy public Markdown directory', async (t) => {

@@ -59,9 +59,9 @@ not assessed. These records describe inspected code, not a deployment certificat
 
 ## Related references
 
-[DBMS overview](./index.md), [geometry families](../concepts/geometries/index.md),
-[dimensions](../concepts/dimensions/index.md), [CRS/SRID](../concepts/crs/index.md),
-[formats](../concepts/formats/index.md) and
+[DBMS overview](./index.md), [geometry families](../concepts/geometries.md),
+[dimensions](../concepts/dimensions.md), [CRS/SRID](../concepts/crs.md),
+[formats](../concepts/formats.md) and
 [Doctrine Spatial 6.x usage](../doctrine-spatial/v6/index.md).
 
 [manual]: https://postgis.net/docs/manual-3.5/using_postgis_dbmanagement.html

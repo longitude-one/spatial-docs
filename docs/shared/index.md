@@ -14,3 +14,6 @@ semantically equivalent while remaining portable and independently usable.
 The [Spatial reference documentation architecture](./spatial-reference-documentation-architecture.md)
 defines the Standards, Concepts and DBMS domains, their responsibilities,
 and their relationship to versioned library documentation.
+
+The [Markdown export example](./markdown-export-example.md) demonstrates content
+preserved in both published representations.

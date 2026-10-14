@@ -263,6 +263,11 @@ leaving the previous generated corpus intact.
 The explicit `View HTML version` link remains the intentional exception that
 allows navigation from Markdown to the corresponding HTML representation.
 
+Every published Markdown page must be reachable from `index.md` by following
+these internal Markdown links. The resource verifier checks this coverage after
+generation; listing a page only in `llms.txt` or an HTML sidebar is insufficient
+for a reader browsing the Markdown corpus.
+
 ## Heading anchors
 
 Links to document sections may use GFM-compatible generated heading anchors.

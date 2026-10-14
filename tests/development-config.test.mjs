@@ -33,6 +33,11 @@ for (const development of [false, true]) {
       console.log(JSON.stringify({ config, attributes: tree.children[0].attributes }));
     `], { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: development ? 'development' : '' } });
     const { config, attributes } = JSON.parse(stdout);
+    assert.deepEqual(config.themeConfig.colorMode, {
+      defaultMode: 'light',
+      disableSwitch: false,
+      respectPrefersColorScheme: false,
+    });
     assert.equal(config.baseUrl, development ? '/spatial-docs/' : '/');
     assert.equal(attributes[0].value, `${config.baseUrl}index.md`);
     assert.equal(attributes[1].value, 'https://example.com/');

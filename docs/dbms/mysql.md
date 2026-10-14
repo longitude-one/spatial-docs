@@ -59,9 +59,9 @@ library; adapter recognition is not a promise that all spatial functions work.
 ## Related references
 
 [DBMS overview](./index.md), [MariaDB differences](./mariadb.md),
-[geometry families](../concepts/geometries/index.md),
-[dimensions](../concepts/dimensions/index.md), [CRS/SRID](../concepts/crs/index.md),
-[formats](../concepts/formats/index.md),
+[geometry families](../concepts/geometries.md),
+[dimensions](../concepts/dimensions.md), [CRS/SRID](../concepts/crs.md),
+[formats](../concepts/formats.md),
 [SQL/MM Spatial](../standards/iso/iso-iec-13249-3.md) and
 [Doctrine Spatial 6.x usage](../doctrine-spatial/v6/index.md).
 

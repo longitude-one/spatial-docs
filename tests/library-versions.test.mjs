@@ -66,6 +66,18 @@ test('package without stable releases has only Next documentation', async () => 
     .map((version) => ({ version }))), 1);
 });
 
+test('accepts major-zero SemVer releases and ignores their prereleases', async (t) => {
+  assert.equal(currentStableMajor([{ version: '0.0.0-alpha' }, { version: '0.1.0-RC1' }, { version: '0.0.1.alpha' }]), null);
+  assert.equal(currentStableMajor([{ version: '0.2.0' }, { version: '0.3.0-beta.1' }]), 0);
+  const docs = await fixture(t);
+  const prereleases = await resolveLibraries(docs, async (url) => url.includes('spatial-core')
+    ? reply(200, ['0.0.0-alpha']) : { status: 404, ok: false });
+  assert.deepEqual(prereleases['spatial-core'].versions, { v1: 'Next', v2: 'Next', v3: 'Next' });
+  await assert.rejects(resolveLibraries(docs, async (url) => url.includes('spatial-core')
+    ? reply(200, ['0.2.0']) : { status: 404, ok: false }), /current stable major v0 has no documentation directory/);
+  assert.throws(() => currentStableMajor([{ version: '00.1.0' }]), /cannot be interpreted/);
+});
+
 test('missing current stable major fails', async (t) => {
   const docs = await fixture(t);
   await assert.rejects(resolveLibraries(docs, async (url) => url.includes('spatial-core')

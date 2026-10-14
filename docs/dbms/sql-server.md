@@ -43,7 +43,7 @@ SQL Server syntax is not evidence that those grammars accept the same text.
 rules are SQL Server behavior. Curved types are not all proprietary merely
 because they are absent from a particular OGC grammar; consult the separate
 [SQL/MM reference](../standards/iso/iso-iec-13249-3.md).
-The [format concept](../concepts/formats/index.md) separates interchange from
+The [format concept](../concepts/formats.md) separates interchange from
 internal serialization; JDBC's `serialize()` contract is not the SQL
 `STAsBinary()` contract.
 
@@ -73,9 +73,9 @@ the existing limitation without changing the adapter.
 
 ## Related references
 
-[DBMS overview](./index.md), [geometry families](../concepts/geometries/index.md),
-[dimensions](../concepts/dimensions/index.md), [CRS/SRID](../concepts/crs/index.md),
-[formats](../concepts/formats/index.md) and
+[DBMS overview](./index.md), [geometry families](../concepts/geometries.md),
+[dimensions](../concepts/dimensions.md), [CRS/SRID](../concepts/crs.md),
+[formats](../concepts/formats.md) and
 [Doctrine Spatial 6.x usage](../doctrine-spatial/v6/index.md).
 
 [overview]: https://learn.microsoft.com/en-us/sql/relational-databases/spatial/spatial-data-types-overview?view=sql-server-ver17

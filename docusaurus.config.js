@@ -1,8 +1,8 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import { baseUrl, isDevelopment, developmentNotice, siteUrl } from './scripts/site-settings.mjs';
+import { parseRepresentationFrontMatter } from './scripts/representation-routes.mjs';
 import remarkBaseUrl from './scripts/remark-base-url.mjs';
 import remarkVersionStatus from './scripts/remark-version-status.mjs';
-import remarkHomeMarkdownLink from './scripts/remark-home-markdown-link.mjs';
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -44,6 +44,7 @@ const config = {
   trailingSlash: false,
   onBrokenLinks: 'throw',
   markdown: {
+    parseFrontMatter: parseRepresentationFrontMatter,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -60,7 +61,6 @@ const config = {
           remarkPlugins: [
             remarkBaseUrl,
             [remarkVersionStatus, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }],
-            [remarkHomeMarkdownLink, { docsDirectory: path.join(rootDirectory, 'docs') }],
           ],
           sidebarPath: './sidebars.js',
         },

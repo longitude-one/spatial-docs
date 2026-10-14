@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, copyFile, mkdir, stat } from 'node:fs/promises';
+import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'parse5';
 import GithubSlugger from 'github-slugger';
@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { verifyLinkTarget } from './link-target-policy.mjs';
+import { verifyRepresentationLinks } from './representation-links.mjs';
 import { verifyMarkdownReachability } from './markdown-reachability.mjs';
 
 async function files(directory) {
@@ -139,24 +140,22 @@ export async function verifyResources(root) {
     representationPaths.add(html);
     representationPaths.add(markdown);
     const href = `${config.baseUrl}${markdown}`;
-    const renderedHtml = resolve(doc.permalink, '', true);
+    if (doc.permalink !== `${config.baseUrl}${html}`) {
+      throw new Error(`Invalid HTML representation route for ${source}: expected explicit ${html}.`);
+    }
     const htmlFile = path.join(build, html);
-    if (!available.has(html)) {
-      await mkdir(path.dirname(htmlFile), { recursive: true });
-      await copyFile(path.join(build, renderedHtml), htmlFile);
-      available.add(html);
-      parsed.set(html, inspect(await readFile(htmlFile, 'utf8'), true));
-    } else if (html !== renderedHtml) {
-      throw new Error(`HTML representation path collides with an existing resource: ${html}.`);
+    if (!available.has(html) || !available.has(markdown)) {
+      throw new Error(`Missing alternate representation for ${source}.`);
     }
     const htmlUrl = `${config.baseUrl}${html}`;
     resolve(htmlUrl, '');
     resolve(href, '');
+    verifyRepresentationLinks(await readFile(htmlFile, 'utf8'), await readFile(path.join(build, markdown), 'utf8'), markdown);
     pages.push({ html: htmlUrl, markdown: href });
   }
   pages.sort((left, right) => (left.markdown < right.markdown ? -1 : left.markdown > right.markdown ? 1 : 0));
   for (const [file, { links }] of parsed) {
-    const from = file.endsWith('/index.html') ? file.slice(0, -10) : file === 'index.html' ? '' : file;
+    const from = file;
     for (const href of links) resolve(href, from);
   }
   const expected = pages.map((page) => page.markdown).sort();
@@ -166,6 +165,18 @@ export async function verifyResources(root) {
   if (!expected.length || JSON.stringify(expected) !== JSON.stringify(listed)
     || JSON.stringify(expected) !== JSON.stringify(exported)) {
     throw new Error('llms.txt and Markdown exports must match the publishable Docusaurus pages exactly.');
+  }
+  for (const file of available) {
+    if (!file.endsWith('.html') || representationPaths.has(file)) continue;
+    let documentationPage = false;
+    walk(parse(await readFile(path.join(build, file), 'utf8')), (node) => {
+      const attrs = Object.fromEntries((node.attrs || []).map(({name, value}) => [name, value]));
+      if (attrs.class?.split(/\s+/).includes('theme-doc-markdown')
+        || (node.tagName === 'link' && attrs.rel === 'alternate' && attrs.type === 'text/markdown')) {
+        documentationPage = true;
+      }
+    });
+    if (documentationPage) throw new Error(`HTML documentation outside the one-to-one representation mapping: ${file}.`);
   }
   verifyMarkdownReachability(markdownDocuments);
   await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);

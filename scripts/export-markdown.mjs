@@ -23,7 +23,7 @@ const requiredContent = [
   {
     html: 'index.html',
     markdown: 'index.md',
-    href: `${baseUrl}index.md`,
+    href: './index.md',
     text: 'Reference and contributor documentation for the LongitudeOne Spatial ecosystem.',
   },
   {
@@ -143,6 +143,9 @@ function parseSourceDocument(content, sourcePath) {
   if (Object.hasOwn(metadata, 'slug')) {
     throw new Error(`${sourcePath} must not define Docusaurus slug metadata.`);
   }
+  for (const field of ['canonical_html', 'canonical_markdown']) {
+    if (Object.hasOwn(metadata, field)) throw new Error(`${sourcePath}: representation metadata is exclusively build-managed.`);
+  }
   for (const field of ['title', 'description']) {
     if (typeof metadata[field] !== 'string' || metadata[field].trim() === '') {
       throw new Error(`${sourcePath} must define a non-empty ${field} in front matter.`);
@@ -155,6 +158,13 @@ function parseSourceDocument(content, sourcePath) {
   function inspect(node) {
     if (node.type === 'html' && !/^<!--[\s\S]*-->$/.test(node.value.trim())) {
       unsupportedHtml.push(node.type);
+    }
+    if (node.type === 'link' || node.type === 'linkReference') {
+      const labelText = (child) => child.value || (child.children || []).map(labelText).join('');
+      const label = labelText(node);
+      if (/^View (HTML|Markdown) version$/i.test(label.trim())) {
+        throw new Error(`${sourcePath}: representation-switching links are exclusively build-managed.`);
+      }
     }
     for (const child of node.children || []) inspect(child);
   }

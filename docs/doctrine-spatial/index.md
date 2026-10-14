@@ -28,7 +28,8 @@ These constraints describe that inspected release or snapshot. Consult the manif
 
 ## API and usage
 
-The [upstream documentation](https://doctrine-spatial.readthedocs.io) covers installation, entity mapping, spatial queries and reference material.
+The [6.x documentation](./v6/index.md) covers installation, configuration, spatial queries and reference material.
+The [5.x documentation](./v5/index.md) retains historical entity mapping examples.
 
 ## Related references
 

@@ -8,6 +8,18 @@ sidebar_position: 1
 
 Spatial Encoder provides an interface for encoding `SpatialInterface` values into spatial representations.
 
+## Installation
+
+The collected documentation targets a pre-release:
+
+```bash
+composer require longitude-one/spatial-encoder:1.0.0-RC.0
+```
+
+## Usage
+
+See [serialization strategies](./strategies.md) for all six strategies, examples, format capabilities and limitations.
+
 ## Related documentation
 
 - [Library roadmap](../roadmap.md)

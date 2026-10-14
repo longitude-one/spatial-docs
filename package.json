@@ -7,7 +7,7 @@
     "start": "docusaurus start",
     "prebuild": "node scripts/export-markdown.mjs",
     "build": "docusaurus build && node scripts/export-markdown.mjs --verify",
-    "serve": "docusaurus serve",
+    "serve": "node scripts/serve-publication.mjs",
     "test": "node --test",
     "stop": "node scripts/stop-server.mjs"
   },

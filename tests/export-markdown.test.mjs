@@ -398,3 +398,21 @@ test('invalid source links leave the last published corpus untouched', async (t)
   await assert.rejects(run(), /Missing or unpublished source document/);
   assert.deepEqual(await readFile(path.join(root, '.generated-markdown/index.md')), before);
 });
+
+for (const body of [
+  '[View HTML version](./index.html)',
+  '[View **HTML** version](./index.html)',
+  '[View Markdown version][alternate]\n\n[alternate]: ./index.md',
+]) {
+  test(`rejects manually maintained representation switch: ${body}`, async (t) => {
+    const {run} = await fixture(t, {'docs/index.md': document('Home', 'Home page', body)});
+    await assert.rejects(run(), /representation-switching links are exclusively build-managed/);
+  });
+}
+
+for (const field of ['canonical_html', 'canonical_markdown']) {
+  test(`rejects manually maintained ${field}`, async (t) => {
+    const {run} = await fixture(t, {'docs/index.md': document('Home', 'Home page', '', `${field}: ./index.html\n`)});
+    await assert.rejects(run(), /representation metadata is exclusively build-managed/);
+  });
+}

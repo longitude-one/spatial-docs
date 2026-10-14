@@ -22,7 +22,27 @@ async function fixture(t, changes = {}) {
     '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/' }),
     ...changes,
   };
-  for (const [name, content] of Object.entries(data)) {
+  for (const [name, value] of Object.entries(data)) {
+    let content = value;
+    if (content && name.startsWith('build/') && name.endsWith('.md')) {
+      if (!content.startsWith('---')) content = `---\ntitle: Fixture\ndescription: Fixture page\n---\n\n${content}`;
+      if (!content.includes('[View HTML version]')) {
+        const end = content.indexOf('\n---', 3) + 4;
+        content = `${content.slice(0, end)}\n\n[View HTML version](./${path.basename(name).replace(/\.md$/, '.html')})\n${content.slice(end)}`;
+      }
+    }
+    if (content && name.startsWith('build/') && name.endsWith('.html')) {
+      const href = `./${path.basename(name).replace(/\.html$/, '.md')}`;
+      content = `<head><link rel="alternate" type="text/markdown" href="${href}"></head><body>${content.replace(/(<h1[^>]*>.*?<\/h1>)/, `$1<p><a rel="alternate" type="text/markdown" href="${href}">View Markdown version</a></p>`)}</body>`;
+    }
+    if (content && name.startsWith('.docusaurus/') && name.endsWith('.json')) {
+      const metadata = JSON.parse(content);
+      if (metadata.permalink !== '/absent') {
+        const prefix = data['docusaurus.config.js'].includes('/spatial-docs/') ? '/spatial-docs/' : '/';
+        metadata.permalink = prefix + metadata.source.slice('@site/docs/'.length).replace(/\.md$/, '.html');
+      }
+      content = JSON.stringify(metadata);
+    }
     if (content === null) continue;
     const file = path.join(root, name);
     await mkdir(path.dirname(file), { recursive: true });
@@ -89,7 +109,7 @@ test('publication rejects an indexed Markdown page unreachable from the entry po
 });
 
 test('rejects a build that retains the legacy public Markdown directory', async (t) => {
-  const root = await fixture(t, { 'build/markdown/legacy.md': '# Legacy' });
+  const root = await fixture(t, { 'build/markdown/legacy.md': '# Legacy', 'build/markdown/legacy.html': '<h1>Legacy</h1>' });
   await assert.rejects(verifyResources(root), /must match/);
 });
 
@@ -107,20 +127,20 @@ test('ignores cached metadata for a deleted source document', async (t) => {
 });
 
 for (const [name, changes, message] of [
-  ['HTML link', { 'build/index.html': '<a href="/missing">Broken</a>' }, /Broken internal link/],
-  ['HTML anchor', { 'build/index.html': '<a href="#missing">Broken</a>' }, /Broken anchor/],
+  ['HTML link', { 'build/index.html': '<h1>Home</h1><a href="/missing">Broken</a>' }, /Broken internal link/],
+  ['HTML anchor', { 'build/index.html': '<h1>Home</h1><a href="#missing">Broken</a>' }, /Broken anchor/],
   ['Markdown link', { 'build/index.md': '# Home\n[Broken](missing.md)' }, /Missing or unpublished source document/],
   ['Markdown anchor', { 'build/index.md': '# Home\n[Broken](#missing)' }, /Missing GFM heading anchor/],
   ['reference link', { 'build/index.md': '# Home\n[Broken][target]\n\n[target]: /missing' }, /must be relative/],
   ['embedded HTML link', { 'build/index.md': '# Home\n<a href="/missing">Broken</a>' }, /Broken internal link/],
   ['same-origin absolute link', { 'build/index.md': '# Home\n[Broken](https://example.com/missing)' }, /Broken internal link/],
-  ['missing Markdown', { 'build/index.md': null }, /Broken internal link/],
+  ['missing Markdown', { 'build/index.md': null }, /Missing alternate representation/],
   ['external llms entry', { 'build/llms.txt': '[Home](/index.md)\n[Other](https://other.example/a.md)' }, /must match/],
   ['duplicate llms entry', { 'build/llms.txt': '[Home](/index.md)\n[Duplicate](/index.md)' }, /must match/],
-  ['unindexed Markdown', { 'build/stale.md': '# Stale' }, /must match/],
+  ['unindexed Markdown', { 'build/stale.md': '# Stale', 'build/stale.html': '<h1>Stale</h1>' }, /must match/],
   ['draft publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/', draft: true }) }, /must match/],
   ['unlisted publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/', unlisted: true }) }, /must match/],
-  ['missing HTML counterpart', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/absent', slug: '/' }) }, /Broken internal link/],
+  ['missing HTML counterpart', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/absent', slug: '/' }) }, /Invalid HTML representation route/],
 ]) {
   test(`rejects ${name}`, async (t) => {
     await assert.rejects(verifyResources(await fixture(t, changes)), message);
@@ -135,17 +155,17 @@ test('accepts relative asset links, encoded paths and query strings', async (t) 
   await verifyResources(root);
 });
 
-test('supports explicit Markdown index pages while mapping HTML directory routes', async (t) => {
+test('supports explicit Markdown and HTML index pages', async (t) => {
   const root = await fixture(t, {
     'build/index.md': '# Home\n[Section](section/index.md)\n',
     'build/section/index.md': '# Section',
-    'build/section.html': '<h1>Section</h1>',
+    'build/section/index.html': '<h1>Section</h1>',
     'build/llms.txt': '[Home](/index.md)\n[Section](/section/index.md)',
     'docs/section/index.md': '---\ntitle: Section\ndescription: Section page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/section.json': JSON.stringify({ source: '@site/docs/section/index.md', permalink: '/section/', slug: '/section/' }),
   });
   await verifyResources(root);
-  assert.equal(await readFile(path.join(root, 'build/section/index.html'), 'utf8'), '<h1>Section</h1>');
+  assert.match(await readFile(path.join(root, 'build/section/index.html'), 'utf8'), /View Markdown version/);
   assert.deepEqual(JSON.parse(await readFile(path.join(root, 'build/markdown-mapping.json'))), [
     { html: '/index.html', markdown: '/index.md' },
     { html: '/section/index.html', markdown: '/section/index.md' },
@@ -183,12 +203,12 @@ test('allows only the leading generated HTML counterpart link', async (t) => {
   });
   await verifyResources(root);
   await writeFile(path.join(root, 'build/index.md'),
-    '[View HTML version](./index.html)\n\n# Home\n[Another HTML link](./index.html)');
+    '---\ntitle: Home\ndescription: Home\n---\n\n[View HTML version](./index.html)\n\n# Home\n[Another HTML link](./index.html)');
   await assert.rejects(verifyResources(root), /explicitly target .md/);
 });
 
 for (const baseUrl of ['/', '/spatial-docs/']) {
-  test(`Docusaurus preview serves sibling Markdown URLs at ${baseUrl}`, { timeout: 20000 }, async (t) => {
+  test(`publication preview serves direct sibling representation URLs at ${baseUrl}`, { timeout: 20000 }, async (t) => {
     const markdown = '---\ntitle: Reference\ndescription: Shared reference\ncanonical_html: ./reference.html\ncanonical_markdown: ./reference.md\n---\n\n[View HTML version](./reference.html)\n';
     const root = await fixture(t, {
       'docusaurus.config.js': `export default {title: 'Test', url: 'https://example.com', baseUrl: '${baseUrl}'};`,
@@ -201,8 +221,7 @@ for (const baseUrl of ['/', '/spatial-docs/']) {
     const { port } = reservation.address();
     await new Promise((resolve) => reservation.close(resolve));
     const child = spawn(process.execPath, [
-      path.resolve('node_modules/@docusaurus/core/bin/docusaurus.mjs'),
-      'serve', root, '--host', '127.0.0.1', '--port', String(port), '--no-open',
+      path.resolve('scripts/serve-publication.mjs'), root, '--host', '127.0.0.1', '--port', String(port), '--no-open',
     ], { env: { ...process.env, CI: 'true' }, stdio: ['ignore', 'pipe', 'pipe'] });
     let logs = '';
     child.stdout.on('data', (data) => { logs += data; });
@@ -230,13 +249,34 @@ for (const baseUrl of ['/', '/spatial-docs/']) {
     assert.doesNotMatch(response.headers.get('content-type') || '', /text\/html/);
     assert.equal(await response.text(), markdown);
     const html = await fetch(`${origin}${baseUrl}shared/reference.html`, { redirect: 'manual' });
-    assert.ok([200, 301, 302].includes(html.status));
-    // Docusaurus's preview clean-URL redirect can omit the development baseUrl.
-    // Verify the corresponding HTML route with that baseUrl kept explicit.
-    const rendered = await fetch(`${origin}${baseUrl}shared/reference`);
-    assert.equal(rendered.status, 200);
-    assert.match(await rendered.text(), /Reference HTML/);
+    assert.equal(html.status, 200);
+    assert.equal(html.headers.get('location'), null);
+    assert.match(await html.text(), /Reference HTML/);
+    const directory = await fetch(`${origin}${baseUrl}shared/reference/`, {redirect: 'manual'});
+    assert.equal(directory.status, 404);
+    const implicit = await fetch(`${origin}${baseUrl}shared/reference`, {redirect: 'manual'});
+    assert.equal(implicit.status, 404);
     const legacy = await fetch(`${origin}${baseUrl}markdown/shared/reference.md`);
     assert.equal(legacy.status, 404);
   });
 }
+
+for (const [name, mutation] of [
+  ['missing HTML', async (root) => rm(path.join(root, 'build/index.html'))],
+  ['directory route', async (root) => writeFile(path.join(root, '.docusaurus/docusaurus-plugin-content-docs/default/home.json'),
+    JSON.stringify({source: '@site/docs/index.md', permalink: '/'}))],
+  ['duplicate mapping', async (root) => writeFile(path.join(root, '.docusaurus/docusaurus-plugin-content-docs/default/duplicate.json'),
+    JSON.stringify({source: '@site/docs/index.md', permalink: '/index.html'}))],
+]) {
+  test(`representation corpus rejects ${name}`, async (t) => {
+    const root = await fixture(t);
+    await mutation(root);
+    await assert.rejects(verifyResources(root), /Missing alternate representation|Invalid HTML representation route|Duplicate representation path/);
+  });
+}
+
+test('rejects orphan HTML documentation outside the mapping', async (t) => {
+  const root = await fixture(t);
+  await writeFile(path.join(root, 'build/orphan.html'), '<div class="theme-doc-markdown"><h1>Orphan</h1></div>');
+  await assert.rejects(verifyResources(root), /HTML documentation outside the one-to-one representation mapping/);
+});

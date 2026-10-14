@@ -13,13 +13,24 @@ npm start
 ```
 
 The start command launches the Docusaurus development server. Open
-<http://localhost:3000/> to view the documentation home page.
+<http://localhost:3000/index.html> to view the documentation home page.
 
 Build the production site with:
 
 ```sh
 npm run build
 ```
+
+Preview the built files with:
+
+```sh
+npm run serve
+```
+
+Open <http://localhost:3000/index.html>. The preview serves explicit `.html`
+and `.md` files directly, including `index.html`; extensionless and directory
+routes are rejected. For the Pages configuration, use
+<http://localhost:3000/spatial-docs/index.html>.
 
 ## Documentation sources
 
@@ -42,3 +53,10 @@ portable metadata and the matching relative HTML link. Docusaurus copies its
 contents directly to the publication root. Source-relative documentation links
 and heading anchors are validated before publication; invalid targets fail the
 build. See the [portable publication contract](docs/shared/portable-markdown-publication-contract.md).
+
+Each HTML page displays `View Markdown version` directly below its title and
+exposes the same relative target through alternate metadata in its head.
+Each Markdown page displays `View HTML version` immediately after front matter.
+These links and representation metadata are build-managed; source documents
+must not maintain them manually. The build and CI reject missing counterparts,
+invalid routes, inconsistent targets, and duplicate switching links.

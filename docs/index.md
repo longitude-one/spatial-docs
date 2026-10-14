@@ -7,6 +7,9 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 ## Browse the documentation
 
 - [Shared documentation](shared/index.md)
+- [Concepts](concepts/index.md)
+- [DBMS](dbms/index.md)
+- Standards: [ISO](standards/iso/index.md), [OGC](standards/ogc/index.md), [RFC](standards/rfc/index.md)
 - [Spatial Core](spatial-core/index.md)
 - [Spatial Decoder](spatial-decoder/index.md)
 - [Geo Parser](geo-parser/index.md)
@@ -17,5 +20,6 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 - [Spatial Transformer](spatial-transformer/index.md)
 - [Doctrine Spatial](doctrine-spatial/index.md)
 
+The [versioning contract](about/versioning.md) explains library majors and release status.
 Versioned library documentation lives under `docs/<library>/v<major>/`; ecosystem-wide
 topics live under `docs/shared/`.

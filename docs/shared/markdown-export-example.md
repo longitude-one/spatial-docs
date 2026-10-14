@@ -9,3 +9,6 @@ This page demonstrates how portable Markdown content is preserved in the generat
 > **Essential information:** The coordinate sequence is retained in the Markdown counterpart.
 
 The HTML page and the Markdown counterpart keep the same meaning without relying on MDX or JSX-only markup.
+
+Return to the [shared documentation overview](./index.md) for the publication
+contract and authoring guidance.

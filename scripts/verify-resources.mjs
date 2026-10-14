@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { verifyLinkTarget } from './link-target-policy.mjs';
+import { verifyMarkdownReachability } from './markdown-reachability.mjs';
 
 async function files(directory) {
   return (await Promise.all((await readdir(directory, { withFileTypes: true })).map(async (entry) => {
@@ -166,5 +167,6 @@ export async function verifyResources(root) {
     || JSON.stringify(expected) !== JSON.stringify(exported)) {
     throw new Error('llms.txt and Markdown exports must match the publishable Docusaurus pages exactly.');
   }
+  verifyMarkdownReachability(markdownDocuments);
   await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
 }

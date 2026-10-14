@@ -5,7 +5,7 @@ description: "Doctrine Spatial 6.x configuration guide, migrated from the collec
 
 ## Configuration for applications using Symfony framework
 
-To configure Doctrine spatial extension on your Symfony application, simply edit your `config/doctrine.yaml` file. This process involves two steps:
+To configure Doctrine spatial extension on your Symfony application, simply edit your `config/packages/doctrine.yaml` file. This process involves two steps:
 
 * **Declaring Spatial Types for DQL:** This step allows you to use spatial data types directly within your Doctrine Query Language (DQL) queries.
 * **Declaring Spatial Functions:** This step enables you to leverage the extension's spatial functions within your DQL queries to perform operations on your spatial data.
@@ -15,7 +15,7 @@ These two configuration steps empower you to effectively manage spatial entities
 ### Declare your geometric types
 
 ```yaml
-#config/doctrine.yaml
+#config/packages/doctrine.yaml
 doctrine:
     dbal:
         types:
@@ -82,20 +82,22 @@ ones, such as `Curve` and `PolyhedSurface`. If you're interested in helping impl
 ### Declare a new function
 
 ```yaml
-orm:
-    dql:
-        numeric_functions:
-            #Declare functions returning a numeric value
-            #A good practice is to prefix functions with ST when they are issue from the Standard directory
-            st_area: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StArea
-        string_functions:
-            #Declare functions returning a string
-            st_envelope: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StEnvelope
-            #Prefix functions with SP when they are not issue from the Standard directory is a good practice
-            sp_asgeojson: LongitudeOne\Spatial\ORM\Query\AST\Functions\PostgreSql\SpAsGeoJson
-            #You can use the DQL function name you want and then use it in your DQL
-            myDQLFunctionAlias: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StCentroid
-            #SELECT myDQLFunctionAlias(POLYGON(...
+# config/packages/doctrine.yaml
+doctrine:
+    orm:
+        dql:
+            numeric_functions:
+                #Declare functions returning a numeric value
+                #A good practice is to prefix functions with ST when they are issue from the Standard directory
+                st_area: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StArea
+            string_functions:
+                #Declare functions returning a string
+                st_envelope: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StEnvelope
+                #Prefix functions with SP when they are not issue from the Standard directory is a good practice
+                sp_asgeojson: LongitudeOne\Spatial\ORM\Query\AST\Functions\PostgreSql\SpAsGeoJson
+                #You can use the DQL function name you want and then use it in your DQL
+                myDQLFunctionAlias: LongitudeOne\Spatial\ORM\Query\AST\Functions\Standard\StCentroid
+                #SELECT myDQLFunctionAlias(POLYGON(...
 ```
 
 Add only the functions you want to use. The list of available function can be found in these sections:

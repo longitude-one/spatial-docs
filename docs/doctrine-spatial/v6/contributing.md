@@ -191,6 +191,7 @@ class SpFooTest extends OrmTestCase
         static::assertEquals($pointO, $result[0][0]);
         static::assertSame('POLYGON((-4 -4,4 -4,4 4,-4 4,-4 -4))', $result[0][1]);
     }
+}
 ```
 
 Now, open the [OrmTestCase.php file][OrmTestCase.php file] and declare your function in the appropriate registration method:

@@ -126,3 +126,6 @@ For local development or validation with fictional, non-deployable information, 
 node scripts/with-test-legal.mjs npm start
 node scripts/with-test-legal.mjs npm run build
 ```
+
+Navigation is checked in the final publication gate. See [navigation validation](docs/shared/validating-documentation-navigation.md)
+for the automated report and desktop/mobile browser journeys.

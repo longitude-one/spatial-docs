@@ -43,6 +43,10 @@ test('search-page navigation uses an explicit HTML resource', async () => {
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
   const loader = require('../scripts/search-route-loader.cjs');
-  assert.equal(loader('const url = `${baseUrl}search/?${params}`;'), 'const url = `${baseUrl}search.html?${params}`;');
+  const source = 'const url = `${baseUrl}search/?${params}`; <button className={styles.searchClearButton}>✕</button>';
+  const adapted = loader(source);
+  assert.ok(adapted.includes('`${baseUrl}search.html?${params}`'));
+  assert.ok(adapted.includes('aria-label="Clear search"'));
+  assert.throws(() => loader('`${baseUrl}search/?`'), /accessible label adapter/);
   assert.throws(() => loader('changed provider'), /review the route adapter/);
 });

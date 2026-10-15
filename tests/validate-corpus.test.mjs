@@ -20,7 +20,7 @@ ${metadata}---
 [View HTML version](./index.html)
 
 ${body}`;
-const options = { lint: async () => {}, resources: async () => {}, legal: async () => {} };
+const options = { lint: async () => {}, resources: async () => {}, legal: async () => {}, navigation: async () => {} };
 async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'corpus-validation-'));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -179,4 +179,13 @@ test('internal manifests and debugging resources cannot become public even when 
   await assembleManifest(root, build);
   const report = await validateCorpus(root, build, options);
   assert.equal(report.errors.filter(({ rule }) => rule === 'internal-resource').length, 5);
+});
+
+test('navigation defects block the final corpus gate with an actionable diagnostic', async (t) => {
+  const { root, build } = await fixture(t);
+  const report = await validateCorpus(root, build, { ...options, navigation: async () => {
+    throw new Error('library/v1/index.html: Markdown action lost document/version identity.');
+  } });
+  assert.equal(report.status, 'failed');
+  assert.ok(report.errors.some((error) => error.rule === 'navigation' && error.message.includes('library/v1/index.html')));
 });

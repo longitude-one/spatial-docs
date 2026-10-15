@@ -81,7 +81,7 @@ const config = {
       disableSwitch: false,
       respectPrefersColorScheme: false,
     },
-    footer: { style: 'dark', copyright: siteVersion },
+    footer: { style: 'dark', copyright: siteVersion, links: [{ title: 'Information', items: [{ label: 'Legal notice / Mentions légales', to: '/legal-notice.html' }] }] },
     ...(isDevelopment ? {
       announcementBar: {
         id: 'development-site',

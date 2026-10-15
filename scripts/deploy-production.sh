@@ -31,6 +31,8 @@ if [[ -e $site/markdown ]]; then
   exit 1
 fi
 
+node "$(dirname "$0")/verify-legal-notice.mjs" production "$site"
+
 umask 077
 ssh_directory=$(mktemp -d)
 trap 'rm -rf -- "$ssh_directory"' EXIT

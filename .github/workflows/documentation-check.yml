@@ -23,13 +23,13 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Validate shared assets and source references
-        run: npm run validate:assets
+        run: node scripts/with-test-legal.mjs npm run validate:assets
       - name: Test resource validation
         run: npm test
       - name: Verify two identical complete publication builds
-        run: npm run validate:determinism
+        run: node scripts/with-test-legal.mjs npm run validate:determinism
       - name: Build and verify development Pages site
-        run: npm run build
+        run: node scripts/with-test-legal.mjs npm run build
         env:
           DOCUSAURUS_DEPLOYMENT: development
           URL_PRODUCTION: https://www.longitude-one.fr

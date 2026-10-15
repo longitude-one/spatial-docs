@@ -114,3 +114,15 @@ and [asset contract](docs/shared/shared-assets-publication-contract.md).
 Run `npm run validate:assets` for offline source validation. The normal build
 checks the generated manifest and shared bytes in a staging directory before
 replacing `public/`; deployment requires the complete verified directory.
+
+## Legal notice configuration
+
+Publication builds require reviewed legal information supplied through environment variables.
+See the [French legal review and configuration checklist](docs/shared/french-website-legal-review.md) for all required values and environment approval.
+Actual publisher contact details must stay outside Git; rendered notices intentionally make those details public.
+For local development or validation with fictional, non-deployable information, prefix the command with `node scripts/with-test-legal.mjs`:
+
+```sh
+node scripts/with-test-legal.mjs npm start
+node scripts/with-test-legal.mjs npm run build
+```

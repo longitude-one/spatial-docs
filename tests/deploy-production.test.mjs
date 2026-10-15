@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -20,6 +21,13 @@ async function fixture(t, mode = '') {
     'index.html': 'new HTML', 'llms.txt': 'new index',
     'index.md': 'new Markdown', '.nojekyll': 'complete tree',
   })) await writeFile(join(build, name), content);
+  const hashes = {};
+  for (const file of ['legal-notice.html', 'legal-notice.md']) {
+    await writeFile(join(build, file), 'TEST ONLY simulated transport artifact');
+    hashes[file] = createHash('sha256').update('TEST ONLY simulated transport artifact').digest('hex');
+  }
+  await mkdir(join(root, '.publication-metadata'));
+  await writeFile(join(root, '.publication-metadata/legal-publication.json'), JSON.stringify({ version: 1, environment: 'production', approved: true, testFixture: false, hashes }));
   for (const suffix of ['', '.old', '.next']) {
     await mkdir(join(destination, `public_html${suffix}`));
     await writeFile(join(destination, `public_html${suffix}`, 'version'), suffix || 'current');
@@ -145,6 +153,17 @@ for (const file of ['asset-manifest.json', 'markdown-mapping.json', 'documentati
     const f = await fixture(t);
     await writeFile(join(f.build, file), '{}');
     await assert.rejects(f.run(), /Internal build manifests/);
+    await assert.rejects(access(join(f.root, 'calls')));
+  });
+}
+
+for (const change of [{ testFixture: true }, { approved: false }, { environment: 'development' }]) {
+  test(`unpublishable legal information ${JSON.stringify(change)} fails before SSH`, async t => {
+    const f = await fixture(t);
+    const file = join(f.root, '.publication-metadata/legal-publication.json');
+    const record = JSON.parse(await readFile(file, 'utf8'));
+    await writeFile(file, JSON.stringify({ ...record, ...change }));
+    await assert.rejects(f.run(), /approved legal information/);
     await assert.rejects(access(join(f.root, 'calls')));
   });
 }

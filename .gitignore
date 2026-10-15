@@ -10,3 +10,8 @@ static/markdown/
 
 public/
 .publication-metadata/
+
+# Build-time legal values are intentionally rendered for the target environment.
+/docs/legal-notice.md
+/docs/legal-notice.md.tmp
+/static/assets/legal/

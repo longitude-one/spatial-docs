@@ -20,7 +20,7 @@ ${metadata}---
 [View HTML version](./index.html)
 
 ${body}`;
-const options = { lint: async () => {}, resources: async () => {} };
+const options = { lint: async () => {}, resources: async () => {}, legal: async () => {} };
 async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'corpus-validation-'));
   t.after(() => rm(root, { recursive: true, force: true }));

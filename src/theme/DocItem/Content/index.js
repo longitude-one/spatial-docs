@@ -1,20 +1,23 @@
 import React from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { MDXProvider } from '@mdx-js/react';
 import { useDoc } from '@docusaurus/plugin-content-docs/client';
 import Head from '@docusaurus/Head';
 import Heading from '@theme/Heading';
 import MDXComponents from '@theme/MDXComponents';
+import DocumentationActions from '../../../components/DocumentationActions';
+import { documentationActions } from '../../../../scripts/documentation-actions.mjs';
 import LibraryVersionNavigation from '../../../components/LibraryVersionNavigation';
 
 export default function DocItemContentWrapper({ children }) {
   const { metadata, frontMatter, contentTitle } = useDoc();
-  const source = metadata.source.replace(/^@site\/docs\//, '');
-  const href = `./${source.split('/').pop()}`;
-  const alternate = <p><a href={href} rel="alternate" type="text/markdown">View Markdown version</a></p>;
+  const { siteConfig } = useDocusaurusContext();
+  const actions = documentationActions(metadata.source, siteConfig.customFields?.publishedDocuments ?? [], frontMatter);
+  const alternate = <DocumentationActions actions={actions} />;
   const components = {...MDXComponents, h1: (props) => <><Heading as="h1" {...props} />{alternate}</>};
   const syntheticTitle = !frontMatter.hide_title && typeof contentTitle === 'undefined';
   return <>
-    <Head><link rel="alternate" type="text/markdown" href={href} /></Head>
+    {actions && <Head><link rel="alternate" type="text/markdown" href={actions.markdown} /></Head>}
     <LibraryVersionNavigation />
     <div className="theme-doc-markdown markdown">
       {syntheticTitle && <header><Heading as="h1">{metadata.title}</Heading>{alternate}</header>}

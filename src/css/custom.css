@@ -351,3 +351,31 @@ html[data-theme='dark'] {
   border-right: 4px solid var(--ifm-color-primary);
   padding-right: 1rem;
 }
+
+.documentation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  margin-block: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.documentation-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.documentation-actions a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .documentation-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

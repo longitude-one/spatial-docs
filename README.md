@@ -61,6 +61,19 @@ These links and representation metadata are build-managed; source documents
 must not maintain them manually. The build and CI reject missing counterparts,
 invalid routes, inconsistent targets, and duplicate switching links.
 
+## Contextual documentation actions
+
+The actions below each documentation title include `View Markdown version` and
+`Edit this page on GitHub`. The edit action opens the corresponding source under
+`docs/` on the repository's `main` branch, preserving its library, major version
+and path. It never edits a generated artifact or redirects historical/Next pages
+to the Current major. Both actions have text labels and wrap on small screens.
+
+Pages without a published documentation source have no edit action. For a source
+that should not offer editing, set `custom_edit_url: null` in its front matter;
+the Markdown action remains available. Contextual actions are build-managed and
+must not be duplicated in document content.
+
 ## Global search
 
 The navbar search searches all published library majors, Standards, Concepts,

@@ -32,7 +32,7 @@ async function execute(root, args) {
 }
 async function runBuildStep(root, stage) {
   await execute(root, [path.join(root, 'node_modules/@docusaurus/core/bin/docusaurus.mjs'), 'build', '--out-dir', stage]);
-  await execute(root, [path.join(root, 'scripts/export-markdown.mjs'), '--verify', '--build-directory', stage]);
+  await execute(root, [path.join(root, 'scripts/validate-corpus.mjs'), '--assemble', '--build-directory', stage]);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

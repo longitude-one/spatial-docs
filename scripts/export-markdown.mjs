@@ -1,4 +1,4 @@
-import { readdir, readFile, mkdir, writeFile, rm, rename, mkdtemp, lstat } from 'node:fs/promises';
+import { readdir, readFile, mkdir, writeFile, rm, rename, mkdtemp, lstat, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dump, load } from 'js-yaml';
@@ -64,7 +64,7 @@ const reservedPathComponents = new Set([
   ...Array.from({ length: 9 }, (_, index) => `lpt${index + 1}`),
 ]);
 
-function validatePathComponent(component, sourcePath) {
+export function validatePathComponent(component, sourcePath) {
   if (!/^[a-z0-9_-][a-z0-9._-]*$/.test(component)
     || component.endsWith('.')
     || reservedPathComponents.has(component.split('.')[0])) {
@@ -113,7 +113,7 @@ function removeComments(node) {
   ));
 }
 
-function validateMdxSyntax(body) {
+export function validateMdxSyntax(body) {
   const tree = mdxProcessor.parse(body.replace(/<!--[\s\S]*?-->/g, ''));
   function inspect(node) {
     if (node.type === 'mdxjsEsm') {
@@ -440,11 +440,13 @@ async function findMarkdownFiles(directory) {
   return nested.flat();
 }
 
-if (process.argv.includes('--verify')) {
-  await verifyBuild();
-  const { verifyResources } = await import('./verify-resources.mjs');
-  await verifyResources(rootDirectory, buildDirectory);
-  console.log('Publishable resource checks passed.');
-} else {
-  await exportMarkdown();
+if (process.argv[1] && await realpath(process.argv[1]) === await realpath(fileURLToPath(import.meta.url))) {
+  if (process.argv.includes('--verify')) {
+    await verifyBuild();
+    const { verifyResources } = await import('./verify-resources.mjs');
+    await verifyResources(rootDirectory, buildDirectory);
+    console.log('Publishable resource checks passed.');
+  } else {
+    await exportMarkdown();
+  }
 }

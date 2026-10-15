@@ -26,9 +26,17 @@ jobs:
         run: npm run validate:assets
       - name: Test resource validation
         run: npm test
-      - name: Build and verify publishable documentation
-        run: npm run build
+      - name: Verify two identical complete publication builds
+        run: npm run validate:determinism
       - name: Build and verify development Pages site
         run: npm run build
         env:
           DOCUSAURUS_DEPLOYMENT: development
+      - name: Upload corpus validation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: corpus-validation
+          path: .publication-validation.json
+          include-hidden-files: true
+          if-no-files-found: ignore

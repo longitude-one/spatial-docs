@@ -62,7 +62,7 @@ such as `fill`, `stroke` and `font-size`; local `#id` references are permitted.
 
 ## Manifest and publication
 
-The build generates `asset-manifest.json` automatically. Each public asset path
+The build generates an internal `.publication-metadata/asset-manifest.json` automatically. Each public asset path
 maps to its source path, SHA-256 digest and extension-derived type:
 
 ```json
@@ -77,15 +77,15 @@ maps to its source path, SHA-256 digest and extension-derived type:
 
 Entries have deterministic ordering and contain no timestamps or machine-specific
 paths. Do not edit the manifest or use its hash to rename an asset.
-`static/asset-manifest.json` is reserved and rejected because it would collide
-with the generated manifest.
+`static/asset-manifest.json` is reserved for build tooling and rejected as an authored static resource.
 
-`npm run build` validates sources before generation, builds into a temporary
-publication directory, and checks the generated corpus, manifest, asset bytes
-and HTML/Markdown references. Only a completely valid directory replaces
-`build/`; failures retain the preceding valid build. The deployment copies the
-complete verified build and promotes it as one site, including its assets and
-manifest. HTTP cache policy is outside this contract.
+`npm run build` validates sources before generation, uses `build/` for
+intermediate Docusaurus output, assembles public files in a temporary directory,
+and checks the complete corpus, internal manifest, asset bytes and HTML/Markdown
+references. Only a completely valid directory replaces `public/`; failures retain
+the preceding valid publication. The deployment copies the complete verified
+public corpus and promotes it as one site, including its assets. Manifests remain
+internal and are not deployed. HTTP cache policy is outside this contract.
 
 ## Local and CI checks
 

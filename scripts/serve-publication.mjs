@@ -46,6 +46,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const host = option('--host', 'localhost');
   const port = Number(option('--port', '3000'));
   const {default: config} = await import(pathToFileURL(path.join(root, 'docusaurus.config.js')));
-  const server = publicationServer(path.join(root, 'build'), config.baseUrl);
+  const server = publicationServer(path.join(root, 'public'), config.baseUrl);
   server.listen(port, host, () => console.log(`Serving published resources at http://${host}:${port}${config.baseUrl}index.html`));
 }

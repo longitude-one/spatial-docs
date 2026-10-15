@@ -30,17 +30,19 @@ async function fixture(t) {
   await writeFile(path.join(root, '.generated-markdown/index.md'), markdown());
   for (const [file, content] of Object.entries({ 'index.md': markdown(), 'index.html': '<h1>Different representation body</h1>',
     '404.html': '', 'search.html': '', 'asset-manifest.json': '{}', 'llms.txt': 'index', 'markdown-mapping.json': '[]' })) {
+    if (['asset-manifest.json', 'markdown-mapping.json'].includes(file)) continue;
     await writeFile(path.join(build, file), content);
   }
+  await writeFile(path.join(root, '.generated-markdown/asset-manifest.json'), '{}');
   await assembleManifest(root, build);
   return { root, build };
 }
 
 test('manifest and reports are deterministic and representations are not compared', async (t) => {
   const { root, build } = await fixture(t);
-  const first = await readFile(path.join(build, 'documentation-manifest.json'), 'utf8');
+  const first = await readFile(path.join(root, '.publication-metadata/documentation-manifest.json'), 'utf8');
   await assembleManifest(root, build);
-  assert.equal(await readFile(path.join(build, 'documentation-manifest.json'), 'utf8'), first);
+  assert.equal(await readFile(path.join(root, '.publication-metadata/documentation-manifest.json'), 'utf8'), first);
   const manifest = JSON.parse(first);
   assert.match(manifest.hashes['index.md'], /^[a-f0-9]{64}$/);
   assert.deepEqual(manifest.documents, [{ source: 'docs/index.md', html: 'index.html', markdown: 'index.md' }]);
@@ -95,12 +97,12 @@ test('shared asset warnings are explicitly nonblocking and assets carry hashes',
   const { root, build } = await fixture(t);
   await mkdir(path.join(build, 'assets'));
   await writeFile(path.join(build, 'assets/orphan.txt'), 'orphan');
-  await writeFile(path.join(build, 'asset-manifest.json'), JSON.stringify({ 'assets/orphan.txt': {} }));
+  await writeFile(path.join(root, '.generated-markdown/asset-manifest.json'), JSON.stringify({ 'assets/orphan.txt': {} }));
   await assembleManifest(root, build);
   const report = await validateCorpus(root, build, options);
   assert.equal(report.status, 'passed');
   assert.deepEqual(report.warnings.map(({ rule }) => rule), ['orphaned-asset']);
-  const manifest = JSON.parse(await readFile(path.join(build, 'documentation-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(path.join(root, '.publication-metadata/documentation-manifest.json'), 'utf8'));
   assert.match(manifest.hashes['assets/orphan.txt'], /^[a-f0-9]{64}$/);
 });
 
@@ -154,7 +156,7 @@ test('CLI failures return a nonzero status and write deterministic JSON plus act
   const { root, build } = await fixture(t);
   await writeFile(path.join(build, 'index.md'), markdown('## Broken\nNo blank line.\n'));
   const reportFile = path.join(root, 'report.json');
-  const args = [path.join(repository, 'scripts/validate-corpus.mjs'), '--build-directory', build, '--report-file', reportFile];
+  const args = [path.join(repository, 'scripts/validate-corpus.mjs'), '--build-directory', build, '--report-file', reportFile, '--metadata-directory', path.join(root, '.publication-metadata')];
   for (let attempt = 0; attempt < 2; attempt++) {
     await assert.rejects(promisify(execFile)(process.execPath, args), (error) => {
       assert.equal(error.code, 1);
@@ -167,4 +169,14 @@ test('CLI failures return a nonzero status and write deterministic JSON plus act
     if (attempt === 0) await writeFile(path.join(root, 'first-report.json'), JSON.stringify(report));
     else assert.equal(JSON.stringify(report), await readFile(path.join(root, 'first-report.json'), 'utf8'));
   }
+});
+
+test('internal manifests and debugging resources cannot become public even when present before hashing', async (t) => {
+  const { root, build } = await fixture(t);
+  for (const file of ['asset-manifest.json', 'markdown-mapping.json', 'documentation-manifest.json', 'debug.log', 'code.js.map']) {
+    await writeFile(path.join(build, file), '{}');
+  }
+  await assembleManifest(root, build);
+  const report = await validateCorpus(root, build, options);
+  assert.equal(report.errors.filter(({ rule }) => rule === 'internal-resource').length, 5);
 });

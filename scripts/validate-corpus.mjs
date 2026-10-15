@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, lstat } from 'node:fs/promises';
+import { readdir, readFile, writeFile, lstat, mkdir, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -10,6 +10,7 @@ import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
 import { parse } from 'parse5';
+import { isPublicResource, isRuntimeResource } from './publication-files.mjs';
 import { baseUrl, siteUrl } from './site-settings.mjs';
 import { verifyResources } from './verify-resources.mjs';
 import { validatePathComponent, validateMdxSyntax } from './export-markdown.mjs';
@@ -36,19 +37,21 @@ export async function corpusFiles(directory, prefix = '') {
   return result.sort();
 }
 
-export async function assembleManifest(root, build) {
+export async function assembleManifest(root, build, metadataDirectory = path.join(root, '.publication-metadata')) {
+  await mkdir(metadataDirectory, { recursive: true });
+  await copyFile(path.join(root, '.generated-markdown/asset-manifest.json'), path.join(metadataDirectory, 'asset-manifest.json'));
   // Expected identities come from generation, never from discovering final HTML.
   const markdown = (await corpusFiles(path.join(root, '.generated-markdown'))).filter((file) => file.endsWith('.md'));
-  const assets = JSON.parse(await readFile(path.join(build, 'asset-manifest.json'), 'utf8'));
+  const assets = JSON.parse(await readFile(path.join(metadataDirectory, 'asset-manifest.json'), 'utf8'));
   const documents = markdown.map((md) => ({ source: `docs/${md}`, html: md.replace(/\.md$/, '.html'), markdown: md }));
   const mapping = documents.map(({ html, markdown: md }) => ({ html: `${baseUrl}${html}`, markdown: `${baseUrl}${md}` }));
-  await writeFile(path.join(build, 'markdown-mapping.json'), serialize(mapping));
+  await writeFile(path.join(metadataDirectory, 'markdown-mapping.json'), serialize(mapping));
   const hashes = {};
   for (const file of await corpusFiles(build)) {
-    if (file !== 'documentation-manifest.json') hashes[file] = hash(await readFile(path.join(build, file)));
+    hashes[file] = hash(await readFile(path.join(build, file)));
   }
   const manifest = { version: 1, documents, assets: Object.keys(assets).sort(), infrastructureHtml, hashes };
-  await writeFile(path.join(build, 'documentation-manifest.json'), serialize(manifest));
+  await writeFile(path.join(metadataDirectory, 'documentation-manifest.json'), serialize(manifest));
   return manifest;
 }
 
@@ -110,13 +113,13 @@ export async function lintMarkdown(root, build, files) {
   });
 }
 
-export async function validateCorpus(root, build, { lint = lintMarkdown, resources = verifyResources } = {}) {
+export async function validateCorpus(root, build, { lint = lintMarkdown, resources = verifyResources, metadataDirectory = path.join(root, '.publication-metadata') } = {}) {
   const errors = [];
   const warnings = [];
   const add = (file, rule, error) => {
     if (error.diagnostics?.length) { errors.push(...error.diagnostics); return; }
     const message = error.message || String(error);
-    const location = message.match(/(?:docs\/|build\/)([^:\n]+):(\d+):(\d+):/);
+    const location = message.match(/(?:docs\/|build\/|public\/)([^:\n]+):(\d+):(\d+):/);
     const position = error.line ? { line: error.line, column: error.column || 1 } : {};
     errors.push({ file: location ? `docs/${location[1]}` : error.line && file.endsWith('.md') ? `docs/${file}` : file, rule, message,
       ...(location ? { line: Number(location[2]), column: Number(location[3]) } : position) });
@@ -124,7 +127,7 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
   const check = async (file, rule, operation) => { try { return await operation(); } catch (error) { add(file, rule, error); } };
   const files = await check('', 'filesystem', () => corpusFiles(build)) || [];
   const manifest = await check('documentation-manifest.json', 'manifest', async () => {
-    const value = JSON.parse(await readFile(path.join(build, 'documentation-manifest.json'), 'utf8'));
+    const value = JSON.parse(await readFile(path.join(metadataDirectory, 'documentation-manifest.json'), 'utf8'));
     if (value.version !== 1 || !Array.isArray(value.documents) || !Array.isArray(value.assets)
       || !value.documents.every((doc) => doc && ['source', 'html', 'markdown'].every((key) => typeof doc[key] === 'string'))
       || !value.assets.every((asset) => typeof asset === 'string')
@@ -203,10 +206,9 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
     for (const file of files.filter((name) => /\.(html|md)$/i.test(name))) {
       if (!declared.has(file)) add(file, 'unexpected-document', new Error('Generated document is not declared in the manifest.'));
     }
-    const bundles = /^assets\/(?:js\/[a-z0-9~_-]+\.[a-f0-9]+\.js(?:\.LICENSE\.txt)?|css\/styles\.[a-f0-9]+\.css)$/;
-    const actualAssets = files.filter((name) => name.startsWith('assets/') && !bundles.test(name));
+    const actualAssets = files.filter((name) => name.startsWith('assets/') && !isRuntimeResource(name));
     // Docusaurus bundles live under assets/js and assets/css; shared assets are declared by the dedicated manifest.
-    const assetManifest = await check('asset-manifest.json', 'assets', async () => JSON.parse(await readFile(path.join(build, 'asset-manifest.json'), 'utf8')));
+    const assetManifest = await check('asset-manifest.json', 'assets', async () => JSON.parse(await readFile(path.join(metadataDirectory, 'asset-manifest.json'), 'utf8')));
     if (assetManifest) {
       if (JSON.stringify(manifest.assets) !== JSON.stringify(Object.keys(assetManifest).sort())) add('documentation-manifest.json', 'assets', new Error('Shared asset manifests disagree.'));
       for (const file of actualAssets) if (!Object.hasOwn(assetManifest, file)) add(file, 'assets', new Error('Undeclared shared asset.'));
@@ -215,7 +217,10 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
       if (!Object.hasOwn(manifest.hashes, file)) add(file, 'integrity', new Error('Shared asset hash is missing.'));
       if (!references.has(file)) warnings.push({ file, rule: 'orphaned-asset', message: 'Shared asset is not referenced by generated documentation.' });
     }
-    for (const file of files) if (file !== 'documentation-manifest.json' && !Object.hasOwn(manifest.hashes, file)) {
+    for (const file of files) {
+      if (!isPublicResource(file, manifest.assets)) add(file, 'internal-resource', new Error('Resource is not permitted in the public corpus.'));
+    }
+    for (const file of files) if (!Object.hasOwn(manifest.hashes, file)) {
       add(file, 'integrity', new Error('Publication file was added after assembly.'));
     }
     for (const [file, expected] of Object.entries(manifest.hashes)) {
@@ -226,7 +231,7 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
     }
   }
   await check('', 'markdownlint', () => lint(root, build, markdown));
-  await check('', 'resources', () => resources(root, build, { writeMapping: false }));
+  await check('', 'resources', () => resources(root, build, { writeMapping: false, metadataDirectory }));
   const sort = (a, b) => `${a.file}\0${a.rule}\0${a.message}`.localeCompare(`${b.file}\0${b.rule}\0${b.message}`, 'en');
   errors.sort(sort); warnings.sort(sort);
   return { status: errors.length ? 'failed' : 'passed', errors, warnings };
@@ -239,11 +244,13 @@ export function formatReport(report) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const index = process.argv.indexOf('--build-directory');
-  const build = index < 0 ? path.join(root, 'build') : path.resolve(process.argv[index + 1]);
+  const build = index < 0 ? path.join(root, 'public') : path.resolve(process.argv[index + 1]);
+  const metadataIndex = process.argv.indexOf('--metadata-directory');
+  const metadataDirectory = metadataIndex < 0 ? path.join(root, '.publication-metadata') : path.resolve(process.argv[metadataIndex + 1]);
   let report;
   try {
-    if (process.argv.includes('--assemble')) await assembleManifest(root, build);
-    report = await validateCorpus(root, build);
+    if (process.argv.includes('--assemble')) await assembleManifest(root, build, metadataDirectory);
+    report = await validateCorpus(root, build, { metadataDirectory });
   } catch (error) {
     report = { status: 'failed', errors: [{ file: '', rule: 'assembly', message: error.message }], warnings: [] };
   }

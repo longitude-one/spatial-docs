@@ -16,7 +16,7 @@ for (const development of [false, true]) {
       ] }] };
       plugin()(tree);
       console.log(JSON.stringify({ config, attributes: tree.children[0].attributes }));
-    `], { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: development ? 'development' : '' } });
+    `], { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: development ? 'development' : '', URL_PRODUCTION: 'https://official.example/docs/' } });
     const { config, attributes } = JSON.parse(stdout);
     assert.deepEqual(config.themeConfig.colorMode, {
       defaultMode: 'light',
@@ -31,8 +31,17 @@ for (const development of [false, true]) {
       assert.match(config.title, /Development/);
       assert.match(config.themeConfig.announcementBar.content, /not the official LongitudeOne documentation/);
       assert.equal(config.themeConfig.announcementBar.isCloseable, false);
+      assert.match(config.themeConfig.announcementBar.content, /href="https:\/\/official.example\/docs\/"/);
     } else {
       assert.equal(config.themeConfig.announcementBar, undefined);
     }
+  });
+}
+
+for (const value of ['', 'not a url', 'javascript:alert(1)', 'https://user:secret@example.com']) {
+  test(`development configuration rejects invalid official URL ${JSON.stringify(value)}`, async () => {
+    await assert.rejects(execute(process.execPath, ['--input-type=module', '-e', "import './docusaurus.config.js'"], {
+      env: { ...process.env, DOCUSAURUS_DEPLOYMENT: 'development', URL_PRODUCTION: value },
+    }), /URL_PRODUCTION/);
   });
 }

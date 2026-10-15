@@ -13,10 +13,16 @@ if [[ $DEPLOY_PATH != /* || $DEPLOY_PATH =~ ^/+$ || ! $SSH_PORT =~ ^[0-9]+$ ||
   exit 1
 fi
 
-site=${1:-build}
-for resource in index.html index.md llms.txt markdown-mapping.json asset-manifest.json; do
+site=${1:-public}
+for resource in index.html index.md llms.txt; do
   if [[ ! -e $site/$resource ]]; then
     echo 'The complete verified site is required before deployment.' >&2
+    exit 1
+  fi
+done
+for internal in asset-manifest.json markdown-mapping.json documentation-manifest.json; do
+  if [[ -e $site/$internal ]]; then
+    echo 'Internal build manifests must remain outside the public site corpus.' >&2
     exit 1
   fi
 done
@@ -58,9 +64,7 @@ tar -C "$site" -cf - . | remote '
   tar -xf - -C public_html.next
   test -f public_html.next/index.html
   test -f public_html.next/index.md
-  test -f public_html.next/asset-manifest.json
   test -f public_html.next/llms.txt
-  test -f public_html.next/markdown-mapping.json
   test ! -e public_html.next/markdown
 '
 

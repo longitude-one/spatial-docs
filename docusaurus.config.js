@@ -85,7 +85,7 @@ const config = {
     ...(isDevelopment ? {
       announcementBar: {
         id: 'development-site',
-        content: developmentNotice,
+        content: developmentNotice(),
         isCloseable: false,
         backgroundColor: '#fff3cd',
         textColor: '#332701',

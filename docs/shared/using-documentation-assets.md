@@ -94,7 +94,7 @@ Open this page's `.html` and `.md` representations, inspect both images, and ope
 each linked resource. Confirm that the published files match the source bytes.
 The [shared assets publication contract](./shared-assets-publication-contract.md)
 lists the supported extensions, SVG safety restrictions and validation checks.
-The generated `asset-manifest.json` records each published path, source and hash.
+The internal `.publication-metadata/asset-manifest.json` records each published path, source and hash.
 A failed build retains the preceding valid publication directory.
 
 See the [portable Markdown publication contract](./portable-markdown-publication-contract.md#shared-assets)

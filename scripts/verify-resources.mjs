@@ -63,7 +63,7 @@ function inspect(content, html) {
   return { links, ids };
 }
 
-export async function verifyResources(root, build = path.join(root, 'build'), { writeMapping = true } = {}) {
+export async function verifyResources(root, build = path.join(root, 'public'), { writeMapping = true, metadataDirectory = path.join(root, '.publication-metadata') } = {}) {
   const config = (await import(`${path.join(root, 'docusaurus.config.js')}?verify`)).default;
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
@@ -90,7 +90,7 @@ export async function verifyResources(root, build = path.join(root, 'build'), { 
         && link.children.length === 1 && link.children[0].value === 'View HTML version') {
         tree.children.shift();
       }
-      markdownDocuments.set(sourcePath, { tree, anchors: documentationAnchors(tree, sourcePath, 'build/') });
+      markdownDocuments.set(sourcePath, { tree, anchors: documentationAnchors(tree, sourcePath, 'public/') });
     }
     if (/\.(html|md)$/.test(file) || file === 'llms.txt') {
       parsed.set(file, inspect(await readFile(path.join(build, file), 'utf8'), file.endsWith('.html')));
@@ -99,7 +99,7 @@ export async function verifyResources(root, build = path.join(root, 'build'), { 
   await processDocumentationLinks(markdownDocuments, {
     staticDirectory: build,
     siteUrl: config.url,
-    diagnosticPrefix: 'build/',
+    diagnosticPrefix: 'public/',
   });
   function resolve(href, from, htmlOnly = false) {
     const url = new URL(href, `${origin}${config.baseUrl}${from}`);
@@ -118,10 +118,10 @@ export async function verifyResources(root, build = path.join(root, 'build'), { 
     return target;
   }
   // Derive explicit representation paths from source paths, not Docusaurus slugs.
-  const metadataDirectory = path.join(root, '.docusaurus/docusaurus-plugin-content-docs/default');
+  const docsMetadataDirectory = path.join(root, '.docusaurus/docusaurus-plugin-content-docs/default');
   const pages = [];
   const representationPaths = new Set();
-  for (const file of (await files(metadataDirectory)).sort()) {
+  for (const file of (await files(docsMetadataDirectory)).sort()) {
     if (!file.endsWith('.json')) continue;
     const doc = JSON.parse(await readFile(file, 'utf8'));
     if (!doc.source?.startsWith('@site/docs/') || !doc.permalink || doc.draft || doc.unlisted) continue;
@@ -178,7 +178,7 @@ export async function verifyResources(root, build = path.join(root, 'build'), { 
     });
     if (documentationPage) throw new Error(`HTML documentation outside the one-to-one representation mapping: ${file}.`);
   }
-  await verifyPublishedAssets(root, build, markdownDocuments, config.baseUrl, config.url);
+  await verifyPublishedAssets(root, build, markdownDocuments, config.baseUrl, config.url, metadataDirectory);
   verifyMarkdownReachability(markdownDocuments);
-  if (writeMapping) await writeFile(path.join(build, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
+  if (writeMapping) await writeFile(path.join(metadataDirectory, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);
 }

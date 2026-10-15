@@ -4,9 +4,9 @@ import { createHash } from 'node:crypto';
 import { parse } from 'parse5';
 import { collectSharedAssets, validateAssetReferences } from './shared-assets.mjs';
 
-export async function verifyPublishedAssets(root, build, documents, baseUrl, siteUrl = 'https://asset-check.invalid') {
+export async function verifyPublishedAssets(root, build, documents, baseUrl, siteUrl = 'https://asset-check.invalid', metadataDirectory = path.join(root, '.publication-metadata')) {
   const expected = await collectSharedAssets(root);
-  const actual = JSON.parse(await readFile(path.join(build, 'asset-manifest.json'), 'utf8'));
+  const actual = JSON.parse(await readFile(path.join(metadataDirectory, 'asset-manifest.json'), 'utf8'));
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Published asset manifest differs from source assets.');
   for (const [published, { sha256 }] of Object.entries(expected)) {
     let current = build;

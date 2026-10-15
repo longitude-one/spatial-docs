@@ -32,6 +32,7 @@ jobs:
         run: npm run build
         env:
           DOCUSAURUS_DEPLOYMENT: development
+          URL_PRODUCTION: https://www.longitude-one.fr
       - name: Upload corpus validation report
         if: always()
         uses: actions/upload-artifact@v7

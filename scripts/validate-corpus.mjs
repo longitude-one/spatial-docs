@@ -12,6 +12,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import { parse } from 'parse5';
 import { isPublicResource, isRuntimeResource } from './publication-files.mjs';
 import { baseUrl, siteUrl } from './site-settings.mjs';
+import { verifyLegalNotice, recordLegalPublication } from './verify-legal-notice.mjs';
 import { verifyResources } from './verify-resources.mjs';
 import { validatePathComponent, validateMdxSyntax } from './export-markdown.mjs';
 
@@ -50,6 +51,7 @@ export async function assembleManifest(root, build, metadataDirectory = path.joi
   for (const file of await corpusFiles(build)) {
     hashes[file] = hash(await readFile(path.join(build, file)));
   }
+  if (documents.some(({ markdown }) => markdown === 'legal-notice.md')) await recordLegalPublication(root, build, metadataDirectory);
   const manifest = { version: 1, documents, assets: Object.keys(assets).sort(), infrastructureHtml, hashes };
   await writeFile(path.join(metadataDirectory, 'documentation-manifest.json'), serialize(manifest));
   return manifest;
@@ -113,7 +115,7 @@ export async function lintMarkdown(root, build, files) {
   });
 }
 
-export async function validateCorpus(root, build, { lint = lintMarkdown, resources = verifyResources, metadataDirectory = path.join(root, '.publication-metadata') } = {}) {
+export async function validateCorpus(root, build, { lint = lintMarkdown, resources = verifyResources, metadataDirectory = path.join(root, '.publication-metadata'), legal = verifyLegalNotice } = {}) {
   const errors = [];
   const warnings = [];
   const add = (file, rule, error) => {
@@ -232,6 +234,7 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
   }
   await check('', 'markdownlint', () => lint(root, build, markdown));
   await check('', 'resources', () => resources(root, build, { writeMapping: false, metadataDirectory }));
+  await check('legal-notice.md', 'legal-notice', () => legal(root, build, metadataDirectory));
   const sort = (a, b) => `${a.file}\0${a.rule}\0${a.message}`.localeCompare(`${b.file}\0${b.rule}\0${b.message}`, 'en');
   errors.sort(sort); warnings.sort(sort);
   return { status: errors.length ? 'failed' : 'passed', errors, warnings };

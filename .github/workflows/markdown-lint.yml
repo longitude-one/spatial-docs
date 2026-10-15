@@ -19,4 +19,4 @@ jobs:
       - name: Install markdownlint-cli2
         run: npm install --global markdownlint-cli2@0.23.3
       - name: Lint Markdown sources
-        run: markdownlint-cli2 "*.md" "docs/**/*.md" "docs/**/*.mdx" "inbox/**/*.md" "inbox/**/*.mdx"
+        run: markdownlint-cli2 "*.md" "docs/**/*.md" "docs/**/*.mdx" "inbox/**/*.md" "inbox/**/*.mdx" "templates/**/*.md"

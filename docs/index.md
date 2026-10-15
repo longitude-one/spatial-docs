@@ -23,3 +23,8 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 The [versioning contract](about/versioning.md) explains library majors and release status.
 Versioned library documentation lives under `docs/<library>/v<major>/`; ecosystem-wide
 topics live under `docs/shared/`.
+
+[Legal notice / Mentions légales](./legal-notice.md) identifies the publisher and
+hosting provider and describes privacy behavior and licensing.
+
+See the [French legal review and publication checklist](./shared/french-website-legal-review.md) for publisher approval and environment configuration.

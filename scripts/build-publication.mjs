@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { corpusFiles } from './validate-corpus.mjs';
+import { generateLegalNotice } from './generate-legal-notice.mjs';
 import { isPublicResource } from './publication-files.mjs';
 
 export async function assemblePublication(root, intermediate, destination) {
@@ -57,6 +58,8 @@ async function execute(root, args) {
   });
 }
 async function runBuildStep(root, stage, metadata) {
+  await generateLegalNotice(root);
+  await execute(root, [path.join(root, 'scripts/export-markdown.mjs')]);
   const intermediate = path.join(root, 'build');
   await execute(root, [path.join(root, 'node_modules/@docusaurus/core/bin/docusaurus.mjs'), 'build', '--out-dir', intermediate]);
   await assemblePublication(root, intermediate, stage);

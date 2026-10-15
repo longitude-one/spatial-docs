@@ -17,8 +17,11 @@ async function build(root) {
     child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`Build failed (${code}).`)));
   });
   const hashes = {};
-  for (const file of await corpusFiles(path.join(root, 'build'))) {
-    hashes[file] = createHash('sha256').update(await readFile(path.join(root, 'build', file))).digest('hex');
+  for (const file of await corpusFiles(path.join(root, 'public'))) {
+    hashes[file] = createHash('sha256').update(await readFile(path.join(root, 'public', file))).digest('hex');
+  }
+  for (const file of await corpusFiles(path.join(root, '.publication-metadata'))) {
+    hashes[`internal/${file}`] = createHash('sha256').update(await readFile(path.join(root, '.publication-metadata', file))).digest('hex');
   }
   return hashes;
 }

@@ -17,8 +17,8 @@ async function fixture(t, mode = '') {
   const bin = join(root, 'bin');
   await Promise.all([mkdir(destination), mkdir(build, { recursive: true }), mkdir(bin)]);
   for (const [name, content] of Object.entries({
-    'index.html': 'new HTML', 'llms.txt': 'new index', 'markdown-mapping.json': '{}',
-    'index.md': 'new Markdown', 'asset-manifest.json': '{}', '.hidden': 'complete tree',
+    'index.html': 'new HTML', 'llms.txt': 'new index',
+    'index.md': 'new Markdown', '.nojekyll': 'complete tree',
   })) await writeFile(join(build, name), content);
   for (const suffix of ['', '.old', '.next']) {
     await mkdir(join(destination, `public_html${suffix}`));
@@ -58,7 +58,7 @@ exec "${realMv.trim()}" "$@"
 test('publishes the complete site and retains the previous live version', async t => {
   const f = await fixture(t);
   await f.run();
-  for (const file of ['index.html', 'llms.txt', 'markdown-mapping.json', 'index.md', 'asset-manifest.json', '.hidden']) {
+  for (const file of ['index.html', 'llms.txt', 'index.md', '.nojekyll']) {
     assert.equal(await readFile(join(f.destination, 'public_html', file), 'utf8'), await readFile(join(f.build, file), 'utf8'));
   }
   assert.equal(await readFile(join(f.destination, 'public_html.old/version'), 'utf8'), 'current');
@@ -132,9 +132,19 @@ for (const settings of [{ SSH_PRIVATE_KEY: '' }, { DEPLOY_PATH: '/' }, { DEPLOY_
 }
 
 
-test('missing shared asset manifest fails before any SSH connection', async t => {
+test('internal manifests are not required by the remote atomic deployment', async t => {
   const f = await fixture(t);
-  await rm(join(f.build, 'asset-manifest.json'));
-  await assert.rejects(f.run(), /complete verified site/);
-  await assert.rejects(access(join(f.root, 'calls')));
+  await f.run();
+  for (const file of ['asset-manifest.json', 'markdown-mapping.json', 'documentation-manifest.json']) {
+    await assert.rejects(access(join(f.destination, 'public_html', file)));
+  }
 });
+
+for (const file of ['asset-manifest.json', 'markdown-mapping.json', 'documentation-manifest.json']) {
+  test(`reject internal manifest ${file} before any SSH connection`, async t => {
+    const f = await fixture(t);
+    await writeFile(join(f.build, file), '{}');
+    await assert.rejects(f.run(), /Internal build manifests/);
+    await assert.rejects(access(join(f.root, 'calls')));
+  });
+}

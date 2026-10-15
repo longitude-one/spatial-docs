@@ -7,3 +7,6 @@ static/markdown/
 .publication-staging-*/
 
 .publication-validation.json
+
+public/
+.publication-metadata/

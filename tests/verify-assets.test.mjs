@@ -12,6 +12,7 @@ async function fixture(t, baseUrl = '/') {
   const root = await mkdtemp(path.join(os.tmpdir(), 'verify-assets-'));
   const build = path.join(root, 'build');
   t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, '.publication-metadata'), { recursive: true });
   await mkdir(path.join(root, 'static/assets/downloads'), { recursive: true });
   await mkdir(path.join(build, 'assets/downloads'), { recursive: true });
   await mkdir(path.join(build, 'shared'), { recursive: true });
@@ -20,7 +21,7 @@ async function fixture(t, baseUrl = '/') {
     await copyFile(path.join(root, 'static/assets/downloads', name), path.join(build, 'assets/downloads', name));
   }
   const manifest = await collectSharedAssets(root);
-  await writeFile(path.join(build, 'asset-manifest.json'), JSON.stringify(manifest));
+  await writeFile(path.join(root, '.publication-metadata/asset-manifest.json'), JSON.stringify(manifest));
   const markdown = '[first](../assets/downloads/first.txt)\n\n[second][download]\n\n[download]: ../assets/downloads/second.txt';
   const documents = new Map([['shared/page.md', { tree: unified().use(remarkParse).parse(markdown) }]]);
   await writeFile(path.join(build, 'shared/page.html'), `<!doctype html><html><head><title>Assets</title></head><body><a href="${baseUrl}assets/downloads/first.txt">First</a><a href="../assets/downloads/second.txt">Second</a></body></html>`);
@@ -37,7 +38,7 @@ for (const baseUrl of ['/', '/spatial-docs/']) {
 test('reject a modified generated manifest', async (t) => {
   const { root, build, documents, manifest, baseUrl } = await fixture(t);
   delete manifest['assets/downloads/second.txt'];
-  await writeFile(path.join(build, 'asset-manifest.json'), JSON.stringify(manifest));
+  await writeFile(path.join(root, '.publication-metadata/asset-manifest.json'), JSON.stringify(manifest));
   await assert.rejects(verifyPublishedAssets(root, build, documents, baseUrl), /manifest differs/);
 });
 test('reject source asset mutation after publication', async (t) => {

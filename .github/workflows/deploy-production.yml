@@ -34,7 +34,7 @@ jobs:
         env:
           DOCUSAURUS_DEPLOYMENT: production
       - name: Transfer and publish verified site
-        run: bash scripts/deploy-production.sh build
+        run: bash scripts/deploy-production.sh public
         env:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || secrets.DEPLOY_PATH }}
           SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}

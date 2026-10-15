@@ -19,7 +19,7 @@ const docsDirectory = path.join(rootDirectory, 'docs');
 const staticDirectory = path.join(rootDirectory, 'static');
 const markdownDirectory = path.join(rootDirectory, '.generated-markdown');
 const buildArgument = process.argv.indexOf('--build-directory');
-const buildDirectory = buildArgument < 0 ? path.join(rootDirectory, 'build') : path.resolve(process.argv[buildArgument + 1]);
+const buildDirectory = buildArgument < 0 ? path.join(rootDirectory, 'public') : path.resolve(process.argv[buildArgument + 1]);
 
 const requiredContent = [
   {

@@ -32,6 +32,17 @@ and `.md` files directly, including `index.html`; extensionless and directory
 routes are rejected. For the Pages configuration, use
 <http://localhost:3000/spatial-docs/index.html>.
 
+The final deployable artifact is `public/`. Docusaurus uses `build/` as an
+intermediate directory; `.publication-metadata/` retains internal integrity and
+asset manifests. Deploy only the validated `public/` tree without rebuilding or
+transforming its content. Internal manifests, reports, caches and source maps
+are excluded from it. Public files use mode `0644` and directories `0755`.
+
+For the development site, set `DOCUSAURUS_DEPLOYMENT=development` and provide
+`URL_PRODUCTION` as the absolute URL of the official documentation before
+building or previewing. Missing or invalid values fail the development build.
+The announcement links to that configured URL; production builds do not need it.
+
 ## Documentation sources
 
 - `docs/shared/` contains documentation shared across the ecosystem.
@@ -44,8 +55,8 @@ routes are rejected. For the Pages configuration, use
 ## Markdown counterparts
 
 `npm run build` exports published `.md` pages alongside their HTML counterparts
-in `build/` and generates a root `build/llms.txt` index. For example,
-`build/shared/index.html` and `build/shared/index.md` represent the same document;
+in `public/` and generates a root `public/llms.txt` index. For example,
+`public/shared/index.html` and `public/shared/index.md` represent the same document;
 there is no public `markdown/` prefix.
 
 The internal `.generated-markdown/` directory contains generated Markdown with
@@ -82,7 +93,7 @@ release status; choosing another library or version does not restrict the search
 Use the search field or `Ctrl+K` (`Cmd+K` on macOS), then arrow keys and Enter.
 
 Search is local to the browser. `npm run build` generates one hashed JSON index
-beside the site assets; deploy the complete `build/` directory from that build.
+beside the site assets; deploy the complete `public/` directory from that build.
 Preview with `npm run serve`; the plugin does not generate an index during
 `npm start`. No search account, API key or server-side service is required.
 Portable Markdown, drafts, unlisted pages and `inbox/` are not indexed.
@@ -102,4 +113,4 @@ Store documentation images, diagrams, schemas, examples and downloads in
 and [asset contract](docs/shared/shared-assets-publication-contract.md).
 Run `npm run validate:assets` for offline source validation. The normal build
 checks the generated manifest and shared bytes in a staging directory before
-replacing `build/`; deployment requires the complete verified directory.
+replacing `public/`; deployment requires the complete verified directory.

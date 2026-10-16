@@ -1,7 +1,10 @@
-// The provider's only search-page URL uses a directory identity. Adapt its
-// navigation link without copying the search UI or changing documentation URLs.
+// Keep provider-specific canonical routing and the clear-control accessible
+// name isolated here, without copying the search UI.
 module.exports = function searchRouteLoader(source) {
   const original = '${baseUrl}search/?';
   if (!source.includes(original)) throw new Error('Local-search provider search-page URL changed; review the route adapter.');
-  return source.replace(original, '${baseUrl}search.html?');
+  const clear = '<button className={styles.searchClearButton}';
+  if (!source.includes(clear)) throw new Error('Local-search provider clear control changed; review its accessible label adapter.');
+  return source.replace(original, '${baseUrl}search.html?')
+    .replace(clear, '<button type="button" aria-label="Clear search" className={styles.searchClearButton}');
 };

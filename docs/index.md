@@ -28,3 +28,5 @@ topics live under `docs/shared/`.
 hosting provider and describes privacy behavior and licensing.
 
 See the [French legal review and publication checklist](./shared/french-website-legal-review.md) for publisher approval and environment configuration.
+
+See [navigation validation](./shared/validating-documentation-navigation.md) for the corpus checks and repeatable reader journeys.

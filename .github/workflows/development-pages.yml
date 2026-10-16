@@ -38,16 +38,16 @@ jobs:
       - name: Build and verify complete development site
         run: npm run build
         env:
-          LEGAL_PUBLISHER_NAME: ${{ secrets.LEGAL_PUBLISHER_NAME }}
-          LEGAL_PUBLISHER_ADDRESS: ${{ secrets.LEGAL_PUBLISHER_ADDRESS }}
-          LEGAL_PUBLISHER_PHONE: ${{ secrets.LEGAL_PUBLISHER_PHONE }}
-          LEGAL_PUBLICATION_DIRECTOR: ${{ secrets.LEGAL_PUBLICATION_DIRECTOR }}
-          LEGAL_HOST_NAME: ${{ secrets.LEGAL_HOST_NAME }}
-          LEGAL_HOST_ADDRESS: ${{ secrets.LEGAL_HOST_ADDRESS }}
-          LEGAL_HOST_PHONE: ${{ secrets.LEGAL_HOST_PHONE }}
-          LEGAL_ADDITIONAL_STORAGE: ${{ secrets.LEGAL_ADDITIONAL_STORAGE }}
-          LEGAL_CONFIGURATION_ENVIRONMENT: ${{ secrets.LEGAL_CONFIGURATION_ENVIRONMENT }}
-          LEGAL_PUBLICATION_APPROVED: ${{ secrets.LEGAL_PUBLICATION_APPROVED }}
+          LEGAL_PUBLISHER_NAME: ${{ vars.LEGAL_PUBLISHER_NAME }}
+          LEGAL_PUBLISHER_ADDRESS: ${{ vars.LEGAL_PUBLISHER_ADDRESS }}
+          LEGAL_PUBLISHER_PHONE: ${{ vars.LEGAL_PUBLISHER_PHONE }}
+          LEGAL_PUBLICATION_DIRECTOR: ${{ vars.LEGAL_PUBLICATION_DIRECTOR }}
+          LEGAL_HOST_NAME: ${{ vars.LEGAL_HOST_NAME }}
+          LEGAL_HOST_ADDRESS: ${{ vars.LEGAL_HOST_ADDRESS }}
+          LEGAL_HOST_PHONE: ${{ vars.LEGAL_HOST_PHONE }}
+          LEGAL_ADDITIONAL_STORAGE: ${{ vars.LEGAL_ADDITIONAL_STORAGE }}
+          LEGAL_CONFIGURATION_ENVIRONMENT: ${{ vars.LEGAL_CONFIGURATION_ENVIRONMENT }}
+          LEGAL_PUBLICATION_APPROVED: ${{ vars.LEGAL_PUBLICATION_APPROVED }}
           LEGAL_TEST_MODE: false
       - name: Verify approved development legal information
         run: node scripts/verify-legal-notice.mjs development public

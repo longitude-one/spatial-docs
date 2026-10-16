@@ -5,7 +5,9 @@
   "scripts": {
     "prestart": "node scripts/generate-legal-notice.mjs && node scripts/export-markdown.mjs",
     "start": "docusaurus start",
+    "start:local": "node scripts/with-test-legal.mjs npm start",
     "build": "node scripts/build-publication.mjs",
+    "build:local": "node scripts/with-test-legal.mjs npm run build",
     "serve": "node scripts/serve-publication.mjs",
     "test": "node --test",
     "stop": "node scripts/stop-server.mjs",

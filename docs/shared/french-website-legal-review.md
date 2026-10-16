@@ -53,8 +53,10 @@ Keep standards PDFs and third-party copied text out of publication unless their 
 The generated source and legal assets are ignored by Git. Never commit actual publisher contact details or copy one environment's facts into another.
 Every published HTML page, including search and 404 pages, links to `/legal-notice.html` in its footer.
 
-Configure the following **environment-scoped secrets** in both GitHub environments: `production` and `github-pages`.
-The build job for development uses `github-pages`; it must receive its own reviewed development values.
+Configure the following legal values as GitHub Actions **repository variables**, except `LEGAL_CONFIGURATION_ENVIRONMENT`.
+Configure that variable separately in each GitHub environment: `development` in `github-pages`, and `production` in `production`.
+Both deployment workflows read legal values through `vars.LEGAL_*`; `LEGAL_TEST_MODE` remains `false` in the workflows.
+Deployment credentials, including `SSH_PRIVATE_KEY`, remain secrets; their configuration is unchanged.
 
 | Variable | Required value |
 | --- | --- |
@@ -108,7 +110,8 @@ This completed implementation review uses artificial data. The publisher's separ
 - [ ] Review documentation and asset provenance, full dependency notices and every missing-license warning; resolve any distribution restriction.
 - [ ] Confirm accessibility scope against the official sources above; do not assert RGAA conformance without an appropriate audit.
 - [ ] Inspect `/legal-notice.html` and `/legal-notice.md` from the same final artifact for accuracy and check the footer on ordinary, search and 404 pages.
-- [ ] Record the reviewer, date, environment and evidence in the operational publication record, then set `LEGAL_PUBLICATION_APPROVED=true` for that environment.
+- [ ] Record the reviewer, date, environment and evidence in the operational publication record.
+  Set the repository variable `LEGAL_PUBLICATION_APPROVED=true` after both environments are reviewed.
 
 Real publisher and hosting facts have not been supplied as part of this implementation. Approval therefore remains unset;
 publication must stay blocked until the publisher completes this review. Revisit it when hosting, processing, dependencies or the site's purpose changes.

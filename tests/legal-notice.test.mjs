@@ -18,7 +18,11 @@ function approved() {
 test('legal configuration requires every fact, explicit environment and publisher approval without logging values', () => {
   for (const field of legalFields) {
     const env = approved(); delete env[field];
-    assert.throws(() => legalConfiguration(env), new RegExp(field));
+    assert.throws(() => legalConfiguration(env), (error) => {
+      assert.match(error.message, new RegExp(field));
+      assert.match(error.message, /npm run start:local or npm run build:local/);
+      return true;
+    });
   }
   assert.throws(() => legalConfiguration({ ...approved(), LEGAL_CONFIGURATION_ENVIRONMENT: 'development' }), /explicitly match production/);
   assert.throws(() => legalConfiguration({ ...approved(), LEGAL_PUBLICATION_APPROVED: 'false' }), /review/);

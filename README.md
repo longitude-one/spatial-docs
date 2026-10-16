@@ -9,16 +9,16 @@ Requirements: Node.js 20 or newer and npm 10 or newer.
 
 ```sh
 npm install
-npm start
+npm run start:local
 ```
 
 The start command launches the Docusaurus development server. Open
 <http://localhost:3000/index.html> to view the documentation home page.
 
-Build the production site with:
+Build a local preview with fictional legal information:
 
 ```sh
-npm run build
+npm run build:local
 ```
 
 Preview the built files with:
@@ -26,6 +26,10 @@ Preview the built files with:
 ```sh
 npm run serve
 ```
+
+The local commands require no legal environment variables and generate fictional
+legal notices. Their output cannot be deployed. For publication, supply the
+reviewed [legal configuration](#legal-notice-configuration) and run `npm run build`.
 
 Open <http://localhost:3000/index.html>. The preview serves explicit `.html`
 and `.md` files directly, including `index.html`; extensionless and directory
@@ -120,12 +124,15 @@ replacing `public/`; deployment requires the complete verified directory.
 Publication builds require reviewed legal information supplied through environment variables.
 See the [French legal review and configuration checklist](docs/shared/french-website-legal-review.md) for all required values and environment approval.
 Actual publisher contact details must stay outside Git; rendered notices intentionally make those details public.
-For local development or validation with fictional, non-deployable information, prefix the command with `node scripts/with-test-legal.mjs`:
+For local development or validation with fictional, non-deployable information, use:
 
 ```sh
-node scripts/with-test-legal.mjs npm start
-node scripts/with-test-legal.mjs npm run build
+npm run start:local
+npm run build:local
 ```
+
+These commands use `scripts/with-test-legal.mjs`, which supplies fictional values
+to the child process. Publication commands continue to require reviewed legal configuration.
 
 Navigation is checked in the final publication gate. See [navigation validation](docs/shared/validating-documentation-navigation.md)
 for the automated report and desktop/mobile browser journeys.

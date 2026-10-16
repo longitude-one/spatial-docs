@@ -10,7 +10,9 @@ export function legalConfiguration(environment = process.env) {
   for (const field of legalFields) {
     const value = environment[field];
     // Never include supplied values in diagnostics: publication is intentional, logs are not.
-    if (typeof value !== 'string' || !value.trim()) throw new Error(`Required legal configuration: ${field}`);
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new Error(`Required legal configuration: ${field}. For local use with fictional legal information, run npm run start:local or npm run build:local.`);
+    }
     if (value.length > 2000 || /[\x00-\x08\x0b\x0c\x0e-\x1f{}<>`]|\$\{|\b(?:TODO|TBD)\b/.test(value)) throw new Error(`Invalid legal text or unresolved placeholder: ${field}`);
     if (!testFixture && /TEST ONLY|CI FIXTURE/i.test(value)) throw new Error(`Test-only legal value cannot be published: ${field}`);
     configuration[field] = value.trim().replace(/\s+/g, ' ');

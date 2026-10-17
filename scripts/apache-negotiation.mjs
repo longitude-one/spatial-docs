@@ -9,26 +9,32 @@ export async function apacheConfiguration() {
   const rules = [];
   // RFC 9110 quoted-string: commas inside parameter values are not list
   // separators, and quoted-pair consumes its escaped character atomically.
-  const quotedString = String.raw`\x22(?:[^\x22\\\r\n]|\\[\t\x20-\x7e\x80-\xff])*\x22`;
+  const quotedString = String.raw`\x22(?:[\t\x20-\x21\x23-\x5b\x5d-\x7e\x80-\xff]|\\[\t\x20-\x7e\x80-\xff])*\x22`;
   const fieldItem = `(?:[^\\x22,\\r\\n]|${quotedString})*`;
+  const ows = String.raw`[\x20\t]*`;
   const quotedUtf8 = String.raw`\x22${[...'utf-8'].map((character) => String.raw`(?:\\)?${character}`).join('')}\x22`;
-  const charsetParameter = `(?:;\\s*charset\\s*=\\s*(?:utf-8|${quotedUtf8})\\s*)`;
+  // RFC 9110 §5.6.6: each semicolon may introduce either a parameter or
+  // nothing. Empty parameters neither constrain a representation nor add
+  // specificity. Nonempty parameters must match the published UTF-8 charset.
+  const emptyParameters = `(?:;${ows})*`;
+  const charsetParameter = `;${ows}charset=(?:utf-8|${quotedUtf8})${ows}`;
+  const mediaParameters = (required) => `${emptyParameters}(?:${charsetParameter}${emptyParameters})${required ? '+' : '*'}`;
   for (const [name, type] of [['HTML', 'html'], ['MARKDOWN', 'markdown']]) {
     rules.push(`# Most specific matching media range determines ${type}'s quality.`, `RewriteRule ^ - [E=DOC_${name}_Q:0]`);
     for (const range of ['\\*/\\*', 'text/\\*', `text/${type}`]) {
       // Parameter-specific ranges override bare ranges of the same media type.
-      const start = `^(?:${fieldItem},)*\\s*${range}\\s*`;
+      const start = `^(?:${fieldItem},)*${ows}${range}${ows}`;
       for (const specific of [false, true]) {
         const add = (pattern, quality) => rules.push(`RewriteCond %{HTTP:Accept} "${pattern}" [NC]`, `RewriteRule ^ - [E=DOC_${name}_Q:${quality}]`);
-        const end = '\\s*(?:,|$)';
-        add(`${start}${specific ? `${charsetParameter}+` : ''}${end}`, '1000');
+        const end = '(?:,|$)';
+        add(`${start}${specific ? mediaParameters(true) : emptyParameters}${end}`, '1000');
         // RFC 9110 §12.5.1: q is a weight regardless of its position. Every
         // other parameter must match the representation, including after q.
         const positions = specific
-          ? [[`${charsetParameter}+`, `${charsetParameter}*`], [`${charsetParameter}*`, `${charsetParameter}+`]]
-          : [['', '']];
+          ? [[mediaParameters(true), mediaParameters(false)], [mediaParameters(false), mediaParameters(true)]]
+          : [[emptyParameters, emptyParameters]];
         for (const [before, after] of positions) {
-          const weighted = (quality) => `${start}${before};\\s*q\\s*=\\s*${quality}\\s*${after}${end}`;
+          const weighted = (quality) => `${start}${before};${ows}q=${quality}${ows}${after}${end}`;
           add(weighted('1(?:\\.0{0,3})?'), '1000');
           add(weighted('0(?:\\.)?'), '0');
           for (const digits of [1, 2, 3]) {

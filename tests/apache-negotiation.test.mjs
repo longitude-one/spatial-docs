@@ -88,7 +88,9 @@ DocumentRoot "${site}"
       await delay(50);
     }
   }
+  let httpCases = 0;
   async function request(uri, accept, expected, status = 200, negotiated = true) {
+    httpCases++;
     // fetch supplies */* by default, so raw http is used for the absent header case.
     const { request: httpRequest } = await import('node:http');
     const response = await new Promise((resolve, reject) => {
@@ -114,6 +116,13 @@ DocumentRoot "${site}"
     for (const [accept, expected, status] of [
       [undefined, 'html'], ['', 'html'], ['*/*', 'html'], ['text/*', 'html'],
       ['text/html', 'html'], ['text/markdown', 'markdown'],
+      ['text/markdown;', 'markdown'], ['text/html;;', 'html'],
+      ['text/markdown; ; charset="utf-8"; ; q=0.9; ;', 'markdown'],
+      ['text/markdown; ; q=0.9; ; charset="utf-8"; ;', 'markdown'],
+      ['text/html;q=0;;, text/markdown;', 'markdown'],
+      ['text/html;;charset=iso-8859-1;;q=1;;', null, 406],
+      ['text/html;;q=1;;charset=iso-8859-1;;', null, 406],
+      [', , text/markdown; , ,', 'markdown'],
       ['text/html, text/markdown', 'html'], ['text/markdown, text/html', 'html'],
       ['text/markdown;q=1.0, text/html;q=0.8', 'markdown'],
       ['text/html;q=1.0, text/markdown;q=0.8', 'html'],
@@ -171,10 +180,78 @@ DocumentRoot "${site}"
     await request(`${uri}.html`, '*/*;q=0', 'html', 200, false);
     await request(`${uri}.md`, '*/*;q=0', 'markdown', 200, false);
   }
+  // Independent, semantic expectations: changing optional parameter syntax
+  // must not change a decision. These cases cross separators, empty parameters,
+  // parameter order, quoted/escaped values, wildcards and specificity.
+  const decisions = [
+    { ranges: [['text/markdown']], expected: 'markdown' },
+    { ranges: [['text/html']], expected: 'html' },
+    { ranges: [['text/markdown', '0.8', 'utf-8'], ['text/html', '0.7']], expected: 'markdown' },
+    { ranges: [['text/html', '0.8', 'utf-8'], ['text/markdown', '0.7']], expected: 'html' },
+    { ranges: [['text/markdown', '1'], ['text/markdown', '0', 'utf-8'], ['text/html', '0.5']], expected: 'html' },
+    { ranges: [['text/html', '1'], ['text/html', '0', 'utf-8'], ['text/markdown', '0.5']], expected: 'markdown' },
+    { ranges: [['text/*', '0', 'utf-8'], ['*/*', '1']], expected: null },
+    { ranges: [['text/*', '0.8', 'utf-8'], ['text/html', '0']], expected: 'markdown' },
+    { ranges: [['text/markdown', '0'], ['*/*', '1']], expected: 'html' },
+    { ranges: [['text/html', '1', 'iso-8859-1'], ['text/markdown', '0.5']], expected: 'markdown' },
+    { ranges: [['text/html', '1', 'iso-8859-1']], expected: null },
+    { ranges: [['text/*']], expected: 'html' },
+    { ranges: [['*/*']], expected: 'html' },
+  ];
+  const orderedDecisions = decisions.flatMap((decision) => [decision, { ...decision, ranges: [...decision.ranges].reverse() }]);
+  for (const separator of [';', '; ;', ';\t;\t;']) {
+    for (const trailing of ['', ';', '; ;\t;']) {
+      for (const weightFirst of [false, true]) {
+        for (const quoted of [false, true]) {
+          for (const { ranges, expected } of orderedDecisions) {
+            const accept = ranges.map(([type, quality, charset]) => {
+              const parameters = [];
+              if (charset) parameters.push(`charset=${quoted ? `"${charset.replace('f', '\\f')}"` : charset}`);
+              if (quality !== undefined) parameters[weightFirst ? 'unshift' : 'push'](`q=${quality}`);
+              return `${type}${parameters.length ? `${separator}${parameters.join(separator)}` : ''}${trailing}`;
+            }).join(', ');
+            await request('/nested/geometry/point', accept, expected, expected ? 200 : 406);
+          }
+        }
+      }
+    }
+  }
+  // Every boundary and close-quality pair is checked independently of the
+  // regex generator. Weights are integers here, so HTML's tie rule is explicit.
+  for (const html of [0, 1, 80, 500, 999, 1000]) {
+    for (const markdown of [0, 1, 80, 500, 999, 1000]) {
+      const expected = html === 0 && markdown === 0 ? null : markdown > html ? 'markdown' : 'html';
+      for (const reverse of [false, true]) {
+        const ranges = [`text/html;;q=${(html / 1000).toFixed(3)};;`, `text/markdown; ;q=${(markdown / 1000).toFixed(3)}; ;`];
+        if (reverse) ranges.reverse();
+        await request('/index', ranges.join(', '), expected, expected ? 200 : 406);
+      }
+    }
+  }
+  for (const type of ['html', 'markdown']) {
+    for (const quality of ['1', '1.', '1.0', '1.00', '1.000', '0.1', '0.10', '0.100']) {
+      await request('/index', `text/${type}; ;q=${quality}; ;`, type);
+    }
+    for (const quality of ['0', '0.', '0.0', '0.00', '0.000']) {
+      await request('/index', `text/${type}; ;q=${quality}; ;`, null, 406);
+    }
+  }
+  // Invalid or unsatisfied parameter values must never be mistaken for q,
+  // a media range, a supported charset, or an empty parameter.
+  for (const accept of [
+    'text/html;q=2', 'text/html;q=-1', 'text/html;q=0.0001', 'text/html;q=1.001',
+    'text/html;q=', 'text/html;q="0.8"', 'text/html;q=0;q=1',
+    'text/html;charset=', 'text/html;charset=""', 'text/html;unknown',
+    'text/html;unknown="unterminated,text/markdown;q=1',
+    'text/html;q =1', 'text/html;charset =utf-8',
+    'text/html;q=1;unknown="x,text/markdown;q=1,other"',
+    String.raw`text/html; ;unknown="x\",text/markdown;q=1,other"; ;q=1;`,
+  ]) await request('/index', accept, null, 406);
   for (const name of ['assets/extensionless', 'assets/file.txt', 'llms.txt', 'llms-full.txt', 'robots.txt', 'sitemap.xml', 'nested/geometry/point.json']) {
     const response = await request(`/${name}`, 'application/json', null, 200, false);
     assert.equal(response.body, files[name]);
   }
   for (const uri of ['/missing', '/absent', '/assets/absent']) await request(uri, 'text/markdown', null, 404, false);
   assert.equal((await request('/assets/', 'text/markdown', null, 200, false)).body, files['assets/index.html']);
+  t.diagnostic(`${httpCases} actual Apache HTTP responses verified.`);
 });

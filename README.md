@@ -165,6 +165,9 @@ vary by `Accept`. Qualities use integer thousandths, with exact media ranges
 overriding `text/*`, which overrides `*/*`. Both physical representations must
 exist; missing pairs fail as missing resources. Existing files and directories
 retain their normal Apache behavior. Representation switching links remain explicit.
+Empty parameters (extra semicolons) are ignored. Nonempty media parameters must
+match UTF-8, whether they appear before or after the `q` weight; quoted values
+and escaped characters retain their HTTP meaning.
 The document root `/` retains its normal directory index behavior; `/index` is
 the negotiable home resource.
 

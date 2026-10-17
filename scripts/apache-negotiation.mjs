@@ -12,20 +12,28 @@ export async function apacheConfiguration() {
   const quotedString = String.raw`\x22(?:[^\x22\\\r\n]|\\[\t\x20-\x7e\x80-\xff])*\x22`;
   const fieldItem = `(?:[^\\x22,\\r\\n]|${quotedString})*`;
   const quotedUtf8 = String.raw`\x22${[...'utf-8'].map((character) => String.raw`(?:\\)?${character}`).join('')}\x22`;
-  const charsetParameters = `(?:;\\s*charset\\s*=\\s*(?:utf-8|${quotedUtf8})\\s*)+`;
+  const charsetParameter = `(?:;\\s*charset\\s*=\\s*(?:utf-8|${quotedUtf8})\\s*)`;
   for (const [name, type] of [['HTML', 'html'], ['MARKDOWN', 'markdown']]) {
     rules.push(`# Most specific matching media range determines ${type}'s quality.`, `RewriteRule ^ - [E=DOC_${name}_Q:0]`);
     for (const range of ['\\*/\\*', 'text/\\*', `text/${type}`]) {
       // Parameter-specific ranges override bare ranges of the same media type.
       const start = `^(?:${fieldItem},)*\\s*${range}\\s*`;
-      for (const parameters of ['', charsetParameters]) {
-        const end = `(?:;${fieldItem})?(?:,|$)`;
+      for (const specific of [false, true]) {
         const add = (pattern, quality) => rules.push(`RewriteCond %{HTTP:Accept} "${pattern}" [NC]`, `RewriteRule ^ - [E=DOC_${name}_Q:${quality}]`);
-        add(`${start}${parameters}\\s*(?:,|$)`, '1000');
-        add(`${start}${parameters};\\s*q\\s*=\\s*1(?:\\.0{0,3})?\\s*${end}`, '1000');
-        add(`${start}${parameters};\\s*q\\s*=\\s*0(?:\\.)?\\s*${end}`, '0');
-        for (const digits of [1, 2, 3]) {
-          add(`${start}${parameters};\\s*q\\s*=\\s*0\\.([0-9]{${digits}})\\s*${end}`, `%1${'0'.repeat(3 - digits)}`);
+        const end = '\\s*(?:,|$)';
+        add(`${start}${specific ? `${charsetParameter}+` : ''}${end}`, '1000');
+        // RFC 9110 §12.5.1: q is a weight regardless of its position. Every
+        // other parameter must match the representation, including after q.
+        const positions = specific
+          ? [[`${charsetParameter}+`, `${charsetParameter}*`], [`${charsetParameter}*`, `${charsetParameter}+`]]
+          : [['', '']];
+        for (const [before, after] of positions) {
+          const weighted = (quality) => `${start}${before};\\s*q\\s*=\\s*${quality}\\s*${after}${end}`;
+          add(weighted('1(?:\\.0{0,3})?'), '1000');
+          add(weighted('0(?:\\.)?'), '0');
+          for (const digits of [1, 2, 3]) {
+            add(weighted(`0\\.([0-9]{${digits}})`), `%1${'0'.repeat(3 - digits)}`);
+          }
         }
       }
     }

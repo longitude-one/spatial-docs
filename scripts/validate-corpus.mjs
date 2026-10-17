@@ -11,6 +11,7 @@ import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
 import { parse } from 'parse5';
 import { isPublicResource, isRuntimeResource } from './publication-files.mjs';
+import { apacheConfiguration } from './apache-negotiation.mjs';
 import { baseUrl, siteUrl } from './site-settings.mjs';
 import { verifyNavigation } from './verify-navigation.mjs';
 import { verifyLegalNotice, recordLegalPublication } from './verify-legal-notice.mjs';
@@ -129,6 +130,11 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
   };
   const check = async (file, rule, operation) => { try { return await operation(); } catch (error) { add(file, rule, error); } };
   const files = await check('', 'filesystem', () => corpusFiles(build)) || [];
+  if (files.includes('.htaccess')) await check('.htaccess', 'apache-configuration', async () => {
+    if (await readFile(path.join(build, '.htaccess'), 'utf8') !== await apacheConfiguration()) {
+      throw new Error('Apache configuration differs from the version-controlled generator.');
+    }
+  });
   const manifest = await check('documentation-manifest.json', 'manifest', async () => {
     const value = JSON.parse(await readFile(path.join(metadataDirectory, 'documentation-manifest.json'), 'utf8'));
     if (value.version !== 1 || !Array.isArray(value.documents) || !Array.isArray(value.assets)

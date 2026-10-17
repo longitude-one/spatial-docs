@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { corpusFiles } from './validate-corpus.mjs';
 import { generateLegalNotice } from './generate-legal-notice.mjs';
 import { isPublicResource } from './publication-files.mjs';
+import { installApacheConfiguration } from './apache-negotiation.mjs';
 
 export async function assemblePublication(root, intermediate, destination) {
   const assets = Object.keys(JSON.parse(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8')));
@@ -63,6 +64,7 @@ async function runBuildStep(root, stage, metadata) {
   const intermediate = path.join(root, 'build');
   await execute(root, [path.join(root, 'node_modules/@docusaurus/core/bin/docusaurus.mjs'), 'build', '--out-dir', intermediate]);
   await assemblePublication(root, intermediate, stage);
+  if (process.env.DOCUSAURUS_DEPLOYMENT !== 'development') await installApacheConfiguration(stage);
   await execute(root, [path.join(root, 'scripts/validate-corpus.mjs'), '--assemble', '--build-directory', stage, '--metadata-directory', metadata]);
 }
 

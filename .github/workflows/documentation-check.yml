@@ -43,3 +43,16 @@ jobs:
             .publication-metadata/navigation-validation.json
           include-hidden-files: true
           if-no-files-found: ignore
+
+  apache-negotiation:
+    name: apache-negotiation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install isolated HTTP integration test runtime
+        run: sudo apt-get update && sudo apt-get install --yes apache2-bin
+      - name: Verify actual production htaccess responses
+        run: npm run test:apache

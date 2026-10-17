@@ -98,6 +98,28 @@ Documentation paths are treated as case-sensitive on every supported platform.
 The file names `point.md` and `Point.md` must never be considered equivalent,
 including on case-insensitive local filesystems.
 
+## Production resource negotiation
+
+In production, the extensionless URI (for example, `/shared/index`) identifies
+an abstract documentation resource. Apache internally selects the existing
+`.html` or `.md` representation from the HTTP `Accept` header, without a redirect.
+This virtual endpoint is not a third representation or a source-document link target.
+
+Explicit `.html` and `.md` URLs always select their representation, regardless
+of `Accept`. Existing source and generated link rules continue to require explicit
+representation extensions, including the representation switching links.
+
+Negotiation respects media ranges and quality values. HTML wins equal preferences
+and is the default for absent `Accept` or `*/*`. A quality of zero rejects that
+representation; a request accepting neither representation receives HTTP 406.
+Negotiated responses expose `Vary: Accept` and the selected `text/html` or
+`text/markdown` content type. Both representation files must exist.
+
+The production corpus includes the version-controlled, deterministically generated
+`.htaccess` infrastructure. Apache `MultiViews` is disabled; only the paired HTML
+and Markdown files are eligible. Physical files and directories bypass negotiation.
+GitHub Pages and the local static preview do not implement this server behavior.
+
 ## Required metadata
 
 Every published Markdown document must contain YAML front matter. The metadata

@@ -189,3 +189,11 @@ test('navigation defects block the final corpus gate with an actionable diagnost
   assert.equal(report.status, 'failed');
   assert.ok(report.errors.some((error) => error.rule === 'navigation' && error.message.includes('library/v1/index.html')));
 });
+
+test('publication rejects Apache rules differing from the version-controlled generator', async (t) => {
+  const { root, build } = await fixture(t);
+  await writeFile(path.join(build, '.htaccess'), 'Options +MultiViews\n');
+  await assembleManifest(root, build);
+  const report = await validateCorpus(root, build, options);
+  assert.ok(report.errors.some(({ rule }) => rule === 'apache-configuration'));
+});

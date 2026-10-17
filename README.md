@@ -136,3 +136,49 @@ to the child process. Publication commands continue to require reviewed legal co
 
 Navigation is checked in the final publication gate. See [navigation validation](docs/shared/validating-documentation-navigation.md)
 for the automated report and desktop/mobile browser journeys.
+
+## Production HTTP content negotiation
+
+Production builds generate `public/.htaccess` deterministically from
+`config/apache/htaccess.template` and `scripts/apache-negotiation.mjs`.
+The validated corpus includes this configuration and deployment transfers it
+unchanged to `public_html/.htaccess`. A missing configuration prevents deployment.
+Development Pages builds omit it; GitHub Pages and `npm run serve` do not provide negotiation.
+
+Apache 2.4 needs `mod_rewrite`, `mod_headers`, `mod_mime` and `mod_negotiation`
+(the latter makes the disabled `MultiViews` option available).
+The hosting directory must allow `FileInfo` and `Options=MultiViews` overrides
+and permit rewriting (`FollowSymLinks` or `SymLinksIfOwnerMatch`). No PHP,
+server-side script, variant discovery or per-page server configuration is used.
+
+| Request | Result |
+| --- | --- |
+| `/shared/index.html`, any `Accept` | HTML |
+| `/shared/index.md`, any `Accept` | Markdown |
+| `/shared/index`, `Accept: text/markdown` | Markdown, internal rewrite |
+| `/shared/index`, `Accept: text/html;q=0.8, text/markdown;q=0.9` | Markdown, internal rewrite |
+| `/shared/index`, equal qualities, `*/*`, or absent `Accept` | HTML, internal rewrite |
+| `/shared/index`, `Accept: application/json` or both qualities zero | 406 |
+
+Negotiated responses include `Vary: Accept`; explicit representations do not
+vary by `Accept`. Qualities use integer thousandths, with exact media ranges
+overriding `text/*`, which overrides `*/*`. Both physical representations must
+exist; missing pairs fail as missing resources. Existing files and directories
+retain their normal Apache behavior. Representation switching links remain explicit.
+Empty parameters (extra semicolons) are ignored. Nonempty media parameters must
+match UTF-8, whether they appear before or after the `q` weight; quoted values
+and escaped characters retain their HTTP meaning.
+The document root `/` retains its normal directory index behavior; `/index` is
+the negotiable home resource.
+
+Run the real Apache HTTP integration tests with:
+
+```sh
+npm run test:apache
+```
+
+The test starts an isolated unprivileged Apache on a temporary loopback port,
+uses the generated production `.htaccess`, checks response bodies and headers,
+and stops the server afterward. CI runs the same suite independently of hosting.
+On Linux, install `apache2-bin`; on macOS the system Apache is used.
+Override `APACHE_HTTPD` and `APACHE_MODULES` for a different installation.

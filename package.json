@@ -13,7 +13,8 @@
     "stop": "node scripts/stop-server.mjs",
     "validate:assets": "node scripts/generate-legal-notice.mjs && node scripts/export-markdown.mjs --validate-assets",
     "validate:corpus": "node scripts/validate-corpus.mjs",
-    "validate:determinism": "node scripts/check-determinism.mjs"
+    "validate:determinism": "node scripts/check-determinism.mjs",
+    "test:apache": "APACHE_INTEGRATION=1 node --test tests/apache-negotiation.test.mjs"
   },
   "engines": {
     "node": ">=20.0",

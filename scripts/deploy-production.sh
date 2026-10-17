@@ -14,7 +14,7 @@ if [[ $DEPLOY_PATH != /* || $DEPLOY_PATH =~ ^/+$ || ! $SSH_PORT =~ ^[0-9]+$ ||
 fi
 
 site=${1:-public}
-for resource in index.html index.md llms.txt; do
+for resource in index.html index.md llms.txt .htaccess; do
   if [[ ! -e $site/$resource ]]; then
     echo 'The complete verified site is required before deployment.' >&2
     exit 1
@@ -67,6 +67,7 @@ tar -C "$site" -cf - . | remote '
   test -f public_html.next/index.html
   test -f public_html.next/index.md
   test -f public_html.next/llms.txt
+  test -f public_html.next/.htaccess
   test ! -e public_html.next/markdown
 '
 

@@ -132,6 +132,20 @@ DocumentRoot "${site}"
       ['text/html;q=0.8, text/markdown;charset=utf-8;q=0.9', 'markdown'],
       ['text/html;charset=iso-8859-1', null, 406],
       ['text/html;unknown=value', null, 406],
+      // A media-type-looking substring in quoted parameters is never a range.
+      ['text/html;foo="x,text/markdown;q=1,other"', null, 406],
+      ['text/html;foo="x,text/markdown;q=1,other", text/html;q=0.8', 'html'],
+      ['text/html;foo="x,text/markdown;q=1,other", text/markdown;q=0.7', 'markdown'],
+      ['application/json;foo="text/html, text/markdown", */*;q=0', null, 406],
+      [String.raw`text/html;foo="x\",text/markdown;q=1,other"`, null, 406],
+      [String.raw`text/html;foo="x\",text/markdown;q=1,other", text/html`, 'html'],
+      [String.raw`application/json;foo="x\\", text/markdown`, 'markdown'],
+      [String.raw`application/json;foo="x\,text/markdown;q=1,other"`, null, 406],
+      ['text/html;q=0.8;foo="x,text/markdown;q=1,other"', 'html'],
+      [String.raw`text/html;q=0.8;foo="x\",text/markdown;q=1,other"`, 'html'],
+      ['text/markdown;charset="utf-8"', 'markdown'],
+      [String.raw`text/markdown;charset="ut\f-8"`, 'markdown'],
+      [String.raw`text/markdown;charset="\u\t\f\-\8"`, 'markdown'],
       ['text/markdown;q=1, text/markdown;charset=utf-8;q=0.5, text/html;q=0.8', 'html'],
     ]) await request(uri, accept, expected, status);
     await request(`${uri}.html`, 'text/markdown', 'html', 200, false);

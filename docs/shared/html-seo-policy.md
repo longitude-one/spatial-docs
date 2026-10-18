@@ -25,7 +25,10 @@ GitHub Pages cannot serve the production Apache response headers; the global HTM
 ## Metadata and semantics
 
 Docusaurus derives titles, descriptions, Open Graph metadata and the principal H1 from document metadata.
-The HTML representation declares English; the current legal notice contains both English and French.
+The HTML language follows the source filename: `.fr.md` produces `lang="fr"`, while `.en.md` and other documentation sources produce `lang="en"`.
+The English interface retains an English language boundary, and the article declares its own language explicitly.
+French and English legal notices are separate pages linked with 🇬🇧 English and 🇫🇷 Français controls.
+Published translations expose reciprocal production `hreflang` links and language-appropriate Open Graph metadata.
 Authors must preserve a coherent heading hierarchy and supply informative image alternative text when appropriate.
 Navigation and breadcrumbs retain explicit `.html` resource paths.
 

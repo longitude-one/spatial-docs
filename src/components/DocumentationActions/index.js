@@ -3,7 +3,7 @@ import React from 'react';
 export default function DocumentationActions({ actions }) {
   if (!actions) return null;
   return (
-    <p className="documentation-actions" role="group" aria-label="Documentation actions">
+    <p className="documentation-actions" role="group" aria-label="Documentation actions" lang="en">
       <a href={actions.markdown} rel="alternate" type="text/markdown">View Markdown version</a>
       {actions.edit && (
         <a href={actions.edit} target="_blank" rel="noopener noreferrer"

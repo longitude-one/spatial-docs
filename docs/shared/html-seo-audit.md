@@ -17,7 +17,7 @@ Lighthouse subsequently compared an isolated reconstruction of the unchanged ini
 | Canonical host | 79 pages identified the GitHub Pages host in production. | Production configuration supplies the official canonical base. |
 | Open Graph identity | URLs inherited the same incorrect host. | Centralized production identity. |
 | H1 | All 79 pages had one H1. | Preserved and enforced. |
-| Language and descriptions | English language and source-derived descriptions present. | Preserved and enforced. |
+| Language and descriptions | French legal notice incorrectly declared English; descriptions matched source metadata. | Source language and description fidelity enforced. |
 | JSON-LD | Breadcrumb data present; no centralized site/article classification. | Site identity, article and explicit API classification added. |
 | Robots | No deliberate `robots.txt`. | Crawlable resources and production sitemap announcement. |
 | Sitemap | Generated from the incorrect host and provider route list. | Inventory-derived canonical documentation entries only. |
@@ -66,7 +66,13 @@ No browser or Lighthouse dependency is introduced into the application or mandat
 
 The complete production and preproduction builds enforce the [SEO policy](./html-seo-policy.md).
 Mutation tests exercise canonical hosts and suffixes, required metadata, heading hierarchy, language, JSON-LD, sitemap exclusions and environment policy.
-Apache integration tests verify 1,267 real HTTP responses, including continued representation access and indexing directives.
+Apache integration tests verify 1,275 real HTTP responses, including continued representation access and indexing directives.
+The French notice is now `legal-notice.fr.md`, with an English translation at `legal-notice.en.md`.
+Both representations and translations are included in legal integrity checks and the documentation inventory.
+All `.fr.md` pages declare French HTML and article content, while English interface text keeps an explicit English boundary.
+This corrects the language defect identified during independent review of the initial Story 39 implementation.
+The former unqualified legal-notice identity is retired as explicitly requested; links now target the language-qualified pages.
+
 Preproduction keeps its own local search index: public search-engine exclusion must not disable user search.
 
 Representative generated JSON-LD is checked with the official Schema.org validator.

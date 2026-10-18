@@ -22,12 +22,12 @@ async function fixture(t, mode = '') {
     'index.md': 'new Markdown', '.nojekyll': 'complete tree', '.htaccess': 'Options -MultiViews\n',
   })) await writeFile(join(build, name), content);
   const hashes = {};
-  for (const file of ['legal-notice.html', 'legal-notice.md']) {
+  for (const file of ['legal-notice.fr.html', 'legal-notice.fr.md', 'legal-notice.en.html', 'legal-notice.en.md']) {
     await writeFile(join(build, file), 'TEST ONLY simulated transport artifact');
     hashes[file] = createHash('sha256').update('TEST ONLY simulated transport artifact').digest('hex');
   }
   await mkdir(join(root, '.publication-metadata'));
-  await writeFile(join(root, '.publication-metadata/legal-publication.json'), JSON.stringify({ version: 1, environment: 'production', approved: true, testFixture: false, hashes }));
+  await writeFile(join(root, '.publication-metadata/legal-publication.json'), JSON.stringify({ version: 2, environment: 'production', approved: true, testFixture: false, hashes }));
   for (const suffix of ['', '.old', '.next']) {
     await mkdir(join(destination, `public_html${suffix}`));
     await writeFile(join(destination, `public_html${suffix}`, 'version'), suffix || 'current');

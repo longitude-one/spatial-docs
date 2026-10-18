@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { generateSeoResources, verifySeo } from '../scripts/seo-publication.mjs';
 import { structuredDataType, pageStructuredData } from '../scripts/seo-policy.mjs';
+import { localizedAlternates } from '../scripts/document-language.mjs';
 
 const urls = { production: 'https://official.example/docs/', development: false };
 async function fixture(t, development = false) {
@@ -21,6 +22,7 @@ async function fixture(t, development = false) {
 <meta name="description" content="Explore spatial libraries.">
 <meta property="og:title" content="Spatial documentation"><meta property="og:description" content="Explore spatial libraries.">
 <meta property="og:url" content="https://official.example/docs/index.html">
+<meta property="og:locale" content="en">
 <meta property="og:image" content="https://official.example/docs/assets/images/social-card.png">
 ${development ? '<meta name="robots" content="noindex, follow">' : ''}
 <script type="application/ld+json">${JSON.stringify(schema)}</script></head>
@@ -34,7 +36,7 @@ test('classification distinguishes site, articles, references and navigation res
   assert.equal(structuredDataType('index.html'), 'WebSite');
   assert.equal(structuredDataType('concepts/geometries.html'), 'TechArticle');
   assert.equal(structuredDataType('spatial-types/v1/validators.html'), 'APIReference');
-  for (const resource of ['legal-notice.html', 'shared/french-website-legal-review.html', 'spatial-core/index.html', 'spatial-core/roadmap.html']) {
+  for (const resource of ['legal-notice.fr.html', 'legal-notice.en.html', 'shared/french-website-legal-review.html', 'spatial-core/index.html', 'spatial-core/roadmap.html']) {
     assert.equal(structuredDataType(resource), null);
   }
 });
@@ -96,3 +98,38 @@ for (const duplicate of ['title', 'description']) test(`rejects duplicate page $
   await generateSeoResources(root, directory, config);
   await assert.rejects(verifySeo(root, directory, config), new RegExp(`duplicate ${duplicate}`));
 });
+
+for (const development of [false, true]) {
+  for (const resource of ['legal-notice.fr.html', 'guide.fr.html', 'legal-notice.en.html']) {
+    test(`validates source-derived language for ${resource} in ${development ? 'preproduction' : 'production'}`, async (t) => {
+      const { root, directory, config, html } = await fixture(t, development);
+      const french = resource.includes('.fr.');
+      const title = french ? 'Document français' : 'English legal notice';
+      const description = french ? 'Présentation du document français.' : 'Details about the English legal notice.';
+      const markdown = resource.replace(/\.html$/, '.md');
+      await writeFile(path.join(root, '.generated-markdown', markdown), `---\ntitle: ${title}\ndescription: ${description}\n---\n`);
+      const data = pageStructuredData(resource, title, description, urls.production);
+      const translated = html.replaceAll('Spatial documentation', title).replaceAll('Explore spatial libraries.', description)
+        .replaceAll('index.html', resource).replace('<html lang="en">', `<html lang="${french ? 'fr' : 'en'}">`)
+        .replace('property="og:locale" content="en"', `property="og:locale" content="${french ? 'fr' : 'en'}"`)
+        .replace('</head>', localizedAlternates(resource, [markdown], urls.production)
+          .map(({ language, url }) => `<link rel="alternate" hreflang="${language}" href="${url}">`).join('') + '</head>')
+        .replace('<body>', `<body lang="en"><div class="theme-doc-markdown markdown" lang="${french ? 'fr' : 'en'}">`)
+        .replace('</body>', '</div></body>')
+        .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/,
+          data ? `<script type="application/ld+json">${JSON.stringify(data)}</script>` : '');
+      const file = path.join(directory, resource);
+      await writeFile(file, translated);
+      await generateSeoResources(root, directory, config);
+      assert.equal((await verifySeo(root, directory, config)).pages, 2);
+      await writeFile(file, translated.replace(`<html lang="${french ? 'fr' : 'en'}">`, `<html lang="${french ? 'en' : 'fr'}">`));
+      await assert.rejects(verifySeo(root, directory, config), /expected document language/);
+      if (french) {
+        await writeFile(file, translated.replace('<body lang="en">', '<body lang="fr">'));
+        await assert.rejects(verifySeo(root, directory, config), /English language boundary/);
+        await writeFile(file, translated.replace('class="theme-doc-markdown markdown" lang="fr"', 'class="theme-doc-markdown markdown" lang="en"'));
+        await assert.rejects(verifySeo(root, directory, config), /French article/);
+      }
+    });
+  }
+}

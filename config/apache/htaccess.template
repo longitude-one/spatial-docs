@@ -26,6 +26,8 @@ AddOutputFilterByType DEFLATE text/html text/css text/javascript application/jav
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [END]
+# Language suffixes belong to resource names, not to representation extensions.
+RewriteCond %{REQUEST_URI} !\.(?:fr|en)$
 RewriteRule (^|/)[^/]*\. - [END]
 
 # An endpoint requires its complete pair; no variant discovery or fallback.

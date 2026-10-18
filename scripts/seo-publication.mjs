@@ -5,6 +5,7 @@ import sax from 'sax';
 import { load } from 'js-yaml';
 import { publicationUrls } from './llms-config.mjs';
 import { pageStructuredData } from './seo-policy.mjs';
+import { documentLanguage, localizedAlternates } from './document-language.mjs';
 
 function walk(node, visit) {
   visit(node);
@@ -69,7 +70,21 @@ export async function verifySeo(root, directory, urls = publicationUrls()) {
       require(level <= previous + 1, `${file}: skipped heading level before ${text(node)}`);
       previous = level;
     }
-    require(elements('html')[0]?.attrs.lang === 'en', `${file}: expected English document language`);
+    const language = documentLanguage(md);
+    require(elements('html')[0]?.attrs.lang === language, `${file}: expected document language ${language}`);
+    require(meta('og:locale')[0] === language, `${file}: Open Graph locale differs from document language`);
+    if (/\.(?:fr|en)\.html$/.test(file)) {
+      const expectedAlternates = localizedAlternates(file, documents, urls.production);
+      const alternates = elements('link').filter(({ attrs }) => attrs.rel === 'alternate' && attrs.hreflang)
+        .map(({ attrs }) => ({ language: attrs.hreflang, url: attrs.href }));
+      const sort = (values) => [...values].sort((a, b) => a.language.localeCompare(b.language));
+      require(JSON.stringify(sort(alternates)) === JSON.stringify(sort(expectedAlternates)), `${file}: incorrect published language alternatives`);
+    }
+    if (language === 'fr') {
+      require(elements('body')[0]?.attrs.lang === 'en', `${file}: site interface must retain its English language boundary`);
+      require(elements('div').some(({ attrs }) => attrs.class?.split(/\s+/).includes('theme-doc-markdown') && attrs.lang === 'fr'),
+        `${file}: French article must declare its language inside the English interface`);
+    }
     const noindex = meta('robots').some((value) => /\bnoindex\b/.test(value));
     require(noindex === urls.development, `${file}: incorrect environment indexing directive`);
     const expectedData = pageStructuredData(file, metadata.title, metadata.description, urls.production);

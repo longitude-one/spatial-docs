@@ -49,9 +49,11 @@ Keep standards PDFs and third-party copied text out of publication unless their 
 
 ## Environment configuration
 
-`templates/legal-notice.md` is the shared source for the generated `docs/legal-notice.md`, its portable Markdown representation and its HTML page.
+`templates/legal-notice.fr.md` and `templates/legal-notice.en.md` generate the French and English legal notices from one approved configuration.
+Their generated sources are `docs/legal-notice.fr.md` and `docs/legal-notice.en.md`, each with matching portable Markdown and HTML representations.
 The generated source and legal assets are ignored by Git. Never commit actual publisher contact details or copy one environment's facts into another.
-Every published HTML page, including search and 404 pages, links to `/legal-notice.html` in its footer.
+Every published HTML page, including search and 404 pages, links to `/legal-notice.fr.html` and `/legal-notice.en.html` in its footer.
+Each notice links to its translation; the French page uses a 🇬🇧 English link. The HTML language follows the `.fr.md` / `.en.md` source suffix.
 
 Configure the following legal values as GitHub Actions **repository variables**, except `LEGAL_CONFIGURATION_ENVIRONMENT`.
 Configure that variable separately in each GitHub environment: `development` in `github-pages`, and `production` in `production`.
@@ -109,7 +111,8 @@ This completed implementation review uses artificial data. The publisher's separ
 - [ ] Review privacy information and local-storage behavior; confirm that no unassessed analytics or tracking was added.
 - [ ] Review documentation and asset provenance, full dependency notices and every missing-license warning; resolve any distribution restriction.
 - [ ] Confirm accessibility scope against the official sources above; do not assert RGAA conformance without an appropriate audit.
-- [ ] Inspect `/legal-notice.html` and `/legal-notice.md` from the same final artifact for accuracy and check the footer on ordinary, search and 404 pages.
+- [ ] Inspect both `/legal-notice.fr.html` / `/legal-notice.fr.md` and `/legal-notice.en.html` / `/legal-notice.en.md` from the same final artifact for accuracy.
+  Check the footer on ordinary, search and 404 pages.
 - [ ] Record the reviewer, date, environment and evidence in the operational publication record.
   Set the repository variable `LEGAL_PUBLICATION_APPROVED=true` after both environments are reviewed.
 

@@ -10,7 +10,7 @@ const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatte
   .use(remarkStringify, { bullet: '-', fences: true, listItemIndent: 'one' });
 // This editorial configuration follows the site's overview, reference and library navigation.
 export const llmsFullOrder = ['index.md', 'about/', 'shared/', 'standards/', 'concepts/', 'dbms/',
-  ...libraryCategories.flatMap(({ libraries }) => libraries.map(([name]) => `${name}/`)), 'legal-notice.md'];
+  ...libraryCategories.flatMap(({ libraries }) => libraries.map(([name]) => `${name}/`)), 'legal-notice.fr.md', 'legal-notice.en.md'];
 const text = (value) => ({ type: 'text', value });
 const paragraph = (value) => ({ type: 'paragraph', children: [text(value)] });
 function walk(node, visit) {

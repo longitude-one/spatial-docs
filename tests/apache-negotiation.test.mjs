@@ -37,6 +37,8 @@ test('actual production .htaccess negotiates HTTP responses', { skip: !enabled, 
     'llms.txt': 'LLM index', 'llms-full.txt': 'Full LLM index', 'robots.txt': 'robots', 'sitemap.xml': '<xml/>',
     'assets/js/main.123abc.js': 'console.log("cached runtime");',
     'compressible.html': '<p>Compressible documentation text.</p>'.repeat(100),
+    'legal-notice.fr.html': '<h1>Mentions légales</h1>', 'legal-notice.fr.md': '# Mentions légales',
+    'legal-notice.en.html': '<h1>Legal notice</h1>', 'legal-notice.en.md': '# Legal notice',
   };
   for (const [name, content] of Object.entries(files)) {
     await mkdir(path.dirname(path.join(site, name)), { recursive: true });
@@ -260,6 +262,12 @@ DocumentRoot "${site}"
     const response = await request(`/${name}`, 'application/json', null, 200, false);
     assert.equal(response.body, files[name]);
     if (['llms.txt', 'llms-full.txt'].includes(name)) assert.match(response.headers['content-type'], /^text\/plain; charset=UTF-8$/i);
+  }
+  for (const language of ['fr', 'en']) {
+    for (const representation of ['html', 'markdown']) {
+      await request(`/legal-notice.${language}`, `text/${representation}`, representation);
+      await request(`/legal-notice.${language}.${representation === 'html' ? 'html' : 'md'}`, 'application/json', representation, 200, false);
+    }
   }
   for (const uri of ['/missing', '/absent', '/assets/absent']) await request(uri, 'text/markdown', null, 404, false);
   assert.equal((await request('/assets/', 'text/markdown', null, 200, false)).body, files['assets/index.html']);

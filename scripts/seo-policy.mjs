@@ -1,3 +1,4 @@
+import { documentLanguage } from './document-language.mjs';
 // Explicit classification keeps API semantics independent from directory naming.
 const apiReferences = new Set([
   'spatial-types/v1/validators.html',
@@ -6,7 +7,7 @@ const apiReferences = new Set([
 ]);
 export function structuredDataType(resource) {
   if (resource === 'index.html') return 'WebSite';
-  if (['legal-notice.html', 'shared/french-website-legal-review.html'].includes(resource)
+  if (['legal-notice.fr.html', 'legal-notice.en.html', 'shared/french-website-legal-review.html'].includes(resource)
     || /(?:^|\/)(?:index|roadmap)\.html$/.test(resource)) return null;
   return apiReferences.has(resource) ? 'APIReference' : 'TechArticle';
 }
@@ -17,6 +18,6 @@ export function pageStructuredData(resource, title, description, productionUrl) 
     '@context': 'https://schema.org', '@type': type,
     [type === 'WebSite' ? 'name' : 'headline']: title,
     description, url: new URL(resource, productionUrl.replace(/\/$/, '') + '/').href,
-    inLanguage: resource === 'legal-notice.html' ? 'fr' : 'en',
+    inLanguage: documentLanguage(resource),
   };
 }

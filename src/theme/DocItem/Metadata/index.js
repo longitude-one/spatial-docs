@@ -4,6 +4,7 @@ import Head from '@docusaurus/Head';
 import { useDoc } from '@docusaurus/plugin-content-docs/client';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { pageStructuredData } from '../../../../scripts/seo-policy.mjs';
+import { documentLanguage } from '../../../../scripts/document-language.mjs';
 
 export default function Metadata() {
   const { metadata } = useDoc();
@@ -15,6 +16,8 @@ export default function Metadata() {
   return <>
     <OriginalMetadata />
     <Head>
+      <html lang={documentLanguage(resource)} />
+      <body lang="en" />
       <link rel="canonical" href={canonical} />
       <meta property="og:url" content={canonical} />
       {data && <script type="application/ld+json">{JSON.stringify(data).replaceAll('<', '\\u003c')}</script>}

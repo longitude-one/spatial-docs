@@ -79,10 +79,17 @@ export function generateLlmsFull(pages, { base, production, development = false,
       if (!image && /\.(?:html?|mdx)$/i.test(resource)) throw new Error(`Non-Markdown document link: ${value}`);
       return target.href;
     };
+    // Hex-encoded source paths give each document a stable, collision-free GFM
+    // footnote namespace, including when labels are reused across documents.
+    const footnotePrefix = `doc-${Buffer.from(markdownPath, 'utf8').toString('hex')}-`;
     const definitions = new Map();
     walk(tree, (node) => { if (node.type === 'definition') definitions.set(node.identifier, node); });
     walk(tree, (node) => {
       if (node.type === 'html' || node.type === 'yaml') throw new Error(`Non-portable content in ${markdownPath}`);
+      if (node.type === 'footnoteDefinition' || node.type === 'footnoteReference') {
+        node.identifier = footnotePrefix + node.identifier;
+        node.label = node.identifier;
+      }
       if (node.type === 'linkReference' || node.type === 'imageReference') {
         const definition = definitions.get(node.identifier);
         if (!definition) throw new Error(`Undefined reference in ${markdownPath}: ${node.identifier}`);

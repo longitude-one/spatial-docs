@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
 import { generateLlmsFull, validateLlmsFull } from '../scripts/llms-full.mjs';
 
 const options = { base: 'https://example.test/project/', production: 'https://official.test/', assets: ['assets/model.svg'] };
@@ -94,4 +98,36 @@ Published content.
   assert.equal(validateLlmsFull(result, [published], options), true);
   assert.throws(() => generateLlmsFull([{ ...published,
     content: published.content.replace('[View HTML version]', '[Different link]') }], options));
+});
+
+test('footnotes with the same label resolve to their own document content after rendering', () => {
+  const pages = [
+    page('one.md', 'First[^note] and again[^note].\n\n[^note]: one footnote with [other](two.md)'),
+    page('two.md', 'Second[^note].\n\n[^note]: two footnote'),
+  ];
+  const result = generateLlmsFull(pages, options);
+  assert.equal(result, generateLlmsFull([...pages].reverse(), options));
+  assert.equal(validateLlmsFull(result, pages, options), true);
+  const renderer = unified().use(remarkParse).use(remarkGfm).use(remarkRehype);
+  const rendered = renderer.runSync(renderer.parse(result));
+  const references = [];
+  const definitions = new Map();
+  function visit(node) {
+    if (node.properties?.dataFootnoteRef) references.push(node.properties.href.slice(1));
+    if (node.tagName === 'li' && node.properties?.id) definitions.set(node.properties.id, node);
+    for (const child of node.children || []) visit(child);
+  }
+  const text = (node) => node.type === 'text' ? node.value : (node.children || []).map(text).join('');
+  visit(rendered);
+  assert.equal(references.length, 3);
+  assert.equal(definitions.size, 2);
+  assert.equal(references[0], references[1]);
+  assert.notEqual(references[0], references[2]);
+  assert.match(text(definitions.get(references[0])), /one footnote/);
+  assert.match(text(definitions.get(references[2])), /two footnote/);
+  assert.match(result, /https:\/\/example.test\/project\/two.md/);
+  // Removing the document namespaces recreates the semantic collision and must fail validation.
+  const collided = result.replace(/doc-[a-f0-9]+-note/g, 'note');
+  assert.notEqual(collided, result);
+  assert.throws(() => validateLlmsFull(collided, pages, options));
 });

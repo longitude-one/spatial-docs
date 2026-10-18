@@ -56,8 +56,10 @@ notes and unpublished sources must not be included.
 The aggregate uses generated Markdown, normalizes each document's title,
 description and absolute source URL, and rebases documentation links, fragments
 and shared assets to the active deployment. The leading HTML representation
-switch is omitted. Code examples retain their content. Front matter, manifests,
-infrastructure and the two machine entry points are excluded from aggregation.
+switch is omitted. Code examples retain their content. Footnote references and
+definitions receive deterministic document namespaces, so reused labels retain
+their own note content. Front matter, manifests, infrastructure and the two machine
+entry points are excluded from aggregation.
 
 Development variants identify themselves as non-official and advertise the
 production documentation separately. Their document links stay within the

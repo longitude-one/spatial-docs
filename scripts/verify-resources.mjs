@@ -8,7 +8,10 @@ import remarkGfm from 'remark-gfm';
 import remarkFrontmatter from 'remark-frontmatter';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { verifyLinkTarget } from './link-target-policy.mjs';
-import { verifyRepresentationLinks } from './representation-links.mjs';
+import { verifyLlmsIndex } from './llms-index.mjs';
+import { validateLlmsFull } from './llms-full.mjs';
+import { publicationUrls } from './llms-config.mjs';
+import { verifyRepresentationLinks, verifyDiscoveryLink } from './representation-links.mjs';
 import { verifyPublishedAssets } from './verify-assets.mjs';
 import { verifyMarkdownReachability } from './markdown-reachability.mjs';
 
@@ -63,7 +66,7 @@ function inspect(content, html) {
   return { links, ids };
 }
 
-export async function verifyResources(root, build = path.join(root, 'public'), { writeMapping = true, metadataDirectory = path.join(root, '.publication-metadata') } = {}) {
+export async function verifyResources(root, build = path.join(root, 'public'), { writeMapping = true, machineUrls, metadataDirectory = path.join(root, '.publication-metadata') } = {}) {
   const config = (await import(`${path.join(root, 'docusaurus.config.js')}?verify`)).default;
   const origin = new URL(config.url).origin;
   const available = new Set((await files(build)).map((file) => path.relative(build, file).split(path.sep).join('/')));
@@ -92,7 +95,7 @@ export async function verifyResources(root, build = path.join(root, 'public'), {
       }
       markdownDocuments.set(sourcePath, { tree, anchors: documentationAnchors(tree, sourcePath, 'public/') });
     }
-    if (/\.(html|md)$/.test(file) || file === 'llms.txt') {
+    if (/\.(html|md)$/.test(file)) {
       parsed.set(file, inspect(await readFile(path.join(build, file), 'utf8'), file.endsWith('.html')));
     }
   }
@@ -150,6 +153,7 @@ export async function verifyResources(root, build = path.join(root, 'public'), {
     const htmlUrl = `${config.baseUrl}${html}`;
     resolve(htmlUrl, '');
     resolve(href, '');
+    verifyDiscoveryLink(await readFile(htmlFile, 'utf8'), markdown, available);
     verifyRepresentationLinks(await readFile(htmlFile, 'utf8'), await readFile(path.join(build, markdown), 'utf8'), markdown);
     pages.push({ html: htmlUrl, markdown: href });
   }
@@ -159,12 +163,10 @@ export async function verifyResources(root, build = path.join(root, 'public'), {
     for (const href of links) resolve(href, from);
   }
   const expected = pages.map((page) => page.markdown).sort();
-  const listed = parsed.get('llms.txt')?.links.slice().sort();
   const exported = [...available].filter((file) => file.endsWith('.md'))
     .map((file) => `${config.baseUrl}${file}`).sort();
-  if (!expected.length || JSON.stringify(expected) !== JSON.stringify(listed)
-    || JSON.stringify(expected) !== JSON.stringify(exported)) {
-    throw new Error('llms.txt and Markdown exports must match the publishable Docusaurus pages exactly.');
+  if (!expected.length || JSON.stringify(expected) !== JSON.stringify(exported)) {
+    throw new Error('Markdown exports must match the publishable Docusaurus pages exactly.');
   }
   for (const file of available) {
     if (!file.endsWith('.html') || representationPaths.has(file)) continue;
@@ -178,6 +180,11 @@ export async function verifyResources(root, build = path.join(root, 'public'), {
     });
     if (documentationPage) throw new Error(`HTML documentation outside the one-to-one representation mapping: ${file}.`);
   }
+  const urls = machineUrls ?? publicationUrls();
+  await verifyLlmsIndex(build, available, urls);
+  const fullPages = await Promise.all([...available].filter((file) => file.endsWith('.md')).map(async (markdownPath) => ({ markdownPath, content: await readFile(path.join(build, markdownPath), 'utf8') })));
+  const fullAssets = Object.keys(JSON.parse(await readFile(path.join(metadataDirectory, 'asset-manifest.json'), 'utf8')));
+  validateLlmsFull(new TextDecoder('utf-8', { fatal: true }).decode(await readFile(path.join(build, 'llms-full.txt'))), fullPages, { ...urls, assets: fullAssets });
   await verifyPublishedAssets(root, build, markdownDocuments, config.baseUrl, config.url, metadataDirectory);
   verifyMarkdownReachability(markdownDocuments);
   if (writeMapping) await writeFile(path.join(metadataDirectory, 'markdown-mapping.json'), `${JSON.stringify(pages, null, 2)}\n`);

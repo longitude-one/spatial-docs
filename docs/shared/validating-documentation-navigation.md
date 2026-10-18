@@ -36,7 +36,7 @@ node scripts/verify-navigation.mjs
 ```
 
 The fictional legal wrapper is for local/CI verification only. Follow the [legal configuration checklist](./french-website-legal-review.md) before publication.
-For development, set `DOCUSAURUS_DEPLOYMENT=development` and `URL_PRODUCTION=https://www.longitude-one.fr` consistently for build, verifier and preview.
+For development, set `DOCUSAURUS_DEPLOYMENT=development` , `URL_PRODUCTION` and `URL_PREPRODUCTION` consistently for build, verifier and preview.
 Finish a build before previewing it; do not replace the preview's artifact with a different base-URL build during a browser journey.
 
 ## Repeatable browser journeys

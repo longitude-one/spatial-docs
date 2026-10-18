@@ -2,6 +2,7 @@
 # Apache 2.4: mod_rewrite, mod_headers, mod_mime; AllowOverride FileInfo Options=MultiViews.
 Options -MultiViews
 AddType text/html .html
+AddType "text/plain; charset=UTF-8" .txt
 AddType "text/markdown; charset=UTF-8" .md
 AddDefaultCharset UTF-8
 RewriteEngine On

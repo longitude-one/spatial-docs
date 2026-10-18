@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyRepresentationLinks} from '../scripts/representation-links.mjs';
+import {verifyRepresentationLinks, verifyDiscoveryLink} from '../scripts/representation-links.mjs';
 import {parseRepresentationFrontMatter} from '../scripts/representation-routes.mjs';
 import path from 'node:path';
 
@@ -8,6 +8,45 @@ const markdown = '---\ntitle: Point\ndescription: Point page\n---\n\n[View HTML 
 const link = '<a href="./point.md" rel="alternate" type="text/markdown">View Markdown version</a>';
 const metadata = '<link rel="alternate" type="text/markdown" href="./point.md">';
 const html = `<head>${metadata}</head><body><h1>Point</h1><p>${link}</p><p>Body</p></body>`;
+
+const discovery = '<link rel="describedby" type="text/plain" href="../llms.txt">';
+const discoverableHtml = html.replace('</head>', `${discovery}</head>`);
+
+test('discovery resolves to the deployment root at every document depth in both environments', () => {
+  for (const base of ['https://www.longitude-one.fr/', 'https://longitude-one.github.io/spatial-docs/']) {
+    for (const source of ['index.md', 'nested/index.md', 'spatial-core/v1/geometry/point.md']) {
+      const href = '../'.repeat(source.split('/').length - 1) + 'llms.txt';
+      const generated = html.replace('</head>', `<link rel="describedby" type="text/plain" href="${href}"></head>`);
+      verifyDiscoveryLink(generated, source, new Set(['llms.txt']));
+      assert.equal(new URL(href, new URL(source.replace(/\.md$/, '.html'), base)).href, `${base}llms.txt`);
+    }
+  }
+});
+
+for (const [name, changedHtml, corpus = ['llms.txt']] of [
+  ['missing discovery', html],
+  ['duplicate discovery', discoverableHtml.replace(discovery, discovery + discovery)],
+  ['competing discovery', discoverableHtml.replace(discovery, discovery + discovery.replace('llms.txt', 'llms-full.txt'))],
+  ['full context target', discoverableHtml.replace('../llms.txt', '../llms-full.txt')],
+  ['wrong depth', discoverableHtml.replace('../llms.txt', 'llms.txt')],
+  ['absolute target', discoverableHtml.replace('../llms.txt', 'https://www.longitude-one.fr/llms.txt')],
+  ['root relative target', discoverableHtml.replace('../llms.txt', '/llms.txt')],
+  ['target fragment', discoverableHtml.replace('../llms.txt', '../llms.txt#index')],
+  ['wrong media type', discoverableHtml.replace('type="text/plain"', 'type="text/markdown"')],
+  ['missing media type', discoverableHtml.replace('type="text/plain"', '')],
+  ['body metadata', discoverableHtml.replace(discovery, '').replace('<body>', `<body>${discovery}`)],
+  ['anchor relationship', discoverableHtml.replace(discovery, discovery.replace('<link ', '<a ') + '</a>')],
+  ['missing corpus target', discoverableHtml, ['llms-full.txt']],
+]) {
+  test(`rejects ${name}`, () => {
+    assert.throws(() => verifyDiscoveryLink(changedHtml, 'nested/point.md', corpus), /describedby/);
+  });
+}
+
+test('discovery and Markdown alternate relations coexist', () => {
+  verifyDiscoveryLink(discoverableHtml, 'nested/point.md', ['llms.txt']);
+  verifyRepresentationLinks(discoverableHtml, markdown, 'nested/point.md');
+});
 
 test('validates direct sibling links for nested documents', () => {
   verifyRepresentationLinks(html, markdown, 'nested/point.md');

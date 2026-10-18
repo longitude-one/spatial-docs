@@ -1,6 +1,7 @@
 export const isDevelopment = process.env.DOCUSAURUS_DEPLOYMENT === 'development';
 export const siteUrl = 'https://longitude-one.github.io';
-export const baseUrl = isDevelopment ? '/spatial-docs/' : '/';
+export const deploymentBasePath = (development) => development ? '/spatial-docs/' : '/';
+export const baseUrl = deploymentBasePath(isDevelopment);
 export function developmentNotice(value = process.env.URL_PRODUCTION) {
   if (!value?.trim()) throw new Error('URL_PRODUCTION is required for development publication.');
   let url;

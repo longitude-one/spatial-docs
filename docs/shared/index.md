@@ -30,3 +30,6 @@ defines supported formats, validation, the generated manifest and atomic publica
 
 [Validating generated documentation](./validating-generated-documentation.md)
 explains the final publication gate, integrity manifests, reports and reproducibility checks.
+
+[HTML search indexing and SEO validation](./html-seo-policy.md) describes canonical URLs, alternate representation indexing,
+structured data and publication checks. The [HTML SEO audit](./html-seo-audit.md) records the Story 39 assessment.

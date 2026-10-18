@@ -6,6 +6,8 @@ custom_edit_url: null
 
 {{BUILD_NOTICE}}
 
+[🇬🇧 English](./legal-notice.en.md)
+
 ## Éditeur et directeur de la publication
 
 LongitudeOne est un projet Open Source. Ce site est édité par une personne

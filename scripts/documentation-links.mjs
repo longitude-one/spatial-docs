@@ -41,7 +41,10 @@ function portablePath(value) {
 }
 
 export async function processDocumentationLinks(documents, { staticDirectory, siteUrl, diagnosticPrefix = 'docs/' }) {
-  const origin = new URL(siteUrl).origin;
+  // Both official deployments belong to the same source corpus, even when
+  // validating a production build. Keep rejecting absolute preview links.
+  const origins = new Set([siteUrl, process.env.URL_PRODUCTION, process.env.URL_PREPRODUCTION, 'https://longitude-one.github.io']
+    .filter(Boolean).map((value) => new URL(value).origin));
   for (const [sourcePath, document] of documents) {
     const references = new Set();
     walk(document.tree, (node) => {
@@ -58,7 +61,7 @@ export async function processDocumentationLinks(documents, { staticDirectory, si
       if (absolute) {
         let url;
         try { url = new URL(original, siteUrl); } catch { fail(original, 'Invalid URL.'); }
-        if (url.origin !== origin) {
+        if (!origins.has(url.origin)) {
           if (url.protocol === 'pathname:') fail(original, 'Internal links must use relative explicit .md source paths.');
           continue;
         }

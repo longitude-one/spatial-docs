@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, readdir, lstat, rename } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, lstat, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -27,23 +27,28 @@ export async function thirdPartyNotices(root) {
 
 export async function generateLegalNotice(root, environment = process.env) {
   const configuration = legalConfiguration(environment);
-  const template = await readFile(path.join(root, 'templates/legal-notice.md'), 'utf8');
   const replacements = { ...configuration,
     BUILD_NOTICE: configuration.testFixture ? '> **TEST ONLY — FICTIONAL LEGAL CONFIGURATION. DO NOT PUBLISH.**' : '',
   };
-  const source = template.replace(/\{\{([A-Z_]+)\}\}/g, (_, field) => {
-    if (!Object.hasOwn(replacements, field)) throw new Error(`Unknown legal template field: ${field}`);
-    return field === 'BUILD_NOTICE' ? replacements[field] : literal(replacements[field]);
-  });
-  if (/\{\{|\}\}|\$\{LEGAL_/.test(source)) throw new Error('Unresolved legal template placeholder.');
+  const sources = {};
+  for (const language of ['fr', 'en']) {
+    const template = await readFile(path.join(root, `templates/legal-notice.${language}.md`), 'utf8');
+    const source = template.replace(/\{\{([A-Z_]+)\}\}/g, (_, field) => {
+      if (!Object.hasOwn(replacements, field)) throw new Error(`Unknown legal template field: ${field}`);
+      return field === 'BUILD_NOTICE' ? replacements[field] : literal(replacements[field]);
+    });
+    if (/\{\{|\}\}|\$\{LEGAL_/.test(source)) throw new Error('Unresolved legal template placeholder.');
+    sources[`legal-notice.${language}.md`] = source;
+  }
   const license = await readFile(path.join(root, 'LICENSE'));
   const thirdParty = await thirdPartyNotices(root);
   const generated = {
-    'docs/legal-notice.md': source,
+    ...Object.fromEntries(Object.entries(sources).map(([file, source]) => [`docs/${file}`, source])),
     'static/assets/legal/documentation-license.txt': license,
     'static/assets/legal/third-party-notices.txt': thirdParty.text,
-    '.docusaurus/legal-source.json': `${JSON.stringify({ version: 1, environment: configuration.LEGAL_CONFIGURATION_ENVIRONMENT,
-      approved: configuration.approved, testFixture: configuration.testFixture, sourceHash: hash(source),
+    '.docusaurus/legal-source.json': `${JSON.stringify({ version: 2, environment: configuration.LEGAL_CONFIGURATION_ENVIRONMENT,
+      approved: configuration.approved, testFixture: configuration.testFixture,
+      sourceHashes: Object.fromEntries(Object.entries(sources).map(([file, source]) => [file, hash(source)])),
       fields: legalFields, inventory: thirdParty.inventory }, null, 2)}\n`,
   };
   for (const [file, bytes] of Object.entries(generated)) {
@@ -58,6 +63,8 @@ export async function generateLegalNotice(root, environment = process.env) {
     await writeFile(`${target}.tmp`, bytes, { flag: 'wx' });
     await rename(`${target}.tmp`, target);
   }
+  // Retire the previously generated identity after both localized sources exist.
+  await rm(path.join(root, 'docs/legal-notice.md'), { force: true });
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await generateLegalNotice(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));

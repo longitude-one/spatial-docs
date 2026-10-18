@@ -120,6 +120,15 @@ The production corpus includes the version-controlled, deterministically generat
 and Markdown files are eligible. Physical files and directories bypass negotiation.
 GitHub Pages and the local static preview do not implement this server behavior.
 
+### Localized document identities
+
+A language suffix is part of the resource name. For example, `legal-notice.fr.md`
+maps to `legal-notice.fr.html`; `legal-notice.en.md` maps to `legal-notice.en.html`.
+The negotiated production resource endpoints are `legal-notice.fr` and `legal-notice.en`.
+The `.fr.md` suffix identifies French HTML content; unsuffixed and `.en.md` sources
+use English. Language switches remain ordinary relative `.md` links in source and
+portable Markdown, and become explicit `.html` links in the HTML representation.
+
 ## Required metadata
 
 Every published Markdown document must contain YAML front matter. The metadata

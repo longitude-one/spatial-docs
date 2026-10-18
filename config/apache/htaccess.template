@@ -7,10 +7,27 @@ AddType "text/markdown; charset=UTF-8" .md
 AddDefaultCharset UTF-8
 RewriteEngine On
 
+# Crawlable alternate representations must not compete with canonical HTML.
+<FilesMatch "\.md$">
+Header always set X-Robots-Tag "noindex"
+</FilesMatch>
+Header always set X-Robots-Tag "noindex" env=DOC_NEGOTIATED
+Header always set X-Robots-Tag "noindex" env=REDIRECT_DOC_NEGOTIATED
+
+# Immutable filenames change with their content; document identities remain fresh.
+<FilesMatch "(?:\.[a-f0-9]{6,}\.(?:js|css)|^search-index-[a-f0-9]+\.json)$">
+Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json text/markdown text/plain image/svg+xml
+</IfModule>
+
 # Explicit representations, other physical files, and directories bypass negotiation.
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [END]
+# Language suffixes belong to resource names, not to representation extensions.
+RewriteCond %{REQUEST_URI} !\.(?:fr|en)$
 RewriteRule (^|/)[^/]*\. - [END]
 
 # An endpoint requires its complete pair; no variant discovery or fallback.

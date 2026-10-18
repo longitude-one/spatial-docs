@@ -8,6 +8,7 @@ import MDXComponents from '@theme/MDXComponents';
 import DocumentationActions from '../../../components/DocumentationActions';
 import { documentationActions } from '../../../../scripts/documentation-actions.mjs';
 import LibraryVersionNavigation from '../../../components/LibraryVersionNavigation';
+import { documentLanguage } from '../../../../scripts/document-language.mjs';
 
 export default function DocItemContentWrapper({ children }) {
   const { metadata, frontMatter, contentTitle } = useDoc();
@@ -23,7 +24,7 @@ export default function DocItemContentWrapper({ children }) {
       <link rel="describedby" type="text/plain" href={discovery} />
     </Head>}
     <LibraryVersionNavigation />
-    <div className="theme-doc-markdown markdown">
+    <div className="theme-doc-markdown markdown" lang={documentLanguage(metadata.source)}>
       {syntheticTitle && <header><Heading as="h1">{metadata.title}</Heading>{alternate}</header>}
       <MDXProvider components={components}>{ children }</MDXProvider>
     </div>

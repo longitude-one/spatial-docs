@@ -33,6 +33,7 @@ test('search provider stays global and indexes documentation alone', () => {
   assert.equal(searchOptions.indexDocs, true);
   assert.equal(searchOptions.indexBlog, false);
   assert.equal(searchOptions.indexPages, false);
+  assert.equal(searchOptions.forceIgnoreNoIndex, true);
   assert.deepEqual(searchOptions.searchContextByPaths, []);
   assert.equal(searchOptions.docsRouteBasePath, '/');
   assert.equal(searchOptions.explicitSearchResultPath, true);

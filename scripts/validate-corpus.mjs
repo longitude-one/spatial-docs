@@ -53,7 +53,7 @@ export async function assembleManifest(root, build, metadataDirectory = path.joi
   for (const file of await corpusFiles(build)) {
     hashes[file] = hash(await readFile(path.join(build, file)));
   }
-  if (documents.some(({ markdown }) => markdown === 'legal-notice.md')) await recordLegalPublication(root, build, metadataDirectory);
+  if (documents.some(({ markdown }) => markdown === 'legal-notice.fr.md')) await recordLegalPublication(root, build, metadataDirectory);
   const manifest = { version: 1, documents, assets: Object.keys(assets).sort(), infrastructureHtml, hashes };
   await writeFile(path.join(metadataDirectory, 'documentation-manifest.json'), serialize(manifest));
   return manifest;
@@ -241,7 +241,7 @@ export async function validateCorpus(root, build, { lint = lintMarkdown, resourc
   }
   await check('', 'markdownlint', () => lint(root, build, markdown));
   await check('', 'resources', () => resources(root, build, { writeMapping: false, metadataDirectory }));
-  await check('legal-notice.md', 'legal-notice', () => legal(root, build, metadataDirectory));
+  await check('legal-notice.fr.md', 'legal-notice', () => legal(root, build, metadataDirectory));
   await check('', 'navigation', () => navigation(root, build, metadataDirectory));
   const sort = (a, b) => `${a.file}\0${a.rule}\0${a.message}`.localeCompare(`${b.file}\0${b.rule}\0${b.message}`, 'en');
   errors.sort(sort); warnings.sort(sort);

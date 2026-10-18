@@ -19,7 +19,7 @@ async function fixture(t, mode = '') {
   await Promise.all([mkdir(destination), mkdir(build, { recursive: true }), mkdir(bin)]);
   for (const [name, content] of Object.entries({
     'index.html': 'new HTML', 'llms.txt': 'new index',
-    'index.md': 'new Markdown', '.nojekyll': 'complete tree',
+    'index.md': 'new Markdown', '.nojekyll': 'complete tree', '.htaccess': 'Options -MultiViews\n',
   })) await writeFile(join(build, name), content);
   const hashes = {};
   for (const file of ['legal-notice.html', 'legal-notice.md']) {
@@ -66,7 +66,7 @@ exec "${realMv.trim()}" "$@"
 test('publishes the complete site and retains the previous live version', async t => {
   const f = await fixture(t);
   await f.run();
-  for (const file of ['index.html', 'llms.txt', 'index.md', '.nojekyll']) {
+  for (const file of ['index.html', 'llms.txt', 'index.md', '.nojekyll', '.htaccess']) {
     assert.equal(await readFile(join(f.destination, 'public_html', file), 'utf8'), await readFile(join(f.build, file), 'utf8'));
   }
   assert.equal(await readFile(join(f.destination, 'public_html.old/version'), 'utf8'), 'current');
@@ -167,3 +167,10 @@ for (const change of [{ testFixture: true }, { approved: false }, { environment:
     await assert.rejects(access(join(f.root, 'calls')));
   });
 }
+
+test('missing Apache configuration fails before any SSH connection', async t => {
+  const f = await fixture(t);
+  await rm(join(f.build, '.htaccess'));
+  await assert.rejects(f.run());
+  await assert.rejects(access(join(f.root, 'calls')));
+});

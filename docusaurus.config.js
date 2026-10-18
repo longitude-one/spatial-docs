@@ -36,6 +36,8 @@ const config = {
   title: isDevelopment ? 'LongitudeOne Spatial — Development' : 'LongitudeOne Spatial Documentation',
   tagline: 'Documentation for the LongitudeOne Spatial ecosystem',
   customFields: {
+    productionUrl: process.env.URL_PRODUCTION || 'https://www.longitude-one.fr',
+    isDevelopment,
     libraryVersions: libraries,
     publishedDocuments,
     libraryNames: Object.fromEntries(libraryCategories.flatMap(({ libraries: entries }) => entries)),
@@ -44,6 +46,7 @@ const config = {
   baseUrl,
   staticDirectories: ['static', '.generated-markdown'],
   trailingSlash: false,
+  headTags: isDevelopment ? [{ tagName: 'meta', attributes: { name: 'robots', content: 'noindex, follow' } }] : [],
   clientModules: ['./src/resource-route-aliases.js'],
   onBrokenLinks: 'throw',
   markdown: {
@@ -77,6 +80,7 @@ const config = {
     ],
   ],
   themeConfig: {
+    image: 'assets/images/social-card.png',
     colorMode: {
       defaultMode: 'light',
       disableSwitch: false,

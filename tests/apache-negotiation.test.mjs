@@ -35,6 +35,8 @@ test('actual production .htaccess negotiates HTTP responses', { skip: !enabled, 
     'missing.html': '<p>Missing pair</p>', 'missing.json': 'unrelated',
     'assets/index.html': '<p>Static directory index</p>', 'assets/extensionless': 'static extensionless asset', 'assets/file.txt': 'static text',
     'llms.txt': 'LLM index', 'llms-full.txt': 'Full LLM index', 'robots.txt': 'robots', 'sitemap.xml': '<xml/>',
+    'assets/js/main.123abc.js': 'console.log("cached runtime");',
+    'compressible.html': '<p>Compressible documentation text.</p>'.repeat(100),
   };
   for (const [name, content] of Object.entries(files)) {
     await mkdir(path.dirname(path.join(site, name)), { recursive: true });
@@ -48,7 +50,7 @@ test('actual production .htaccess negotiates HTTP responses', { skip: !enabled, 
   const modules = process.env.APACHE_MODULES || (process.platform === 'darwin' ? '/usr/libexec/apache2' : '/usr/lib/apache2/modules');
   const binary = process.env.APACHE_HTTPD || (process.platform === 'darwin' ? '/usr/sbin/httpd' : '/usr/sbin/apache2');
   const { stdout: compiledModules } = await promisify(execFile)(binary, ['-l']);
-  const modulesToLoad = ['mpm_prefork', 'unixd', 'authz_core', 'authz_host', 'mime', 'negotiation', 'dir', 'rewrite', 'headers']
+  const modulesToLoad = ['mpm_prefork', 'unixd', 'authz_core', 'authz_host', 'mime', 'negotiation', 'dir', 'rewrite', 'headers', 'filter', 'deflate']
     .filter((name) => !compiledModules.includes(`mod_${name}.c`));
   const config = path.join(root, 'httpd.conf');
   await writeFile(config, `ServerRoot "${root}"
@@ -89,6 +91,11 @@ DocumentRoot "${site}"
     }
   }
   let httpCases = 0;
+  const cached = await fetch(`${base}/assets/js/main.123abc.js`);
+  assert.equal(cached.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  const compressed = await fetch(`${base}/compressible.html`, { headers: { 'Accept-Encoding': 'gzip' } });
+  assert.equal(compressed.headers.get('content-encoding'), 'gzip');
+  assert.equal(await compressed.text(), files['compressible.html']);
   async function request(uri, accept, expected, status = 200, negotiated = true) {
     httpCases++;
     // fetch supplies */* by default, so raw http is used for the absent header case.
@@ -102,6 +109,8 @@ DocumentRoot "${site}"
     });
     assert.equal(response.status, status, `${uri} Accept: ${accept}: ${response.body}\n${await readFile(path.join(root, 'error.log'), 'utf8')}`);
     assert.equal(response.headers.location, undefined, 'selection must not redirect');
+    if (negotiated || uri.endsWith('.md')) assert.equal(response.headers['x-robots-tag'], 'noindex', 'alternate transport must not be indexed');
+    else assert.equal(response.headers['x-robots-tag'], undefined, 'canonical HTML remains indexable');
     const varies = (response.headers.vary || '').toLowerCase().split(/,\s*/).includes('accept');
     assert.equal(varies, negotiated, `Vary for ${uri} Accept: ${accept}`);
     if (status === 200 && expected) {

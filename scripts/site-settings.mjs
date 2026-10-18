@@ -1,5 +1,7 @@
 export const isDevelopment = process.env.DOCUSAURUS_DEPLOYMENT === 'development';
-export const siteUrl = 'https://longitude-one.github.io';
+export const siteUrl = (isDevelopment
+  ? (process.env.URL_PREPRODUCTION || 'https://longitude-one.github.io')
+  : (process.env.URL_PRODUCTION || 'https://www.longitude-one.fr')).replace(/\/$/, '');
 export const deploymentBasePath = (development) => development ? '/spatial-docs/' : '/';
 export const baseUrl = deploymentBasePath(isDevelopment);
 export function developmentNotice(value = process.env.URL_PRODUCTION) {

@@ -12,6 +12,8 @@ export const searchOptions = {
   searchContextByPaths: [],
   searchBarShortcut: true,
   highlightSearchTermsOnTargetPage: false,
+  // Preproduction is excluded from public search engines, not our local index.
+  forceIgnoreNoIndex: true,
 };
 
 export function searchContext(url, baseUrl, fields) {

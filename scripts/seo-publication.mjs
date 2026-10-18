@@ -24,6 +24,7 @@ export async function generateSeoResources(root, directory, urls = publicationUr
     + locations.map((url) => `  <url><loc>${escapeXml(url)}</loc></url>\n`).join('') + '</urlset>\n');
   // Keep both conventional and AI crawlers able to retrieve all public representations.
   await writeFile(path.join(directory, 'robots.txt'), 'User-agent: *\nAllow: /\n'
+    + 'Content-Signal: search=yes, ai-input=yes, ai-train=no\n'
     + (urls.development ? '# Preproduction HTML carries noindex; crawling remains allowed.\n' : `Sitemap: ${new URL('sitemap.xml', urls.production).href}\n`));
 }
 
@@ -115,6 +116,8 @@ export async function verifySeo(root, directory, urls = publicationUrls()) {
   require(JSON.stringify(locations.sort()) === JSON.stringify(expected.sort()), 'sitemap.xml: expected canonical HTML documents only');
   const robots = await readFile(path.join(directory, 'robots.txt'), 'utf8');
   require(robots.includes('User-agent: *\nAllow: /\n') && !/^Disallow:\s*\//m.test(robots), 'robots.txt: public resources must remain crawlable');
+  require(robots.includes('User-agent: *\nAllow: /\nContent-Signal: search=yes, ai-input=yes, ai-train=no\n'),
+    'robots.txt: expected search and AI input permission without model training permission');
   require(urls.development ? !/^Sitemap:/m.test(robots) : robots.includes(`Sitemap: ${new URL('sitemap.xml', urls.production).href}`), 'robots.txt: wrong environment sitemap');
   if (errors.length) throw new Error(errors.join('\n'));
   return { pages: documents.length, status: 'passed' };

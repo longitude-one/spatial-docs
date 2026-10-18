@@ -45,7 +45,18 @@ for (const development of [false, true]) test(`validates ${development ? 'prepro
   assert.equal((await verifySeo(root, directory, config)).pages, 1);
   const sitemap = await readFile(path.join(directory, 'sitemap.xml'), 'utf8');
   assert.equal(sitemap.includes('<loc>'), !development);
+  const robots = await readFile(path.join(directory, 'robots.txt'), 'utf8');
+  assert.equal(robots, 'User-agent: *\nAllow: /\nContent-Signal: search=yes, ai-input=yes, ai-train=no\n'
+    + (development ? '# Preproduction HTML carries noindex; crawling remains allowed.\n' : 'Sitemap: https://official.example/docs/sitemap.xml\n'));
 });
+for (const directive of ['', 'Content-Signal: search=yes, ai-input=yes, ai-train=yes\n']) {
+  test(`rejects ${directive ? 'training permission' : 'missing content signals'} in robots policy`, async (t) => {
+    const { root, directory, config } = await fixture(t);
+    const file = path.join(directory, 'robots.txt');
+    await writeFile(file, (await readFile(file, 'utf8')).replace('Content-Signal: search=yes, ai-input=yes, ai-train=no\n', directive));
+    await assert.rejects(verifySeo(root, directory, config), /model training permission/);
+  });
+}
 for (const [name, from, to] of [
   ['negotiated canonical', 'href="https://official.example/docs/index.html"', 'href="https://official.example/docs/index"'],
   ['Markdown canonical', 'href="https://official.example/docs/index.html"', 'href="https://official.example/docs/index.md"'],

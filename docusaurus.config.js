@@ -44,6 +44,7 @@ const config = {
   baseUrl,
   staticDirectories: ['static', '.generated-markdown'],
   trailingSlash: false,
+  clientModules: ['./src/resource-route-aliases.js'],
   onBrokenLinks: 'throw',
   markdown: {
     parseFrontMatter: parseRepresentationFrontMatter,

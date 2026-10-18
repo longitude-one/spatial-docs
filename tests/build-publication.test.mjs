@@ -50,7 +50,7 @@ async function assemblyFixture(t) {
   await mkdir(path.join(root, '.generated-markdown'), { recursive: true });
   await writeFile(path.join(root, '.generated-markdown/asset-manifest.json'), JSON.stringify({ 'assets/examples/point.json': {} }));
   const files = {
-    'index.html': 'HTML', 'index.md': 'Markdown', 'llms.txt': 'Index', '404.html': 'Missing',
+    'index.html': 'HTML', 'index.md': 'Markdown', 'llms.txt': 'Index', 'llms-full.txt': 'Complete', '404.html': 'Missing',
     'assets/examples/point.json': '{}', 'assets/js/main.123abc.js': 'runtime',
     'assets/css/styles.123abc.css': 'styles', 'search-index-123abc.json': '{}', 'sitemap.xml': '<xml/>',
     'asset-manifest.json': '{}', 'markdown-mapping.json': '{}', 'documentation-manifest.json': '{}',
@@ -69,7 +69,7 @@ test('assembles only served resources, preserving bytes and normalizing executab
   const { root, intermediate, destination, files } = await assemblyFixture(t);
   await assemblePublication(root, intermediate, destination);
   const { corpusFiles } = await import('../scripts/validate-corpus.mjs');
-  const expected = ['index.html', 'index.md', 'llms.txt', '404.html', 'assets/examples/point.json',
+  const expected = ['index.html', 'index.md', 'llms.txt', 'llms-full.txt', '404.html', 'assets/examples/point.json',
     'assets/js/main.123abc.js', 'assets/css/styles.123abc.css', 'search-index-123abc.json', 'sitemap.xml'].sort();
   assert.deepEqual(await corpusFiles(destination), expected);
   for (const file of expected) {

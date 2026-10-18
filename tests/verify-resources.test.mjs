@@ -7,7 +7,17 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 import { once } from 'node:events';
-import { verifyResources } from '../scripts/verify-resources.mjs';
+import { verifyResources as verifyPublicationResources } from '../scripts/verify-resources.mjs';
+import { generateLlmsIndex } from '../scripts/llms-index.mjs';
+import { generateLlmsFull } from '../scripts/llms-full.mjs';
+
+async function verifyResources(root) {
+  const config = (await import(`${path.join(root, 'docusaurus.config.js')}?fixture`)).default;
+  return verifyPublicationResources(root, undefined, { machineUrls: {
+    production: 'https://example.com/', base: new URL(config.baseUrl, config.url).href,
+    development: config.baseUrl !== '/',
+  } });
+}
 
 async function fixture(t, changes = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'spatial-docs-check-'));
@@ -18,15 +28,17 @@ async function fixture(t, changes = {}) {
     'public/index.html': '<h1 id="home">Home</h1><a href="/index.md#home">Markdown</a>',
     'public/index.md': '# Home\n\n[Home](#home)\n[External](https://other.example/missing)\n',
     '.publication-metadata/asset-manifest.json': '{}',
-    'public/llms.txt': '# Documentation\n\n[Home](/index.md)\n',
     'docs/index.md': '---\ntitle: Home\ndescription: Home page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/' }),
     ...changes,
   };
+  const pages = [];
   for (const [name, value] of Object.entries(data)) {
     let content = value;
     if (content && name.startsWith('public/') && name.endsWith('.md')) {
       if (!content.startsWith('---')) content = `---\ntitle: Fixture\ndescription: Fixture page\n---\n\n${content}`;
+      const canonicalHtml = `./${path.basename(name).replace(/\.md$/, '.html')}`;
+      if (!content.includes('canonical_html:')) content = content.replace('\n---', `\ncanonical_html: ${canonicalHtml}\ncanonical_markdown: ./${path.basename(name)}\n---`);
       if (!content.includes('[View HTML version]')) {
         const end = content.indexOf('\n---', 3) + 4;
         content = `${content.slice(0, end)}\n\n[View HTML version](./${path.basename(name).replace(/\.md$/, '.html')})\n${content.slice(end)}`;
@@ -34,7 +46,8 @@ async function fixture(t, changes = {}) {
     }
     if (content && name.startsWith('public/') && name.endsWith('.html')) {
       const href = `./${path.basename(name).replace(/\.html$/, '.md')}`;
-      content = `<head><link rel="alternate" type="text/markdown" href="${href}"></head><body>${content.replace(/(<h1[^>]*>.*?<\/h1>)/, `$1<p><a rel="alternate" type="text/markdown" href="${href}">View Markdown version</a></p>`)}</body>`;
+      const discovery = '../'.repeat(name.slice('public/'.length).split('/').length - 1) + 'llms.txt';
+      content = `<head><link rel="describedby" type="text/plain" href="${discovery}"><link rel="alternate" type="text/markdown" href="${href}"></head><body>${content.replace(/(<h1[^>]*>.*?<\/h1>)/, `$1<p><a rel="alternate" type="text/markdown" href="${href}">View Markdown version</a></p>`)}</body>`;
     }
     if (content && name.startsWith('.docusaurus/') && name.endsWith('.json')) {
       const metadata = JSON.parse(content);
@@ -45,9 +58,25 @@ async function fixture(t, changes = {}) {
       content = JSON.stringify(metadata);
     }
     if (content === null) continue;
+    if (name.startsWith('public/') && name.endsWith('.md')) pages.push({markdownPath: name.slice(7), content});
     const file = path.join(root, name);
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, content);
+  }
+  const baseUrl = data['docusaurus.config.js'].includes('/spatial-docs/') ? '/spatial-docs/' : '/';
+  const urls = {production: 'https://example.com/', base: `https://example.com${baseUrl}`, development: baseUrl !== '/'};
+  const paths = pages.map(({markdownPath}) => markdownPath);
+  if (!Object.hasOwn(changes, 'public/llms.txt')) await writeFile(path.join(root, 'public/llms.txt'), generateLlmsIndex({sections: [
+    {title: 'Documentation', entries: [{path: 'index.md', label: 'Home', description: 'Documentation entry point.'}]},
+  ]}, paths.includes('index.md') ? paths : [...paths, 'index.md'], urls));
+  try {
+    await writeFile(path.join(root, 'public/llms-full.txt'), generateLlmsFull(pages, {
+      ...urls, assets: Object.keys(data).filter((name) => name.startsWith('public/assets/')).map((name) => name.slice(7)),
+    }));
+  } catch (error) {
+    assert.match(error.message, /Unknown published resource|Non-Markdown document link|Non-portable content|Link escapes deployment base|Cannot aggregate an empty documentation corpus/);
+    // Invalid corpus cases must reach their specific resource validation before aggregate validation.
+    await writeFile(path.join(root, 'public/llms-full.txt'), 'Invalid corpus fixture\n');
   }
   return root;
 }
@@ -58,6 +87,52 @@ test('valid site produces an HTML/Markdown mapping', async (t) => {
   assert.deepEqual(JSON.parse(await readFile(path.join(root, '.publication-metadata/markdown-mapping.json'))), [
     { html: '/index.html', markdown: '/index.md' },
   ]);
+});
+
+test('curated index permits described external resources', async (t) => {
+  const root = await fixture(t);
+  const file = path.join(root, 'public/llms.txt');
+  await writeFile(file, (await readFile(file, 'utf8')).replace('## Full Documentation',
+    '- [External reference](https://other.example/a.md): Relevant reference.\n\n## Full Documentation'));
+  await verifyResources(root);
+});
+
+for (const [name, mutate, error] of [
+  ['duplicate index entry', (text) => text.replace('## Full Documentation',
+    '- [Duplicate](https://example.com/index.md): Duplicate entry.\n\n## Full Documentation'), /duplicate resource/],
+  ['malformed index', () => '[Home](/index.md)', /expected project H1/],
+]) {
+  test(`rejects ${name}`, async (t) => {
+    const root = await fixture(t);
+    const file = path.join(root, 'public/llms.txt');
+    await writeFile(file, mutate(await readFile(file, 'utf8')));
+    await assert.rejects(verifyResources(root), error);
+  });
+}
+
+for (const [name, mutate, error] of [
+  ['missing discovery', (text) => text.replace(/<link rel="describedby"[^>]*>/, ''), /exactly one describedby/],
+  ['duplicate discovery', (text) => text.replace('</head>', '<link rel="describedby" type="text/plain" href="llms.txt"></head>'), /exactly one describedby/],
+  ['wrong discovery target', (text) => text.replace('href="llms.txt"', 'href="llms-full.txt"'), /relative target llms.txt/],
+]) {
+  test(`corpus rejects ${name}`, async (t) => {
+    const root = await fixture(t);
+    const file = path.join(root, 'public/index.html');
+    await writeFile(file, mutate(await readFile(file, 'utf8')));
+    await assert.rejects(verifyResources(root), error);
+  });
+}
+
+test('corpus rejects a missing discovery target', async (t) => {
+  const root = await fixture(t);
+  await rm(path.join(root, 'public/llms.txt'));
+  await assert.rejects(verifyResources(root), /describedby target llms.txt is missing/);
+});
+
+test('infrastructure HTML needs no discovery relationship', async (t) => {
+  const root = await fixture(t);
+  await writeFile(path.join(root, 'public/404.html'), '<h1>Not found</h1>');
+  await verifyResources(root);
 });
 
 test('publication rejects an internal link opening a new tab', async (t) => {
@@ -80,7 +155,6 @@ test('every nested resource mapping differs only by representation extension', a
     'public/index.md': '# Home\n\n[Reference](shared/reference.md)\n',
     'public/shared/reference.md': '---\ntitle: Reference\ndescription: Shared reference\ncanonical_html: ./reference.html\ncanonical_markdown: ./reference.md\n---\n\n[View HTML version](./reference.html)\n\n## Scope\n',
     'public/shared/reference.html': '<h1>Reference</h1><h2 id="scope">Scope</h2>',
-    'public/llms.txt': '[Home](/index.md)\n[Reference](/shared/reference.md)',
     'docs/shared/reference.md': '---\ntitle: Reference\ndescription: Shared reference\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/reference.json': JSON.stringify({
       source: '@site/docs/shared/reference.md', permalink: '/shared/reference',
@@ -100,7 +174,6 @@ test('publication rejects an indexed Markdown page unreachable from the entry po
   const root = await fixture(t, {
     'public/orphan.md': '# Orphan',
     'public/orphan.html': '<h1>Orphan</h1>',
-    'public/llms.txt': '[Home](/index.md)\n[Orphan](/orphan.md)',
     'docs/orphan.md': '---\ntitle: Orphan\ndescription: Orphan page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/orphan.json': JSON.stringify({
       source: '@site/docs/orphan.md', permalink: '/orphan',
@@ -136,8 +209,6 @@ for (const [name, changes, message] of [
   ['embedded HTML link', { 'public/index.md': '# Home\n<a href="/missing">Broken</a>' }, /Broken internal link/],
   ['same-origin absolute link', { 'public/index.md': '# Home\n[Broken](https://example.com/missing)' }, /Broken internal link/],
   ['missing Markdown', { 'public/index.md': null }, /Missing alternate representation/],
-  ['external llms entry', { 'public/llms.txt': '[Home](/index.md)\n[Other](https://other.example/a.md)' }, /must match/],
-  ['duplicate llms entry', { 'public/llms.txt': '[Home](/index.md)\n[Duplicate](/index.md)' }, /must match/],
   ['unindexed Markdown', { 'public/stale.md': '# Stale', 'public/stale.html': '<h1>Stale</h1>' }, /must match/],
   ['draft publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/', draft: true }) }, /must match/],
   ['unlisted publication', { '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/', slug: '/', unlisted: true }) }, /must match/],
@@ -165,7 +236,6 @@ test('supports explicit Markdown and HTML index pages', async (t) => {
     'public/index.md': '# Home\n[Section](section/index.md)\n',
     'public/section/index.md': '# Section',
     'public/section/index.html': '<h1>Section</h1>',
-    'public/llms.txt': '[Home](/index.md)\n[Section](/section/index.md)',
     'docs/section/index.md': '---\ntitle: Section\ndescription: Section page\n---\n',
     '.docusaurus/docusaurus-plugin-content-docs/default/section.json': JSON.stringify({ source: '@site/docs/section/index.md', permalink: '/section/', slug: '/section/' }),
   });
@@ -182,7 +252,6 @@ test('validates Pages subpath links and mappings', async (t) => {
     'docusaurus.config.js': "export default {url: 'https://example.com', baseUrl: '/spatial-docs/'};",
     'public/index.html': '<h1 id="home">Home</h1><a href="/spatial-docs/index.md#home">Markdown</a>',
     'public/index.md': '# Home\n[Home](#home)',
-    'public/llms.txt': '[Home](/spatial-docs/index.md)',
     '.docusaurus/docusaurus-plugin-content-docs/default/home.json': JSON.stringify({ source: '@site/docs/index.md', permalink: '/spatial-docs/', slug: '/' }),
   });
   await verifyResources(root);

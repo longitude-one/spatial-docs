@@ -18,6 +18,9 @@ jobs:
     if: github.event.deleted == false
     runs-on: ubuntu-latest
     environment: production
+    env:
+      URL_PRODUCTION: https://www.longitude-one.fr
+      URL_PREPRODUCTION: https://longitude-one.github.io
     steps:
       - uses: actions/checkout@v7
         with:

@@ -23,6 +23,7 @@ jobs:
     env:
       DOCUSAURUS_DEPLOYMENT: development
       URL_PRODUCTION: https://www.longitude-one.fr
+      URL_PREPRODUCTION: https://longitude-one.github.io
     steps:
       # Use trusted main, never the pull request head (including fork PRs).
       - uses: actions/checkout@v7

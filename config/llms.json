@@ -1,0 +1,28 @@
+{
+  "sections": [
+    { "title": "Start Here", "entries": [
+      { "path": "index.md", "label": "Documentation home", "description": "Choose a library, reference topic or contributor guide." },
+      { "path": "concepts/index.md", "label": "Spatial concepts", "description": "Understand geometries, dimensions, coordinate reference systems and formats." }
+    ] },
+    { "title": "Spatial Libraries", "entries": [
+      { "path": "spatial-core/index.md", "label": "Spatial Core", "description": "Explore the geometry domain model and its available versions." },
+      { "path": "spatial-types/index.md", "label": "Spatial Types", "description": "Find concrete geometry types, invariants and validation guidance." },
+      { "path": "doctrine-spatial/index.md", "label": "Doctrine Integration", "description": "Integrate spatial types and operations with Doctrine." }
+    ] },
+    { "title": "Parsing, Encoding and Decoding", "entries": [
+      { "path": "wkt-parser/index.md", "label": "WKT Parser", "description": "Parse textual geometry representations." },
+      { "path": "wkb-parser/index.md", "label": "WKB Parser", "description": "Parse binary geometry representations." },
+      { "path": "spatial-encoder/index.md", "label": "Spatial Encoder", "description": "Select spatial representation encoding strategies." },
+      { "path": "spatial-decoder/index.md", "label": "Spatial Decoder", "description": "Decode spatial representations into geometry values." }
+    ] },
+    { "title": "Standards and Reference", "entries": [
+      { "path": "standards/iso/index.md", "label": "ISO references", "description": "Locate the ISO standards governing spatial semantics and reference systems." },
+      { "path": "standards/ogc/index.md", "label": "OGC references", "description": "Find the Simple Features baseline." },
+      { "path": "standards/rfc/rfc-7946.md", "label": "GeoJSON", "description": "Understand the RFC 7946 representation and its constraints." }
+    ] },
+    { "title": "Contributor Documentation", "entries": [
+      { "path": "shared/portable-markdown-publication-contract.md", "label": "Portable publication contract", "description": "Author documentation that remains usable as HTML and portable Markdown." },
+      { "path": "shared/validating-generated-documentation.md", "label": "Publication validation", "description": "Run local checks used to prevent invalid documentation publication." }
+    ] }
+  ]
+}

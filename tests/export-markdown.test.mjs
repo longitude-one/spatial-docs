@@ -34,6 +34,10 @@ async function fixture(t, sources) {
   await cp(path.join(repository, 'scripts/library-landing-pages.mjs'), path.join(root, 'scripts/library-landing-pages.mjs'));
   await cp(path.join(repository, 'scripts/documentation-links.mjs'), path.join(root, 'scripts/documentation-links.mjs'));
   await cp(path.join(repository, 'scripts/shared-assets.mjs'), path.join(root, 'scripts/shared-assets.mjs'));
+  for (const name of ['llms-config.mjs', 'llms-index.mjs', 'llms-full.mjs', 'navbar-items.mjs']) await cp(path.join(repository, 'scripts', name), path.join(root, 'scripts', name));
+  await mkdir(path.join(root, 'config'));
+  const entries = Object.keys(sources).filter((name) => name.startsWith('docs/') && name.endsWith('.md') && !name.includes('/_') && !/draft: true|unlisted: true/.test(sources[name])).map((name) => ({path: name.slice(5), label: 'Selected resource', description: 'Fixture selected resource.'}));
+  await writeFile(path.join(root, 'config/llms.json'), JSON.stringify({ sections: [{ title: 'Selected Documentation', entries }] }));
   await symlink(path.join(repository, 'node_modules'), path.join(root, 'node_modules'));
   for (const [name, body] of Object.entries(sources)) {
     const file = path.join(root, name);
@@ -45,7 +49,7 @@ async function fixture(t, sources) {
     run: (environment = {}) => execute(
       process.execPath,
       [path.join(root, 'scripts/export-markdown.mjs')],
-      { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: '', ...environment } },
+      { env: { ...process.env, DOCUSAURUS_DEPLOYMENT: '', URL_PRODUCTION: 'https://www.longitude-one.fr', URL_PREPRODUCTION: 'https://longitude-one.github.io', ...environment } },
     ),
   };
 }
@@ -77,7 +81,7 @@ test('exports canonical Markdown with only portable metadata and explicit repres
   assert.match(point, /canonical_markdown: \.\/point\.md/);
   assert.match(point, /\[View HTML version\]\(\.\/point\.html\)/);
   assert.match(point, /```wkt\nPOINT \(1 2\)\n```/);
-  assert.match(await readFile(path.join(root, '.generated-markdown/llms.txt'), 'utf8'), /- \[Point \\\[coordinates\\\]\]\(\/shared\/point\.md\)/);
+  assert.match(await readFile(path.join(root, '.generated-markdown/llms.txt'), 'utf8'), /https:\/\/www\.longitude-one\.fr\/shared\/point\.md/);
 });
 
 async function landingFixture(t, entryDocument = 'index.md') {

@@ -17,12 +17,58 @@ in technical meaning is a defect in the responsible generator.
 | `npm run validate:determinism` | Build twice and compare every published filename and file hash. |
 | `npm run validate:assets` | Check source shared assets and references before the full build. |
 
-Set `DOCUSAURUS_DEPLOYMENT=development` for the development base URL and supply
-`URL_PRODUCTION` with the official documentation URL. Its absence or an invalid
-HTTP(S) URL fails the development build. Local builds,
-PR checks and deployment workflows use the same validation engine. The existing
-`documentation-check` job must be required by repository branch protection to
-block merging on a validation failure.
+For publication, supply `URL_PRODUCTION` for every build. Development builds also require
+`URL_PREPRODUCTION` and `DOCUSAURUS_DEPLOYMENT=development`; the configured project
+base path is appended to the preproduction URL. Missing, empty or invalid public
+HTTPS URLs fail generation. PR checks and deployment workflows use the same
+validation engine. The existing `documentation-check` job must be required by
+repository branch protection to block merging on a validation failure.
+
+| Environment variable | Deployment configuration |
+| --- | --- |
+| `URL_PRODUCTION` | Official documentation origin, configured in CI. |
+| `URL_PREPRODUCTION` | GitHub Pages origin, configured in CI without the project base path. |
+
+The local fixture commands `npm run build:local` and `npm run start:local` supply
+the standard production and preproduction URLs when absent. Explicit values,
+including invalid ones, are preserved for validation. This test helper also supplies
+fictional legal information and must never be used to publish. Publication commands
+retain the required environment configuration without defaults.
+
+## Machine-oriented entry points
+
+[llmstxt.org v2](https://llmstxt.org/) is the normative reference for the structure
+and semantics of `llms.txt`. The project adds stricter identity, URL and corpus
+validation rules. It publishes both `llms.txt` and `llms-full.txt` at the publication
+root; neither can be omitted from the assembled corpus.
+
+| Resource | Generation and validation |
+| --- | --- |
+| `llms.txt` | Curated section, resource and description order comes from `config/llms.json`. Every internal entry targets an existing absolute `.md` URL. |
+| `llms-full.txt` | Every published portable Markdown document appears exactly once, in the editorial order defined in `scripts/llms-full.mjs`. |
+| HTML discovery | Every documentation page has exactly one relative `describedby` head link to `llms.txt`, alongside its Markdown alternate. |
+
+The index stays concise when new documents are added. Contributors deliberately
+select important entry points in the editorial configuration instead of indexing
+the entire corpus. Public contributor pages may be selected; internal operational
+notes and unpublished sources must not be included.
+
+The aggregate uses generated Markdown, normalizes each document's title,
+description and absolute source URL, and rebases documentation links, fragments
+and shared assets to the active deployment. The leading HTML representation
+switch is omitted. Code examples retain their content. Front matter, manifests,
+infrastructure and the two machine entry points are excluded from aggregation.
+
+Development variants identify themselves as non-official and advertise the
+production documentation separately. Their document links stay within the
+preproduction corpus. Production variants contain no development notice.
+
+Structural errors, missing targets, wrong deployment URLs, duplicate discovery
+relationships and incomplete aggregation fail local and CI validation before
+publication. Validation compares the aggregate with a canonical reconstruction
+of the complete published Markdown corpus. External links are not fetched during
+builds; third-party llms.txt validators can complement these authoritative checks
+without becoming a network dependency of publication.
 
 ## Publication checks
 

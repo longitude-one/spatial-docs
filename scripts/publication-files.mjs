@@ -6,7 +6,7 @@ export function isRuntimeResource(file) {
 export function isPublicResource(file, assets = []) {
   if (file === '.htaccess') return true;
   if (internalManifests.includes(file) || file.endsWith('.map') || file.split('/').some((part) => part.startsWith('.') && part !== '.nojekyll')) return false;
-  return /\.(?:html|md)$/.test(file) || file === 'llms.txt' || publicInfrastructure.includes(file) || assets.includes(file)
+  return /\.(?:html|md)$/.test(file) || ['llms.txt', 'llms-full.txt'].includes(file) || publicInfrastructure.includes(file) || assets.includes(file)
     || /^search-index-[a-f0-9]+\.json$/.test(file)
     || isRuntimeResource(file);
 }

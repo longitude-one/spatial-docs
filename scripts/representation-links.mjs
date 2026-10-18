@@ -13,6 +13,25 @@ function text(node) {
   return node.value || (node.childNodes || node.children || []).map(text).join('');
 }
 
+export function verifyDiscoveryLink(html, source, publishedPaths) {
+  const fail = (message) => { throw new Error(`${source}: ${message}`); };
+  const expected = path.posix.relative(path.posix.dirname(source), 'llms.txt');
+  const relationships = [];
+  let head;
+  walk(parse(html), (node) => {
+    if (node.tagName === 'head') head = node;
+    const attrs = Object.fromEntries((node.attrs || []).map(({ name, value }) => [name, value]));
+    if (attrs.rel?.split(/\s+/).includes('describedby')) relationships.push({node, attrs});
+  });
+  if (relationships.length !== 1) fail('expected exactly one describedby relationship to llms.txt.');
+  const {node, attrs} = relationships[0];
+  if (node.tagName !== 'link' || node.parentNode !== head) fail('describedby metadata must be a link in head.');
+  if (attrs.rel !== 'describedby' || attrs.type !== 'text/plain' || attrs.href !== expected) {
+    fail(`describedby metadata must declare text/plain and the relative target ${expected}.`);
+  }
+  if (!new Set(publishedPaths).has('llms.txt')) fail('describedby target llms.txt is missing from the publication corpus.');
+}
+
 export function verifyRepresentationLinks(html, markdown, source) {
   const fail = (message) => { throw new Error(`${source}: ${message}`); };
   const htmlHref = `./${path.posix.basename(source.replace(/\.md$/, '.html'))}`;

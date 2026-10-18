@@ -12,6 +12,9 @@ import { baseUrl, siteUrl } from './site-settings.mjs';
 import { documentationAnchors, processDocumentationLinks } from './documentation-links.mjs';
 import { resolveLibraries, statusFor, markdownStatus, writeManifest } from './library-versions.mjs';
 import { collectSharedAssets, validateAssetReferences } from './shared-assets.mjs';
+import { generateLlmsIndex, verifyLlmsIndex } from './llms-index.mjs';
+import { generateLlmsFull } from './llms-full.mjs';
+import { publicationUrls } from './llms-config.mjs';
 import { appendLibraryLandingNavigation } from './library-landing-pages.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -340,16 +343,11 @@ async function exportMarkdown() {
       await mkdir(path.dirname(destination), { recursive: true });
       await writeFile(destination, page.content, { encoding: 'utf8', flag: 'wx' });
     }
-    const index = [
-      '# LongitudeOne Spatial Documentation',
-      '',
-      'Markdown counterparts for the published documentation pages:',
-      '',
-      ...generated.map(({ markdownPath, title }) => (
-        `- [${escapeMarkdownLabel(title)}](${baseUrl}${markdownPath})`
-      )),
-      '',
-    ].join('\n');
+    const urls = publicationUrls();
+    const editorial = JSON.parse(await readFile(path.join(rootDirectory, 'config/llms.json'), 'utf8'));
+    const index = generateLlmsIndex(editorial, generated.map((page) => page.markdownPath), urls);
+    const full = generateLlmsFull(generated, { ...urls, assets: Object.keys(assetManifest) });
+    await writeFile(path.join(stagingDirectory, 'llms-full.txt'), full, { encoding: 'utf8', flag: 'wx' });
     await writeFile(path.join(stagingDirectory, 'llms.txt'), index, { encoding: 'utf8', flag: 'wx' });
     if (!await stagedOutputMatches(stagingDirectory)) {
       await promoteGeneratedOutput(stagingDirectory);
@@ -365,23 +363,9 @@ async function exportMarkdown() {
 }
 
 async function verifyBuild() {
-  const index = await readFile(path.join(buildDirectory, 'llms.txt'), 'utf8');
-  const indexedMarkdownPaths = [...index.matchAll(/\]\(([^\s)]+\.md)\)/g)]
-    .map((match) => match[1].slice(baseUrl.length));
-  const markdownDirectory = buildDirectory;
-  const generatedMarkdownPaths = (await findMarkdownFiles(markdownDirectory))
-    .map((file) => path.relative(markdownDirectory, file).split(path.sep).join('/'))
-    .sort();
-  const listedMarkdownPaths = [...indexedMarkdownPaths].sort();
-
-  if (listedMarkdownPaths.length !== generatedMarkdownPaths.length
-    || listedMarkdownPaths.some((markdownPath, index) => markdownPath !== generatedMarkdownPaths[index])) {
-    throw new Error('llms.txt must list every generated Markdown page exactly once.');
-  }
-
-  for (const markdownPath of indexedMarkdownPaths) {
-    await readFile(path.join(markdownDirectory, markdownPath));
-  }
+  const available = new Set((await findMarkdownFiles(buildDirectory)).map((file) => path.relative(buildDirectory, file).split(path.sep).join('/')));
+  for (const file of ['llms.txt', 'llms-full.txt']) { await readFile(path.join(buildDirectory, file)); available.add(file); }
+  await verifyLlmsIndex(buildDirectory, available);
 
   for (const requirement of requiredContent) {
     const html = await readFile(path.join(buildDirectory, requirement.html), 'utf8');
@@ -407,9 +391,6 @@ async function verifyBuild() {
     }
   }
 
-  if (indexedMarkdownPaths.length === 0) {
-    throw new Error('llms.txt does not list any Markdown pages.');
-  }
 }
 
 async function findHtmlFiles(directory) {

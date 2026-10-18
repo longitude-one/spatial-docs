@@ -250,6 +250,7 @@ DocumentRoot "${site}"
   for (const name of ['assets/extensionless', 'assets/file.txt', 'llms.txt', 'llms-full.txt', 'robots.txt', 'sitemap.xml', 'nested/geometry/point.json']) {
     const response = await request(`/${name}`, 'application/json', null, 200, false);
     assert.equal(response.body, files[name]);
+    if (['llms.txt', 'llms-full.txt'].includes(name)) assert.match(response.headers['content-type'], /^text\/plain; charset=UTF-8$/i);
   }
   for (const uri of ['/missing', '/absent', '/assets/absent']) await request(uri, 'text/markdown', null, 404, false);
   assert.equal((await request('/assets/', 'text/markdown', null, 200, false)).body, files['assets/index.html']);

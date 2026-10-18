@@ -42,10 +42,15 @@ asset manifests. Deploy only the validated `public/` tree without rebuilding or
 transforming its content. Internal manifests, reports, caches and source maps
 are excluded from it. Public files use mode `0644` and directories `0755`.
 
-For the development site, set `DOCUSAURUS_DEPLOYMENT=development` and provide
-`URL_PRODUCTION` as the absolute URL of the official documentation before
-building or previewing. Missing or invalid values fail the development build.
-The announcement links to that configured URL; production builds do not need it.
+`npm run build:local` and `npm run start:local` supply the standard production
+and preproduction URLs when they are absent, alongside test legal information.
+Explicit URL settings are preserved. These helpers must never publish a site.
+
+Set `URL_PRODUCTION` to the official documentation HTTPS URL for publication builds.
+For the development site, also set `DOCUSAURUS_DEPLOYMENT=development` and
+`URL_PREPRODUCTION` to the GitHub Pages HTTPS origin; the configured project base
+path is appended automatically. Missing or invalid values fail generation.
+The development announcement links to the configured official documentation URL.
 
 ## Documentation sources
 
@@ -59,7 +64,8 @@ The announcement links to that configured URL; production builds do not need it.
 ## Markdown counterparts
 
 `npm run build` exports published `.md` pages alongside their HTML counterparts
-in `public/` and generates a root `public/llms.txt` index. For example,
+in `public/` and generates a curated root `public/llms.txt` index plus the complete
+`public/llms-full.txt` context. For example,
 `public/shared/index.html` and `public/shared/index.md` represent the same document;
 there is no public `markdown/` prefix.
 
@@ -71,6 +77,7 @@ build. See the [portable publication contract](docs/shared/portable-markdown-pub
 
 Each HTML page displays `View Markdown version` directly below its title and
 exposes the same relative target through alternate metadata in its head.
+A relative `describedby` head link advertises the deployment’s `llms.txt`.
 Each Markdown page displays `View HTML version` immediately after front matter.
 These links and representation metadata are build-managed; source documents
 must not maintain them manually. The build and CI reject missing counterparts,

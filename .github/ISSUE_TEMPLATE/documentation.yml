@@ -1,0 +1,24 @@
+name: Documentation correction or improvement
+description: Report missing, incorrect or unclear LongitudeOne documentation.
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Affected page and version
+      description: Link the page or source path, and identify the library major or DBMS version when relevant.
+      placeholder: docs/shared/documentation-contribution-workflow.md
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and expected improvement
+      description: Explain what is missing or incorrect and what a reader should be able to understand or do.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence
+      description: Where applicable, provide release-specific API or test evidence, a standard edition and clause, or official vendor documentation.

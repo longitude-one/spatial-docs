@@ -54,6 +54,9 @@ The development announcement links to the configured official documentation URL.
 
 ## Documentation sources
 
+Start with the [documentation contribution workflow](docs/shared/documentation-contribution-workflow.md)
+for writing, validation, pull requests, review and version maintenance.
+
 - `docs/shared/` contains documentation shared across the ecosystem.
 - `docs/<library>/v<major>/` contains versioned library documentation.
 - `docs/standards/`, `docs/concepts/` and `docs/dbms/` contain spatial references.

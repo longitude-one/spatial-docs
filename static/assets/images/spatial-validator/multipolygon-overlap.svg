@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 360" role="img" aria-labelledby="title description">
+<title id="title">Overlapping interiors</title><desc id="description">Overlapping interiors. Member boundaries: [[(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)], [(1, 1), (3, 1), (3, 3), (1, 3), (1, 1)]]. Two individually valid squares. Filled areas overlap. MultiPolygon intersection error.</desc>
+<rect width="820" height="360" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 70 + 55*x; svgY = 285 - 55*y. -->
+<path d="M 70,285 L 180,285 L 180,175 L 70,175 L 70,285 Z" fill="#39A576" fill-opacity="0.2" stroke="#2784C2" stroke-width="3"/>
+<path d="M 125,230 L 235,230 L 235,120 L 125,120 L 125,230 Z" fill="#39A576" fill-opacity="0.2" stroke="#183D55" stroke-width="3"/>
+<path d="M 125,230 L 180,230 L 180,175 L 125,175 Z" fill="#D45151" fill-opacity="0.35" stroke="#B33131" stroke-width="3"/>
+<text x="440" y="100" font-family="sans-serif" font-size="18" fill="#183D55">Two individually valid squares</text>
+<text x="440" y="140" font-family="sans-serif" font-size="18" fill="#183D55">Filled areas overlap</text>
+<text x="440" y="180" font-family="sans-serif" font-size="18" fill="#B33131">MultiPolygon intersection error</text>
+</svg>

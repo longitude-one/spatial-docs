@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 360" role="img" aria-labelledby="title description">
+<title id="title">A valid Triangle</title><desc id="description">A valid Triangle. Coordinates: [[(0, 0), (4, 0), (0, 4), (0, 0)]]. A → B → C → A. Three distinct vertices. Valid Triangle.</desc>
+<rect width="820" height="360" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 70 + 35*x; svgY = 285 - 35*y. -->
+<path d="M 70,285 L 210,285 L 70,145 L 70,285 Z" fill="#39A576" fill-opacity="0.2" stroke="#2784C2" stroke-width="3"/>
+<circle cx="70" cy="285" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5"/><text x="58" y="308" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="210" cy="285" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5"/><text x="198" y="308" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="70" cy="145" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5"/><text x="58" y="168" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<text x="440" y="100" font-family="sans-serif" font-size="18" fill="#183D55">A → B → C → A</text>
+<text x="440" y="140" font-family="sans-serif" font-size="18" fill="#183D55">Three distinct vertices</text>
+<text x="440" y="180" font-family="sans-serif" font-size="18" fill="#183D55">Valid Triangle</text>
+</svg>

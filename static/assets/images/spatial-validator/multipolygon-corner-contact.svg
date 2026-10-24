@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 360" role="img" aria-labelledby="title description">
+<title id="title">An isolated corner contact</title><desc id="description">An isolated corner contact. Member boundaries: [[(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)], [(2, 2), (4, 2), (4, 4), (2, 4), (2, 2)]]. Members touch at (2, 2). No interior overlap. Valid MultiPolygon.</desc>
+<rect width="820" height="360" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 70 + 55*x; svgY = 285 - 55*y. -->
+<path d="M 70,285 L 180,285 L 180,175 L 70,175 L 70,285 Z" fill="#39A576" fill-opacity="0.2" stroke="#2784C2" stroke-width="3"/>
+<path d="M 180,175 L 290,175 L 290,65 L 180,65 L 180,175 Z" fill="#39A576" fill-opacity="0.2" stroke="#183D55" stroke-width="3"/>
+<circle cx="180" cy="175" r="6" fill="#DB9251" stroke="#183D55" stroke-width="2"/>
+<text x="440" y="100" font-family="sans-serif" font-size="18" fill="#183D55">Members touch at (2, 2)</text>
+<text x="440" y="140" font-family="sans-serif" font-size="18" fill="#183D55">No interior overlap</text>
+<text x="440" y="180" font-family="sans-serif" font-size="18" fill="#183D55">Valid MultiPolygon</text>
+</svg>

@@ -21,6 +21,10 @@ use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Polygon;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\GeometryCollection;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\MultiPoint;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\MultiLineString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Triangle;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\MultiPolygon;
+use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\MultiPolygon as MultiPolygonZ;
+use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\PolyhedralSurface;
 use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\Polygon as PolygonZ;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geography\Point as GeographyPoint;
 use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
@@ -835,3 +839,310 @@ On non-empty Geography, available structural and Point checks continue, but topo
 `[root] | polygon-unavailable: Geography Polygon topology and orientation are not implemented yet.`, alongside the internal and boundary warnings.
 The default payload for `polygon-orientation` and `polygon-unavailable` is `['severity' => 'warning']`;
 other Polygon topology errors default to null. An explicitly supplied Polygon payload is preserved.
+
+## Triangle checks
+
+A Triangle is a declared spatial type, not just a Polygon with a triangular outline.
+`Spatial` selects `Triangle` validation for Triangle objects, composing boundary, Point, metadata and supporting-plane checks.
+The [Triangle rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#triangle-rules)
+require exactly four exterior positions A → B → C → A, three distinct non-collinear vertices and no holes.
+The following examples reuse the setup above.
+
+### Three vertices and a closing position
+
+This triangular parcel has three distinct vertices and repeats A to close its boundary.
+A plain Polygon with the same coordinates remains a Polygon; applying the specialized `Triangle` constraint to it produces a type violation.
+Generic validation does not infer a different type from the outline.
+
+![Three distinct vertices A, B and C form a closed, valid Triangle with four exterior positions.](../../assets/images/spatial-validator/triangle-valid.svg)
+
+```php
+$spatialObject = new Triangle([[[0, 0], [4, 0], [0, 4], [0, 0]]]);
+$showViolations($spatialObject); // No violations.
+```
+
+### A fourth distinct vertex is not a Triangle
+
+The square below is a valid Polygon boundary, but cannot be the exterior of a Triangle.
+This subclass simulates malformed Triangle data that the standard constructor rejects.
+
+![Four distinct vertices and a closing position form a square, which fails the Triangle position count.](../../assets/images/spatial-validator/triangle-four-vertices.svg)
+
+```php
+$spatialObject = new class ([]) extends Triangle {
+    public function isEmpty(): bool
+    {
+        return false;
+    }
+
+    public function getRings(): array
+    {
+        return [new LineString([new Point(0, 0), new Point(4, 0), new Point(4, 4), new Point(0, 4), new Point(0, 0)])];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+rings[0] | triangle-position-count: A non-empty Triangle requires exactly four exterior positions.
+```
+
+### No interior rings
+
+A Triangle cannot contain a hole, even when the hole is strictly inside its exterior.
+This second subclass simulates that invalid structure.
+
+![A triangular hole lies inside a larger triangle; the hole is forbidden for the Triangle type.](../../assets/images/spatial-validator/triangle-hole.svg)
+
+```php
+$spatialObject = new class ([]) extends Triangle {
+    public function isEmpty(): bool
+    {
+        return false;
+    }
+
+    public function getRings(): array
+    {
+        return [
+            new LineString([new Point(0, 0), new Point(6, 0), new Point(0, 6), new Point(0, 0)]),
+            new LineString([new Point(1, 1), new Point(1, 2), new Point(2, 1), new Point(1, 1)]),
+        ];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+rings[1] | triangle-interior: A Triangle must not have interior rings.
+```
+
+Repeated vertices produce `triangle-distinct` at `rings[0].points[index]` with
+`A Triangle requires three distinct spatial vertices.` Boundary and plane failures retain their shared codes,
+including `polygonstructure-degenerate` for collinearity; Triangle boundary topology uses `triangle-topology` at `rings[0]`.
+Non-collinearity is determined from the first three vertices, so the closing position cannot supply a missing plane.
+Genuine EMPTY Triangle is valid. XYZ/XYZM use the actual spatial plane; M must be finite but does not affect spatial predicates.
+Non-empty Geography retains available checks and unavailable-geodetic warnings rather than establishing complete geographic validity.
+
+## MultiPolygon checks
+
+A MultiPolygon represents several filled surfaces. Each member receives complete Polygon or Triangle validation,
+then the aggregate checks relationships between valid non-empty members.
+The [MultiPolygon rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#multipolygon-rules)
+allow isolated contacts but reject overlapping interiors and shared boundary intervals.
+Member family, coordinate variant and full spatial reference must match, including for retained EMPTY members.
+
+### An isolated corner contact is valid
+
+Two parcels may meet at a single corner without sharing an edge or overlapping their interiors.
+The squares below touch only at (2, 2).
+
+![Two square Polygon members touch only at one corner, forming a valid MultiPolygon.](../../assets/images/spatial-validator/multipolygon-corner-contact.svg)
+
+```php
+$spatialObject = new MultiPolygon([
+    new Polygon([[[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]]),
+    new Polygon([[[2, 2], [4, 2], [4, 4], [2, 4], [2, 2]]]),
+]);
+$showViolations($spatialObject); // No violations.
+```
+
+### Overlapping interiors
+
+These individually valid squares overlap on the area from (1, 1) to (2, 2).
+The aggregate diagnostic identifies the later member, `polygons[1]`, and names both member indexes in its message.
+
+![Two squares overlap over a smaller square area, causing a MultiPolygon intersection error.](../../assets/images/spatial-validator/multipolygon-overlap.svg)
+
+```php
+$spatialObject = new MultiPolygon([
+    new Polygon([[[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]]),
+    new Polygon([[[1, 1], [3, 1], [3, 3], [1, 3], [1, 1]]]),
+]);
+$showViolations($spatialObject);
+```
+
+```text
+polygons[1] | multipolygon-intersection: Polygon members 0 and 1 must have disjoint interiors and only isolated boundary contacts.
+```
+
+### A shared edge also fails
+
+Even without interior overlap, sharing the whole edge from (2, 0) to (2, 2) violates the isolated-contact rule.
+This differs from adjacent patches of a PolyhedralSurface, where shared edges connect the surface.
+
+![Two adjacent squares share an entire edge, which is forbidden between MultiPolygon members.](../../assets/images/spatial-validator/multipolygon-shared-edge.svg)
+
+```php
+$spatialObject = new MultiPolygon([
+    new Polygon([[[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]]),
+    new Polygon([[[2, 0], [4, 0], [4, 2], [2, 2], [2, 0]]]),
+]);
+$showViolations($spatialObject);
+```
+
+```text
+polygons[1] | multipolygon-intersection: Polygon members 0 and 1 must have disjoint interiors and only isolated boundary contacts.
+```
+
+### Different supporting planes
+
+Each member must be planar, but the whole MultiPolygon need not share one plane.
+These squares occupy Z = 0 and Z = 1. Their XY footprints coincide, yet their XYZ surfaces do not intersect.
+
+![Two parallel square surfaces share an XY footprint but lie at different heights, forming a valid XYZ MultiPolygon.](../../assets/images/spatial-validator/multipolygon-parallel-planes.svg)
+
+```php
+$spatialObject = new MultiPolygonZ([
+    new PolygonZ([[[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]]]),
+    new PolygonZ([[[0, 0, 1], [2, 0, 1], [2, 2, 1], [0, 2, 1], [0, 0, 1]]]),
+]);
+$showViolations($spatialObject); // No violations.
+```
+
+Checks account for filled areas after subtracting holes: a member entirely inside another member's hole, without contact, is valid.
+In different XYZ planes, isolated boundary/interior contacts with disjoint interiors are allowed by this library's profile;
+contact segments and intersecting interiors are rejected. XY/XYM use XY, XYZ/XYZM use XYZ, and M is ignored spatially.
+Invalid members retain nested paths such as `polygons[1].rings[0].points[2]` and are excluded from dependent pair checks;
+other valid pairs are still checked. One aggregate diagnostic is emitted per interacting pair.
+An empty list or valid EMPTY members is allowed. Non-empty Geography interactions report `multipolygon-unavailable` at `polygons[second]`
+with `Geography MultiPolygon interactions are not implemented yet.` and default warning payload `['severity' => 'warning']`.
+
+## Polyhedral surface checks
+
+A PolyhedralSurface joins Polygon or Triangle patches into one surface in XYZ or XYZM.
+Unlike MultiPolygon members, neighbouring patches may share edges, and those edges connect the surface.
+The [polyhedral-surface rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#polyhedral-surface-rules)
+distinguish ordinary `PolyhedralSurface` validity, selected by `Spatial`, from explicit `ClosedPolyhedralSurface` validation.
+Every patch receives full validation, retaining paths such as `patches[0].rings[0].points[2]`.
+
+### A valid open surface
+
+Two triangular panels meet along AB, like an open book. They traverse the shared edge in opposite directions.
+This is a valid PolyhedralSurface, but it does not enclose a volume and therefore fails explicit closure.
+The drawing uses an oblique XYZ projection.
+
+![Two triangular panels share AB in opposite directions, forming a valid open surface that fails explicit closure.](../../assets/images/spatial-validator/polyhedral-open-book.svg)
+
+```php
+$a = [0, 0, 0];
+$b = [2, 0, 0];
+$c = [0, 2, 0];
+$d = [0, 0, 2];
+$base = new PolygonZ([[$a, $c, $b, $a]]);
+$wall = new PolygonZ([[$a, $b, $d, $a]]);
+$spatialObject = new PolyhedralSurface([$base, $wall]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\ClosedPolyhedralSurface());
+```
+
+```text
+[root] | closedpolyhedralsurface-invalid: A closed PolyhedralSurface requires a non-empty envelope enclosing a volume.
+```
+
+The next invalid examples use a demonstration object that exposes supplied patches after construction.
+This lets the validator inspect malformed surface data without the standard constructor rejecting it first.
+
+```php
+$surfaceCandidate = static function (array $patches): PolyhedralSurface {
+    $surface = new class extends PolyhedralSurface {
+        public array $candidatePatches = [];
+
+        public function getPatches(): array
+        {
+            return $this->candidatePatches;
+        }
+    };
+    $surface->candidatePatches = $patches;
+
+    return $surface;
+};
+```
+
+### Opposite directions on shared edges
+
+Reverse the wall from the open-book example and both patches now traverse AB from B to A.
+The surface fails the shared-edge orientation rule. This is an error, distinct from a Polygon hole's orientation warning.
+
+![Both panels traverse their shared edge from B to A, causing a surface orientation error.](../../assets/images/spatial-validator/polyhedral-wrong-orientation.svg)
+
+```php
+$reversedWall = new PolygonZ([[$a, $d, $b, $a]]);
+$spatialObject = $surfaceCandidate([$base, $reversedWall]);
+$showViolations($spatialObject);
+```
+
+```text
+[root] | polyhedralsurface-orientation: Shared patch boundaries must have opposite directions.
+```
+
+### Patches must connect through edges
+
+Two separate triangular panels do not form one connected PolyhedralSurface.
+Touching at a vertex alone is also insufficient: patch connectivity requires shared boundary segments.
+
+![Two disjoint triangular patches have no common edge and cannot form one PolyhedralSurface.](../../assets/images/spatial-validator/polyhedral-disconnected.svg)
+
+```php
+$remote = new PolygonZ([[[5, 5, 0], [7, 5, 0], [5, 7, 0], [5, 5, 0]]]);
+$spatialObject = $surfaceCandidate([$base, $remote]);
+$showViolations($spatialObject);
+```
+
+```text
+[root] | polyhedralsurface-connected: Patches must form an edge-connected surface.
+```
+
+### No EMPTY patches
+
+An EMPTY Polygon is valid on its own, but cannot contribute a patch to a non-empty surface.
+The EMPTY patch below is a schematic list entry, with no spatial position.
+
+![One triangular patch is followed by an EMPTY patch with no position; the EMPTY contributing patch is invalid.](../../assets/images/spatial-validator/polyhedral-empty-patch.svg)
+
+```php
+$spatialObject = $surfaceCandidate([$base, new PolygonZ([])]);
+$showViolations($spatialObject);
+```
+
+```text
+patches[1] | polyhedralsurface-empty-patch: A non-empty PolyhedralSurface cannot contain an EMPTY patch.
+```
+
+### A closed envelope with volume
+
+Adding two triangular panels to the open book forms a tetrahedron.
+Each edge belongs to two patches with opposite directions, and the envelope encloses nonzero volume.
+Both ordinary validity and explicit closure pass.
+
+![Four triangular patches form a closed tetrahedron enclosing a volume.](../../assets/images/spatial-validator/polyhedral-tetrahedron.svg)
+
+```php
+$spatialObject = new PolyhedralSurface([
+    $base,
+    $wall,
+    new PolygonZ([[$a, $d, $c, $a]]),
+    new PolygonZ([[$b, $c, $d, $b]]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\ClosedPolyhedralSurface()); // No violations.
+```
+
+### Other surface diagnostics and scope
+
+Shared segments are subdivided at supplied collinear endpoints before incidence, orientation and connectivity are checked.
+At each vertex, incident faces must form one connected local fan; branching or pinched configurations fail.
+Patch interiors must not intersect other patches. Holes are taken into account in these checks and in the enclosed-volume calculation.
+
+| Code | Default message | Path |
+| --- | --- | --- |
+| `polyhedralsurface-dimension` | A PolyhedralSurface requires Z coordinates. | Surface |
+| `polyhedralsurface-incidence` | A boundary segment must have at most two incident patches. | Surface |
+| `polyhedralsurface-intersection` | Patch interiors must not intersect other patches. | Surface |
+| `polyhedralsurface-manifold` | Each surface vertex must have one connected local face fan. | Surface |
+
+A memberless XYZ/XYZM surface is valid EMPTY under ordinary validation, but fails explicit closure.
+Closed validity additionally requires every boundary segment to have two uses and a nonzero enclosed-volume sum.
+Globally reversing all patch directions preserves the result. No patches are repaired, joined, moved or reoriented by validation.
+Non-empty Geography retains available component checks and reports `polyhedralsurface-unavailable` with
+`Geography PolyhedralSurface topology is not implemented yet.` and default warning payload `['severity' => 'warning']`.
+M must remain finite but is ignored spatially; an XYZ full surface is evaluated using its actual three-dimensional patch geometry.

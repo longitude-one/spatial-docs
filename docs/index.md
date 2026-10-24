@@ -15,6 +15,7 @@ description: Reference and contributor documentation for the LongitudeOne Spatia
 - [Geo Parser](geo-parser/index.md)
 - [Spatial Encoder](spatial-encoder/index.md)
 - [Spatial Types](spatial-types/index.md)
+- [Spatial Validator](spatial-validator/index.md)
 - [WKB Parser](wkb-parser/index.md)
 - [WKT Parser](wkt-parser/index.md)
 - [Spatial Transformer](spatial-transformer/index.md)

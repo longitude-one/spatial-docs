@@ -10,12 +10,12 @@ Both return ordinary Symfony violation lists.
 
 ## Install and run
 
-The target is `1.0.0-RC.0`; use the following requirement when that release is available.
+For the 1.0 series, use the following Composer requirement when a matching release is available.
 It requires PHP `^8.4`, `spatial-core ^1.3`, `spatial-types ^1.0@beta` and Symfony Validator `^5.4 || ^6.0 || ^7.0 || ^8.0`.
 Composer resolves the package dependencies; PCOV and the library's quality tools are not consumer requirements.
 
 ```bash
-composer require longitude-one/spatial-validator:1.0.0-RC.0
+composer require 'longitude-one/spatial-validator:~1.0.0'
 ```
 
 In a project with the package installed, run this PHP code:

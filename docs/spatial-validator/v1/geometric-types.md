@@ -16,6 +16,7 @@ require 'vendor/autoload.php';
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CircularString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CompoundCurve;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geography\Point as GeographyPoint;
 use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
 use Symfony\Component\Validator\Validation;
@@ -331,3 +332,112 @@ Non-empty Geography simplicity is unavailable. A single XYZ full circle encoded 
 but comparisons with other arcs cannot determine its plane and report an unavailable-check warning.
 The warning code is `simplecircularstring-unavailable`, with the message
 `Circular simplicity is unavailable for this spatial model or arc plane.` and default payload `['severity' => 'warning']`.
+
+## Compound-curve checks
+
+A CompoundCurve joins LineString and CircularString components in order, for example a curved road followed by a straight section.
+`Spatial` selects `CompoundCurve` validation: it checks each component and its metadata, rejects EMPTY members and verifies consecutive joins.
+`SimpleCompoundCurve` additionally checks the whole curve for forbidden intersections and overlaps.
+These examples follow the [compound-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#compound-curve-rules)
+and reuse the setup above.
+
+### Connected components: CompoundCurve
+
+This road follows an upper semicircle from A (-1, 0) through B (0, 1) to C (1, 0), then a straight section to D (2, 0).
+Both components meet at C, so the compound curve is valid. It also passes explicit simplicity.
+
+![An upper semicircle joins a straight segment at C, forming a valid simple compound curve.](../../assets/images/spatial-validator/compound-connected.svg)
+
+```php
+$spatialObject = new CompoundCurve([
+    new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]),
+    new LineString([new Point(1, 0), new Point(2, 0)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleCompoundCurve()); // No violations.
+```
+
+If the straight section starts at (2, 0) instead, there is a gap after C (1, 0).
+The following subclass simulates disconnected components, which the standard constructor rejects.
+
+![The arc ends at C but the next segment starts at D, leaving a gap and failing continuity.](../../assets/images/spatial-validator/compound-disconnected.svg)
+
+```php
+$spatialObject = new class ([new LineString([new Point(0, 0), new Point(1, 0)])]) extends CompoundCurve {
+    public function getCurves(): array
+    {
+        return [
+            new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]),
+            new LineString([new Point(2, 0), new Point(3, 0)]),
+        ];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+curves[1] | compoundcurve-disconnected: The component must start at the preceding component endpoint.
+```
+
+Each component must be a valid LineString or CircularString with matching Geometry/Geography family, exact coordinate variant and full spatial reference.
+Component validation runs before join checks. No component is reordered and no coordinates are moved to fill gaps.
+
+### No EMPTY contributing component
+
+An EMPTY LineString is valid on its own, but it cannot contribute a section to a compound curve.
+Here the subclass simulates an EMPTY second component, which the standard constructor rejects.
+The EMPTY component has no location; the box below is a schematic list entry, not a drawn segment.
+
+![A valid first segment is followed by an EMPTY component, shown as a separate list entry with no spatial location.](../../assets/images/spatial-validator/compound-empty-member.svg)
+
+```php
+$spatialObject = new class ([new LineString([new Point(0, 0), new Point(1, 0)])]) extends CompoundCurve {
+    public function getCurves(): array
+    {
+        return [
+            new LineString([new Point(0, 0), new Point(1, 0)]),
+            new LineString([]),
+        ];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+curves[1] | compoundcurve-empty-member: A contributing curve must not be EMPTY.
+```
+
+This differs from a compound curve with no components: `new CompoundCurve([])` is valid EMPTY and also passes simplicity.
+
+### Whole-curve simplicity: SimpleCompoundCurve
+
+Two individually simple components can cross when joined.
+This example joins the same semicircle to a straight segment from C (1, 0) to D (-1, 1).
+The join at C is allowed, but the segment also crosses the arc at (-0.6, 0.8).
+Ordinary validity passes; explicit simplicity rejects that additional intersection.
+
+![A segment joins the semicircle at C but also crosses its interior; whole-curve simplicity fails at the straight segment.](../../assets/images/spatial-validator/compound-intersection.svg)
+
+```php
+$spatialObject = new CompoundCurve([
+    new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]),
+    new LineString([new Point(1, 0), new Point(-1, 1)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleCompoundCurve());
+```
+
+```text
+curves[1].segments[0] | simplecompoundcurve-invalid: Compound-curve parts have a forbidden intersection or overlap.
+```
+
+`curves[1].segments[0]` identifies the first segment of the second component.
+Simplicity checks line/line, line/arc and arc/arc interactions, allowing neighbouring endpoint joins and one global closure.
+Ordinary validity requires neither closure nor simplicity. Geometry joins compare XYZ when Z exists and otherwise XY, ignoring M.
+
+For non-empty Geography, component and Point checks still run, but joins report `compoundcurve-unavailable`
+with `Geography compound-curve continuity is unavailable.` Explicit simplicity reports `simplecompoundcurve-unavailable`
+with `Compound-curve simplicity is unavailable for this model or arc plane.`
+These warnings default to payload `['severity' => 'warning']`.
+The indeterminate plane of an XYZ full circle encoded A → B → A also prevents simplicity comparisons with other parts;
+the validator reports a warning rather than choosing a plane.

@@ -106,6 +106,10 @@ Describe any impact on documentation structure, navigation,
 generated resources, URLs, or published content.
 
 Write "None" when there is no specific impact beyond the changed content.
+
+For public library behavior changes, identify affected libraries and major versions,
+the documentation updated, and migration guidance when needed. If documentation
+is unaffected, state why; an artificial documentation edit is not required.
 -->
 
 ## Screenshots
@@ -123,4 +127,5 @@ Remove this section when not applicable.
 - [ ] Normative statements are traceable to their source when applicable.
 - [ ] No generated file was manually edited when it must be generated from a source.
 - [ ] No unrelated change is included.
+- [ ] Documentation impact was assessed; affected public behavior is documented, or the reason no update is needed is stated.
 - [ ] The Pull Request is ready for review.

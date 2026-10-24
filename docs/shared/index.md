@@ -7,6 +7,10 @@ description: Guidance and reference material for the LongitudeOne Spatial ecosys
 This section contains guidance and reference material for the entire
 LongitudeOne Spatial ecosystem.
 
+The [Documentation contribution workflow](./documentation-contribution-workflow.md)
+explains how to write, validate, review and maintain documentation changes,
+including standards citations and the documentation Definition of Done.
+
 The [Portable Markdown publication contract](./portable-markdown-publication-contract.md)
 defines the strict publication rules that keep generated HTML and Markdown
 semantically equivalent while remaining portable and independently usable.

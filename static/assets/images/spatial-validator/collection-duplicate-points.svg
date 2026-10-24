@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title description">
+<title id="title">Repeated MultiPoint position</title><desc id="description">points[0] is EMPTY and has no location. points[1] and points[3] coincide at (0,0). points[2] is at (2,0). Only explicit simplicity rejects the duplicate.</desc>
+<rect width="760" height="300" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 60 + 80*x; svgY = 135 - 80*y. EMPTY has no plotted position. -->
+<circle cx="60" cy="135" r="14" fill="none" stroke="#B33131" stroke-width="2"/>
+<rect x="30" y="220" width="270" height="45" fill="none" stroke="#183D55" stroke-dasharray="6 5"/>
+<text x="50" y="249" font-family="sans-serif" font-size="18" fill="#183D55">points[0]: EMPTY (no position)</text>
+<circle cx="60" cy="135" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="60" y="167" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A (0, 0)</text>
+<circle cx="220" cy="135" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="220" y="167" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B (2, 0)</text>
+<text x="360" y="85" font-family="sans-serif" font-size="18" fill="#183D55">points[1] = points[3]</text>
+<text x="360" y="125" font-family="sans-serif" font-size="18" fill="#183D55">Ordinary validity: passes</text>
+<text x="360" y="165" font-family="sans-serif" font-size="18" fill="#B33131">SimpleMultiPoint: fails</text>
+</svg>

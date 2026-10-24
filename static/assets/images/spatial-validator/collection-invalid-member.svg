@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title description">
+<title id="title">A nested invalid member</title><desc id="description">The first collection member is a Point. The second member is a LineString containing only one Point, at (2,0), and fails the minimum point count.</desc>
+<rect width="760" height="300" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 60 + 80*x; svgY = 150 - 80*y. -->
+<circle cx="220" cy="150" r="18" fill="none" stroke="#B33131" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="60" cy="150" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="60" y="182" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">Point</text>
+<circle cx="220" cy="150" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="220" y="182" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">One-Point line</text>
+<text x="360" y="85" font-family="sans-serif" font-size="18" fill="#183D55">geometries[0]: valid Point</text>
+<text x="360" y="125" font-family="sans-serif" font-size="18" fill="#183D55">geometries[1]: one-Point line</text>
+<text x="360" y="165" font-family="sans-serif" font-size="18" fill="#B33131">Member validity fails</text>
+</svg>

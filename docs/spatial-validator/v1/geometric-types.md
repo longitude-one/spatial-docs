@@ -18,6 +18,9 @@ use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CircularString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CompoundCurve;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Polygon;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\GeometryCollection;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\MultiPoint;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\MultiLineString;
 use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\Polygon as PolygonZ;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geography\Point as GeographyPoint;
 use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
@@ -550,3 +553,131 @@ These checks are only one stage of complete Polygon validation: a coplanar hole 
 For non-empty Geography, Cartesian planarity is not used as a substitute. The internal stage reports `polygonstructure-unavailable`
 with `Geography Polygon planarity and inter-ring topology are not implemented yet.`, alongside boundary limitations and the public Polygon topology warning.
 Unavailable-check warnings default to payload `['severity' => 'warning']`; genuine EMPTY Geography needs no supporting plane.
+
+## Collection checks
+
+Collections validate their members recursively. `GeometryCollection` accepts different spatial types, `MultiPoint` contains Points,
+and `MultiLineString` contains LineStrings. Generic `Spatial` selects the corresponding validator.
+Simplicity and closure are separate, explicit properties: `SimpleMultiPoint`, `SimpleMultiLineString` and `ClosedMultiLineString`.
+These examples follow the [collection rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#collection-rules)
+and reuse the setup above. All member indexes are zero-based.
+
+### Mixed spatial types: GeometryCollection
+
+A collection can contain a survey marker, a route and a parcel boundary together.
+Their different types and topological dimensions are allowed; their Geometry/Geography family, coordinate variant and full spatial reference must match.
+General collection validity does not prohibit intersections between members or add a whole-collection simplicity check.
+
+![A collection contains an independent Point, a LineString and a triangular Polygon, all valid.](../../assets/images/spatial-validator/collection-mixed.svg)
+
+```php
+$spatialObject = new GeometryCollection(elements: [
+    new Point(0, 0),
+    new LineString([new Point(1, 0), new Point(2, 1)]),
+    new Polygon([[[3, 0], [5, 0], [4, 2], [3, 0]]]),
+]);
+$showViolations($spatialObject); // No violations.
+```
+
+Each member still has to pass its own checks. Here the second member is a LineString containing only one Point.
+The member's violation is preserved at `geometries[1]`, rather than replaced by a generic collection error.
+
+![The second member contains one Point and fails LineString validity inside the collection.](../../assets/images/spatial-validator/collection-invalid-member.svg)
+
+```php
+$spatialObject = new GeometryCollection(elements: [
+    new Point(0, 0),
+    new LineString([new Point(2, 0)]),
+]);
+$showViolations($spatialObject);
+```
+
+```text
+geometries[1] | minimumpointcount-invalid: A line must contain at least 2 points unless EMPTY is allowed.
+```
+
+### Point collections: MultiPoint and SimpleMultiPoint
+
+Ordinary `MultiPoint` validity checks the Points, without requiring distinct positions.
+`SimpleMultiPoint` adds that requirement, ignoring valid EMPTY members because they have no spatial position.
+Here `points[1]` and `points[3]` both occupy A (0, 0); `points[0]` is EMPTY and remains in the collection.
+
+![The first member is EMPTY; the second and fourth members coincide at A, which fails explicit MultiPoint simplicity.](../../assets/images/spatial-validator/collection-duplicate-points.svg)
+
+```php
+$spatialObject = new MultiPoint([
+    new Point(), new Point(0, 0), new Point(2, 0), new Point(0, 0),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleMultiPoint());
+```
+
+```text
+points[3] | simplemultipoint-invalid: The point repeats a spatial position.
+```
+
+### Line collections: MultiLineString and SimpleMultiLineString
+
+Two crossing routes can form a valid MultiLineString. `SimpleMultiLineString` additionally requires each member to be simple
+and restricts contacts between different lines to their shared boundaries.
+These two simple segments meet at their interiors, so the explicit simplicity check reports the second line.
+
+![Two individually simple segments cross at (1, 1); the MultiLineString is valid but fails explicit simplicity.](../../assets/images/spatial-validator/collection-crossing-lines.svg)
+
+```php
+$spatialObject = new MultiLineString([
+    new LineString([new Point(0, 0), new Point(2, 2)]),
+    new LineString([new Point(0, 2), new Point(2, 0)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString());
+```
+
+```text
+lineStrings[1] | simplemultilinestring-invalid: The lines intersect outside their shared boundaries or overlap.
+```
+
+A contact at the actual endpoints of both open lines is allowed. Crossings, overlaps and an endpoint lying inside another line fail.
+A closed line has an empty boundary, so another line cannot touch it even at its repeated starting position.
+A member's own simplicity failure retains its `simplelinestring-invalid` code at `lineStrings[index]`.
+
+### Every member closed: ClosedMultiLineString
+
+`ClosedMultiLineString` requires a non-EMPTY aggregate in which every member returns to its own starting position.
+Joining several open lines into a loop is insufficient. Here A → B → C and C → D → A together draw a square,
+but neither of the two members is closed.
+
+![Two open members together trace a square, but each fails the individual closure required by ClosedMultiLineString.](../../assets/images/spatial-validator/collection-open-members.svg)
+
+```php
+$spatialObject = new MultiLineString([
+    new LineString([new Point(0, 0), new Point(2, 0), new Point(2, 2)]),
+    new LineString([new Point(2, 2), new Point(0, 2), new Point(0, 0)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\ClosedMultiLineString());
+```
+
+```text
+lineStrings[0] | firstpointequalslastpoint-invalid: A closed line requires finite non-empty endpoints at the same position.
+lineStrings[1] | firstpointequalslastpoint-invalid: A closed line requires finite non-empty endpoints at the same position.
+```
+
+Closure does not establish simplicity: individually closed members may still intersect or cross themselves.
+
+### EMPTY members and unavailable checks
+
+Valid EMPTY members are retained in GeometryCollection, MultiPoint and MultiLineString and still checked for matching metadata.
+A collection represents EMPTY if it has no members or all members represent the empty set; this flag never hides stored members.
+These rules do not permit EMPTY Points inside a LineString.
+
+An EMPTY MultiLineString fails explicit closure with
+`[root] | closedmultilinestring-invalid: An EMPTY MultiLineString is not closed.`
+In a mixed non-empty aggregate, each EMPTY line instead fails its own endpoint-closure check at `lineStrings[index]`.
+Simplicity ignores absent EMPTY positions, while non-empty Geometry position comparisons use XYZ when Z exists and otherwise XY, ignoring M.
+
+Non-empty Geography simplicity reports unavailable-check warnings, including `simplemultipoint-unavailable`
+with `Geography SimpleMultiPoint validation is not implemented yet.` and `simplemultilinestring-unavailable`
+with `Geography SimpleMultiLineString validation is not implemented yet.` Member simplicity can also report its own warning.
+Member closure uses `firstpointequalslastpoint-unavailable` with `Geography line closure is not implemented yet.`
+Warnings default to payload `['severity' => 'warning']`; ordinary collection errors default to null.

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 640" role="img" aria-labelledby="title description">
+  <title id="title">Complete Polygon validation composition</title>
+  <desc id="description">Polygon composes structure and planarity, each ring and relationships between rings. Rings independently check cardinality, closure, simplicity and Points. Relationships check hole placement, contacts and connected interior.</desc>
+  <rect width="800" height="640" fill="#F5F8FA"/>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#183D55"/></marker></defs>
+  <rect x="240" y="25" width="320" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="58.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Polygon validation</text>
+  <rect x="20" y="145" width="230" height="65" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="135" y="183.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Structure and planarity</text>
+  <rect x="285" y="145" width="230" height="65" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="183.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Each ring</text>
+  <rect x="550" y="145" width="230" height="65" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="665" y="172.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Relationships</text>
+  <text x="665" y="194.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">between rings</text>
+  <path d="M400 80 V110 H135 V145" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M400 80 V145" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M400 80 V110 H665 V145" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M400 210 V245 H270 V312 H300" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="300" y="285" width="235" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="417.5" y="318.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Cardinality</text>
+  <path d="M400 210 V245 H270 V402 H300" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="300" y="375" width="235" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="417.5" y="408.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Closure</text>
+  <path d="M400 210 V245 H270 V492 H300" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="300" y="465" width="235" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="417.5" y="498.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Applicable simplicity</text>
+  <path d="M400 210 V245 H270 V582 H300" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="300" y="555" width="235" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="417.5" y="588.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Point validation</text>
+  <path d="M665 210 V245 H550 V312 H565" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="565" y="285" width="220" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="675" y="318.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Hole placement</text>
+  <path d="M665 210 V245 H550 V432 H565" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="565" y="405" width="220" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="675" y="438.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Crossings and contacts</text>
+  <path d="M665 210 V245 H550 V552 H565" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="565" y="525" width="220" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="675" y="558.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Connected interior</text>
+</svg>

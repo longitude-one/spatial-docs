@@ -17,6 +17,8 @@ use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CircularString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CompoundCurve;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Polygon;
+use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\Polygon as PolygonZ;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geography\Point as GeographyPoint;
 use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
 use Symfony\Component\Validator\Validation;
@@ -441,3 +443,110 @@ with `Compound-curve simplicity is unavailable for this model or arc plane.`
 These warnings default to payload `['severity' => 'warning']`.
 The indeterminate plane of an XYZ full circle encoded A → B → A also prevents simplicity comparisons with other parts;
 the validator reports a warning rather than choosing a plane.
+
+## Polygon structure and supporting plane
+
+A Polygon needs consistent boundary data and a plane that contains every boundary position.
+The [internal Polygon structure and supporting-plane checks](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#internal-polygon-structure-and-supporting-plane)
+validate each boundary as a `Ring`, check matching component metadata and establish a common supporting plane.
+`rings[0]` is the exterior boundary; later rings are holes.
+Use public `Spatial` or `Polygon` validation: `PolygonStructure` is an internal building block, not a separate public validation API.
+The examples below reuse the setup above.
+
+### A valid plane can be vertical
+
+Planarity does not require a horizontal surface. This rectangle lies entirely in the vertical plane X = 0.
+Its exterior is closed, simple and contains non-collinear positions, so it passes validation.
+The illustration is an oblique projection of the XYZ coordinates, not a map view.
+
+![A closed rectangle in the vertical plane X = 0 passes Polygon validation.](../../assets/images/spatial-validator/polygon-vertical-plane.svg)
+
+```php
+$spatialObject = new PolygonZ([
+    [[0, 0, 0], [0, 2, 0], [0, 2, 2], [0, 0, 2], [0, 0, 0]],
+]);
+$showViolations($spatialObject); // No violations.
+```
+
+### Consistent EMPTY state and exterior boundary
+
+A genuine EMPTY Polygon has no rings and passes validation. A Polygon claiming to be non-empty must have an exterior boundary.
+This subclass deliberately reports a non-empty state while storing no rings.
+The dashed box below represents missing data, not a boundary present in the object.
+
+![A Polygon reports non-empty but has no exterior ring; the dashed outline represents missing data.](../../assets/images/spatial-validator/polygon-missing-exterior.svg)
+
+```php
+$spatialObject = new class ([]) extends Polygon {
+    public function isEmpty(): bool
+    {
+        return false;
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+[root] | polygonstructure-empty: A non-empty Polygon requires an exterior ring.
+```
+
+Conversely, an object reporting EMPTY while retaining rings produces
+`polygonstructure-empty: An EMPTY Polygon must not contain boundary rings.` Its stored boundaries are still checked.
+An EMPTY boundary is rejected by `Ring`, even though a Polygon with no rings can be valid EMPTY.
+
+### Non-collinear exterior positions
+
+Three positions on one straight line cannot establish a non-degenerate supporting plane.
+This candidate visits A (0, 0), B (1, 0), C (2, 0) and returns to A.
+It also retraces its segments, so both the Ring simplicity check and the supporting-plane check report violations.
+The subclass simulates a degenerate boundary without relying on the Polygon constructor to accept it.
+
+![A, B and C are collinear; returning from C to A retraces the line and cannot form a Polygon surface.](../../assets/images/spatial-validator/polygon-collinear-exterior.svg)
+
+```php
+$spatialObject = new class ([]) extends Polygon {
+    public function isEmpty(): bool
+    {
+        return false;
+    }
+
+    public function getRings(): array
+    {
+        return [new LineString([new Point(0, 0), new Point(1, 0), new Point(2, 0), new Point(0, 0)])];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+rings[0] | simplelinestring-invalid: The line has a forbidden segment intersection or overlap.
+rings[0] | polygonstructure-degenerate: The exterior must determine a non-degenerate supporting plane.
+```
+
+### Every boundary position must share the same plane
+
+Here A (0, 0, 0), B (2, 0, 0) and C (2, 2, 0) establish Z = 0, but D (0, 2, 1) lies above that plane.
+The ring is closed and simple in XYZ, yet the four vertices cannot bound a planar Polygon.
+The dashed guide shows D's projection onto Z = 0; that projected position is not part of the supplied ring.
+
+![D lies above the supporting plane Z = 0 established by A, B and C, so the Polygon fails planarity.](../../assets/images/spatial-validator/polygon-nonplanar-boundary.svg)
+
+```php
+$spatialObject = new PolygonZ([
+    [[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 1], [0, 0, 0]],
+]);
+$showViolations($spatialObject);
+```
+
+```text
+rings[0].points[3] | polygonstructure-plane: Every boundary position must lie in the exterior supporting plane.
+```
+
+All exterior and hole positions must lie in that same plane. XYZ and XYZM use XYZ, including inclined and vertical planes;
+XY and XYM use XY. M must remain finite but does not determine the plane. The checks do not move coordinates or flatten the surface.
+Incompatible metadata or unusable positions suppress dependent plane checks while independent boundary diagnostics continue.
+
+These checks are only one stage of complete Polygon validation: a coplanar hole outside the exterior still fails the later topology checks.
+For non-empty Geography, Cartesian planarity is not used as a substitute. The internal stage reports `polygonstructure-unavailable`
+with `Geography Polygon planarity and inter-ring topology are not implemented yet.`, alongside boundary limitations and the public Polygon topology warning.
+Unavailable-check warnings default to payload `['severity' => 'warning']`; genuine EMPTY Geography needs no supporting plane.

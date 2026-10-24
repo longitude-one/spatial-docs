@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 310" role="img" aria-labelledby="title description">
+<title id="title">Collinear exterior positions</title><desc id="description">A (0,0), B (1,0), C (2,0), A are collinear. The return to A retraces the line; no surface is formed.</desc>
+<rect width="760" height="310" fill="#F5F8FA"/>
+<!-- Uniform XY scale: svgX = 50 + 110*x; svgY = 145 - 110*y. -->
+<path d="M 50,145 H 270" stroke="#2784C2" stroke-width="5"/>
+<path d="M 270,145 H 50" stroke="#B33131" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="150" y="115" font-family="sans-serif" font-size="24" fill="#183D55">→</text>
+<text x="150" y="220" font-family="sans-serif" font-size="24" fill="#B33131">←</text>
+<circle cx="50" cy="145" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="50" y="173" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="160" cy="145" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="160" y="173" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="270" cy="145" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="270" y="173" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<text x="370" y="95" font-family="sans-serif" font-size="18" fill="#183D55">A → B → C → A</text>
+<text x="370" y="135" font-family="sans-serif" font-size="18" fill="#183D55">All vertices on one line</text>
+<text x="370" y="175" font-family="sans-serif" font-size="18" fill="#B33131">No supporting plane</text>
+</svg>

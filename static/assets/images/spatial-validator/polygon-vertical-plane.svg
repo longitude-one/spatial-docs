@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 310" role="img" aria-labelledby="title description">
+<title id="title">A vertical supporting plane</title><desc id="description">The rectangle A (0,0,0), B (0,2,0), C (0,2,2), D (0,0,2) lies in X = 0. This is an oblique projection.</desc>
+<rect width="760" height="310" fill="#F5F8FA"/>
+<!-- Oblique projection: svgX = 90 + 70*x + 40*y; svgY = 230 - 25*y - 60*z. -->
+<path d="M 90,230 L 170,180 L 170,60 L 90,110 Z" fill="#39A576" fill-opacity="0.2" stroke="#2784C2" stroke-width="3"/>
+<circle cx="90" cy="230" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="90" y="258" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="170" cy="180" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="170" y="208" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="170" cy="60" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="170" y="45" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<circle cx="90" cy="110" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="90" y="95" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">D</text>
+<text x="370" y="95" font-family="sans-serif" font-size="18" fill="#183D55">All vertices: X = 0</text>
+<text x="370" y="135" font-family="sans-serif" font-size="18" fill="#183D55">Closed, simple, non-collinear</text>
+<text x="370" y="175" font-family="sans-serif" font-size="18" fill="#183D55">Valid Polygon</text>
+<text x="370" y="245" font-family="sans-serif" font-size="16" fill="#183D55">Oblique XYZ projection</text>
+</svg>

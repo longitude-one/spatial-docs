@@ -20,8 +20,8 @@ use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
 use Symfony\Component\Validator\Validation;
 
 $validator = Validation::createValidator();
-$showViolations = static function ($spatialObject) use ($validator): void {
-    $violations = $validator->validate($spatialObject, new SpatialAssert\Spatial());
+$showViolations = static function ($spatialObject, $constraint = null) use ($validator): void {
+    $violations = $validator->validate($spatialObject, $constraint ?? new SpatialAssert\Spatial());
     foreach ($violations as $violation) {
         echo ($violation->getPropertyPath() ?: '[root]') . ' | '
             . $violation->getCode() . ': ' . $violation->getMessage() . PHP_EOL;
@@ -161,3 +161,70 @@ foreach ($violations as $violation) {
 ```text
 [root] | simplelinestring-invalid: The line has a forbidden segment intersection or overlap.
 ```
+
+## Linear-ring checks
+
+A parcel boundary needs more than an ordinary valid line: it must return to its starting position and form a simple ring.
+The [linear-ring rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#linear-ring-rules)
+provide two explicit constraints on LineString objects. The helper above accepts an optional constraint for these examples.
+
+### Closure only: FirstPointEqualsLastPoint
+
+`FirstPointEqualsLastPoint` checks that the first and last Points are finite, non-empty and at the same spatial position.
+This open boundary A → B → C fails because it stops at C instead of returning to A.
+
+![An open boundary A–B–C fails closure; the dashed C–A segment is missing.](../../assets/images/spatial-validator/ring-closure.svg)
+
+```php
+$spatialObject = new LineString([
+    new Point(0, 0), new Point(2, 0), new Point(1, 2),
+]);
+$showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint());
+```
+
+```text
+[root] | firstpointequalslastpoint-invalid: A closed line requires finite non-empty endpoints at the same position.
+```
+
+Appending A closes this boundary and removes the violation:
+
+```php
+$spatialObject = new LineString([
+    new Point(0, 0), new Point(2, 0), new Point(1, 2), new Point(0, 0),
+]);
+$showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint()); // No violations.
+```
+
+Closure alone does not check the whole line or establish ring validity.
+It compares XY, or XYZ when Z exists, and ignores M. EMPTY fails because it has no endpoints.
+For non-empty Geography with finite endpoints, the check reports `firstpointequalslastpoint-unavailable`
+with the message `Geography line closure is not implemented yet.` and a default warning payload.
+
+### A complete linear boundary: Ring
+
+`Ring` requires a non-empty, valid, closed and simple line with at least four positions, counting the repeated starting position.
+The closed triangle A → B → C → A above passes `Ring` as well:
+
+```php
+$showViolations($spatialObject, new SpatialAssert\Ring()); // No violations.
+```
+
+A closed boundary can still cross itself. This bow-tie returns to A and contains five positions, but fails the simplicity rule composed by `Ring`.
+
+![A closed bow-tie A–B–C–D–A has a self-intersection and fails Ring despite passing closure.](../../assets/images/spatial-validator/ring-self-intersection.svg)
+
+```php
+$spatialObject = new LineString([
+    new Point(0, 0), new Point(2, 2), new Point(0, 2), new Point(2, 0), new Point(0, 0),
+]);
+$showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint()); // No violations.
+$showViolations($spatialObject, new SpatialAssert\Ring());
+```
+
+```text
+[root] | simplelinestring-invalid: The line has a forbidden segment intersection or overlap.
+```
+
+An EMPTY LineString fails `Ring` with `ring-empty: An EMPTY LineString is not a linear ring.`
+On Geography, available structural and Point checks still run, but closure and simplicity produce separate unavailable-check warnings.
+Use these constraints explicitly for a standalone LineString: generic `Spatial` does not require every line to be a closed ring.

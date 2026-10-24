@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" role="img" aria-labelledby="title description">
+<title id="title">Closed boundary: Ring fails</title><desc id="description">A closed bow-tie A to B to C to D to A crosses at its center. Closure passes, but Ring rejects the self-intersection.</desc>
+<rect width="640" height="260" fill="#F5F8FA"/>
+<path d="M 60,210 L 220,50 L 60,50 L 220,210 Z" fill="none" stroke="#2784C2" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="140" cy="130" r="12" fill="#F5F8FA" stroke="#B33131" stroke-width="2"/><path d="M 135,125 L 145,135 M 135,135 L 145,125" stroke="#B33131" stroke-width="2"/>
+<circle cx="60" cy="210" r="7" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="60" y="240" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="220" cy="50" r="7" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="220" y="80" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="60" cy="50" r="7" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="60" y="80" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<circle cx="220" cy="210" r="7" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="220" y="240" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">D</text>
+<text x="290" y="90" font-family="sans-serif" font-size="18" fill="#183D55">A → B → C → D → A</text>
+<text x="290" y="130" font-family="sans-serif" font-size="18" fill="#183D55">Closure: passes</text>
+<text x="290" y="170" font-family="sans-serif" font-size="18" fill="#B33131">Ring: fails at the crossing</text>
+</svg>

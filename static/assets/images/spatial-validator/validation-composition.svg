@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 650" role="img" aria-labelledby="title description">
+  <title id="title">Spatial validation composition</title>
+  <desc id="description">Symfony checks input, dispatches by type, composes elementary rules and recursively validates components. Both routes retain localized Symfony violations.</desc>
+  <rect width="800" height="650" fill="#F5F8FA"/>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#183D55"/></marker></defs>
+  <rect x="160" y="25" width="480" height="60" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="61" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Symfony validate(value, spatial constraint)</text>
+  <rect x="240" y="120" width="320" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="153.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Symfony input contract</text>
+  <rect x="240" y="210" width="320" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="243.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Spatial type dispatch</text>
+  <rect x="240" y="300" width="320" height="55" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="333.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Specialized validator</text>
+  <rect x="35" y="405" width="310" height="65" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="190" y="443.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Reusable elementary rules</text>
+  <rect x="455" y="405" width="310" height="65" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="610" y="443.5" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Component validation</text>
+  <rect x="200" y="565" width="400" height="60" rx="8" fill="#FFFFFF" stroke="#183D55" stroke-width="2"/>
+  <text x="400" y="601" fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">Localized Symfony violations</text>
+  <path d="M400 85 V120" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M400 175 V210" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M400 265 V300" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M320 355 V380 H190 V405" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M480 355 V380 H610 V405" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M190 470 V525 H300 V565" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M610 470 V525 H500 V565" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M610 405 V237 H560" fill="none" stroke="#183D55" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="620" y="285" fill="#183D55" font-family="sans-serif" font-size="16">Recurse by type</text>
+</svg>

@@ -1,6 +1,6 @@
 ---
-title: Geometric validations
-description: Geometric types and their validation rules in Spatial Validator 1.0.
+title: Geometric validators
+description: Geometric types and their validators rules in Spatial Validator 1.0.
 sidebar_position: 2
 ---
 
@@ -15,6 +15,7 @@ require 'vendor/autoload.php';
 
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\CircularString;
 use LongitudeOne\SpatialTypes\Types\Dimension2\Geography\Point as GeographyPoint;
 use LongitudeOne\SpatialValidator\Validator\Constraints as SpatialAssert;
 use Symfony\Component\Validator\Validation;
@@ -228,3 +229,105 @@ $showViolations($spatialObject, new SpatialAssert\Ring());
 An EMPTY LineString fails `Ring` with `ring-empty: An EMPTY LineString is not a linear ring.`
 On Geography, available structural and Point checks still run, but closure and simplicity produce separate unavailable-check warnings.
 Use these constraints explicitly for a standalone LineString: generic `Spatial` does not require every line to be a closed ring.
+
+## Circular-curve checks
+
+A CircularString describes arcs using successive groups of three defining Points, with neighbouring arcs sharing an endpoint.
+`Spatial` selects `CircularString` validation, which checks components, Point coordinates and the two structural rules below.
+`SimpleCircularString` adds an explicit simplicity check.
+These examples follow the [circular-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#circular-curve-rules)
+and reuse the setup above. The small subclasses simulate malformed input that the standard constructor rejects.
+
+### An odd number of at least three Points
+
+`CircularPointCount` accepts EMPTY or an odd number of at least three defining Points: 3, 5, 7, and so on.
+Two endpoints alone do not define the intended arc; a third Point on the arc is needed.
+The dashed arc below shows one possible completion, not a curve determined by the two Points.
+
+![Two endpoints cannot determine a circular arc; the dashed semicircle is only a possible completion.](../../assets/images/spatial-validator/circular-point-count.svg)
+
+```php
+$spatialObject = new class ([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]) extends CircularString {
+    public function getPoints(): array
+    {
+        return [new Point(-1, 0), new Point(1, 0)];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+[root] | circularpointcount-invalid: A non-empty CircularString needs an odd number of at least three points.
+```
+
+### Valid defining Points: CircularArcPoints
+
+`CircularArcPoints` requires each Point to be non-empty, and the intermediate position of each arc to differ from both endpoints.
+Here A and B occupy the same position, so the first arc cannot be defined correctly.
+The violation path `arcs[0]` identifies that first arc.
+
+![A and the intermediate Point B coincide, so the three positions cannot define the intended circular arc.](../../assets/images/spatial-validator/circular-duplicate-middle.svg)
+
+```php
+$spatialObject = new class ([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]) extends CircularString {
+    public function getPoints(): array
+    {
+        return [new Point(-1, 0), new Point(-1, 0), new Point(1, 0)];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+arcs[0] | circulararcpoints-invalid: The intermediate arc position must differ from both endpoints.
+```
+
+An EMPTY intermediate Point also fails this constraint, this time at `points[1]`.
+It has no position to draw; the gap below is schematic.
+
+![An EMPTY intermediate Point supplies no position between the two endpoints; the missing arc is shown schematically.](../../assets/images/spatial-validator/circular-empty-point.svg)
+
+```php
+$spatialObject = new class ([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]) extends CircularString {
+    public function getPoints(): array
+    {
+        return [new Point(-1, 0), new Point(), new Point(1, 0)];
+    }
+};
+$showViolations($spatialObject);
+```
+
+```text
+points[1] | circulararcpoints-invalid: A circular arc must not contain an EMPTY Point.
+```
+
+The two endpoints may coincide: A → B → A can define a full circle when B is distinct from A.
+This differs from an intermediate Point coinciding with an endpoint; the four-position minimum for linear rings does not apply to circular arcs.
+
+### Optional simplicity: SimpleCircularString
+
+`SimpleCircularString` first checks ordinary CircularString validity, then looks for forbidden arc intersections and overlaps.
+This example follows the upper semicircle from A through B to C, then retraces the same semicircle through B back to A.
+It passes ordinary `Spatial` validation but fails explicit simplicity. The two arrows show opposite travel directions on the same arc.
+
+![The upper semicircle is traversed from A to C and then retraced from C to A; the overlapping arcs fail simplicity.](../../assets/images/spatial-validator/circular-retracing.svg)
+
+```php
+$spatialObject = new CircularString([
+    new Point(-1, 0), new Point(0, 1), new Point(1, 0), new Point(0, 1), new Point(-1, 0),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleCircularString());
+```
+
+```text
+arcs[1] | simplecircularstring-invalid: Circular arcs have a forbidden intersection or overlap.
+```
+
+`arcs[1]` identifies the second arc. EMPTY passes ordinary validity and simplicity.
+Collinear defining Points represent the segment between the endpoints, rather than two chords.
+Spatial checks use XYZ when Z exists and otherwise XY; M is ignored spatially but must remain finite.
+Non-empty Geography simplicity is unavailable. A single XYZ full circle encoded A → B → A is simple,
+but comparisons with other arcs cannot determine its plane and report an unavailable-check warning.
+The warning code is `simplecircularstring-unavailable`, with the message
+`Circular simplicity is unavailable for this spatial model or arc plane.` and default payload `['severity' => 'warning']`.

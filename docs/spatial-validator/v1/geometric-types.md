@@ -681,3 +681,157 @@ with `Geography SimpleMultiPoint validation is not implemented yet.` and `simple
 with `Geography SimpleMultiLineString validation is not implemented yet.` Member simplicity can also report its own warning.
 Member closure uses `firstpointequalslastpoint-unavailable` with `Geography line closure is not implemented yet.`
 Warnings default to payload `['severity' => 'warning']`; ordinary collection errors default to null.
+
+## Polygon topology and orientation
+
+After checking structure, boundary rings and their common plane, `Polygon` checks how the boundaries relate to one another.
+Generic `Spatial` performs the same validation. The examples below follow the
+[Polygon rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#polygon-rules).
+They model a parcel with exterior boundary `rings[0]` and excluded areas represented by holes at `rings[1]`, `rings[2]`, and so on.
+They reuse the setup above and this square exterior:
+
+```php
+$exterior = [[0, 0], [12, 0], [12, 12], [0, 12], [0, 0]];
+```
+
+### A hole inside the parcel
+
+A hole strictly inside the exterior is valid. Several holes are allowed when they remain mutually outside one another.
+Here a small square hole lies entirely inside the parcel. Its order is reversed relative to the exterior to avoid an orientation warning.
+
+![A small square hole lies strictly inside the square exterior, leaving one connected parcel interior.](../../assets/images/spatial-validator/polygon-hole-inside.svg)
+
+```php
+$hole = array_reverse([[2, 2], [4, 2], [4, 4], [2, 4], [2, 2]]);
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject); // No violations.
+```
+
+### An isolated tangent contact can be valid
+
+A hole may touch the exterior at an isolated point if the parcel interior stays connected.
+This triangular hole touches the left boundary at (0, 6), without crossing it or sharing a boundary segment.
+
+![A triangular hole touches the exterior at one isolated point, without disconnecting the parcel interior.](../../assets/images/spatial-validator/polygon-hole-tangent.svg)
+
+```php
+$hole = array_reverse([[0, 6], [3, 4], [3, 8], [0, 6]]);
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject); // No violations.
+```
+
+### A hole outside the exterior
+
+An excluded area outside the parcel cannot be one of its holes.
+This triangle is completely outside the exterior, even though each ring is individually valid and coplanar.
+
+![A triangular hole lies entirely to the right of the parcel exterior and fails containment.](../../assets/images/spatial-validator/polygon-hole-outside.svg)
+
+```php
+$hole = array_reverse([[20, 2], [22, 2], [20, 4], [20, 2]]);
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject);
+```
+
+```text
+rings[1] | polygon-outside: Every hole must lie inside the exterior boundary.
+```
+
+A hole surrounding the entire exterior also fails containment; a larger area does not make it an interior hole.
+
+### Crossing boundaries or shared boundary intervals
+
+A hole must not cross the exterior or share an interval of its boundary.
+This rectangular hole crosses the parcel's right edge at (12, 4) and (12, 8).
+The same intersection rule also rejects crossings and shared intervals between holes.
+
+![A rectangular hole crosses the right exterior edge twice, producing an intersection error.](../../assets/images/spatial-validator/polygon-hole-crossing.svg)
+
+```php
+$hole = array_reverse([[10, 4], [14, 4], [14, 8], [10, 8], [10, 4]]);
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject);
+```
+
+```text
+rings[1] | polygon-intersection: Polygon boundaries must not cross or share an interval.
+```
+
+### Nested holes
+
+One hole cannot contain another hole. The smaller hole below lies inside the larger excluded area rather than in the parcel interior.
+To represent an island inside an excluded area, use a separate surface in an appropriate multi-surface model.
+
+![A smaller square hole lies inside a larger square hole, which fails the no-nesting rule.](../../assets/images/spatial-validator/polygon-holes-nested.svg)
+
+```php
+$largeHole = array_reverse([[1, 1], [8, 1], [8, 8], [1, 8], [1, 1]]);
+$smallHole = array_reverse([[2, 2], [4, 2], [4, 4], [2, 4], [2, 2]]);
+$spatialObject = new Polygon([$exterior, $largeHole, $smallHole]);
+$showViolations($spatialObject);
+```
+
+```text
+rings[2] | polygon-nested: Polygon holes must not overlap or contain another hole.
+```
+
+Overlapping holes are also invalid; crossings or shared intervals can additionally produce intersection diagnostics.
+
+### A connected parcel interior
+
+Isolated contacts must not combine to split the parcel interior.
+This diamond-shaped hole touches the left and right exterior boundaries, separating the remaining parcel into an upper and a lower region.
+The boundaries do not cross, but the interior is disconnected.
+
+![A diamond-shaped hole touches opposite sides of the exterior and separates the parcel interior into two regions.](../../assets/images/spatial-validator/polygon-disconnected-interior.svg)
+
+```php
+$hole = array_reverse([[0, 6], [6, 2], [12, 6], [6, 10], [0, 6]]);
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject);
+```
+
+```text
+rings[1] | polygon-disconnected: Boundary contacts must not disconnect the Polygon interior.
+```
+
+Chains of touching holes and contact cycles enclosing an island can also disconnect the interior.
+Several boundaries meeting at one isolated point do not automatically make a Polygon invalid: the resulting interior matters.
+
+### Relative orientation: a warning
+
+This hole is properly inside the parcel, but follows the same direction as the exterior.
+The validator emits an orientation warning, rather than a topology error. Orientation is relative: there is no universal clockwise-exterior requirement.
+
+![The exterior and its interior hole both run counterclockwise, producing an orientation warning.](../../assets/images/spatial-validator/polygon-orientation-warning.svg)
+
+```php
+$hole = [[2, 2], [4, 2], [4, 4], [2, 4], [2, 2]];
+$spatialObject = new Polygon([$exterior, $hole]);
+$showViolations($spatialObject);
+
+$violations = $validator->validate($spatialObject, new SpatialAssert\Polygon());
+foreach ($violations as $violation) {
+    echo 'severity: ' . $violation->getConstraint()->payload['severity'] . PHP_EOL;
+}
+```
+
+```text
+rings[1] | polygon-orientation: A hole has the same orientation as the exterior boundary.
+severity: warning
+```
+
+Reversing the hole removes this warning. Reversing every ring preserves their relative orientation and therefore the result.
+An orientation warning does not hide an independent topology error, such as an outside hole.
+
+### Scope and unavailable Geography checks
+
+Genuine EMPTY Polygon is valid. A Triangle remains a distinct declared type; a triangular outline does not change a Polygon's declared type.
+Invalid structure prevents dependent topology calculations while preserving the original nested diagnostics.
+For Geometry XYZ/XYZM, topology uses the actual supporting plane, including inclined and vertical planes; M never participates spatially.
+The validator neither moves coordinates nor repairs or reorients rings.
+
+On non-empty Geography, available structural and Point checks continue, but topology and orientation report
+`[root] | polygon-unavailable: Geography Polygon topology and orientation are not implemented yet.`, alongside the internal and boundary warnings.
+The default payload for `polygon-orientation` and `polygon-unavailable` is `['severity' => 'warning']`;
+other Polygon topology errors default to null. An explicitly supplied Polygon payload is preserved.

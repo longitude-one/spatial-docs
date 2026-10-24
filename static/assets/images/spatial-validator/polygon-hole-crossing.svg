@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" role="img" aria-labelledby="title description">
+<title id="title">Crossing boundaries</title><desc id="description">Crossing boundaries. Hole crosses the right edge. Contacts: (12, 4), (12, 8). Boundary intersection fails. Exterior square: (0,0), (12,0), (12,12), (0,12). Hole coordinates: [[(10, 4), (14, 4), (14, 8), (10, 8), (10, 4)]].</desc>
+<rect width="820" height="340" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 50 + 16*x; svgY = 260 - 16*y. -->
+<path d="M 50,260 L 242,260 L 242,68 L 50,68 L 50,260 Z" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3"/>
+<path d="M 210,196 L 274,196 L 274,132 L 210,132 L 210,196 Z" fill="#F5F8FA" stroke="#B33131" stroke-width="2.5"/>
+<path d="M 210,196 L 274,196 L 274,132 L 210,132 L 210,196 Z" fill="#D45151" fill-opacity="0.15" stroke="none"/>
+<circle cx="242" cy="196" r="6" fill="#F5F8FA" stroke="#B33131" stroke-width="2"/>
+<circle cx="242" cy="132" r="6" fill="#F5F8FA" stroke="#B33131" stroke-width="2"/>
+<text x="50" y="45" font-family="sans-serif" font-size="18" fill="#183D55">Exterior: rings[0]</text>
+<text x="50" y="305" font-family="sans-serif" font-size="16" fill="#183D55">Green: parcel interior · Pale: excluded area</text>
+<text x="450" y="100" font-family="sans-serif" font-size="18" fill="#183D55">Hole crosses the right edge</text>
+<text x="450" y="142" font-family="sans-serif" font-size="18" fill="#183D55">Contacts: (12, 4), (12, 8)</text>
+<text x="450" y="184" font-family="sans-serif" font-size="18" fill="#B33131">Boundary intersection fails</text>
+</svg>

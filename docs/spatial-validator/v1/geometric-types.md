@@ -5,7 +5,8 @@ sidebar_position: 2
 ---
 
 Geometry type validators check Points, curves, surfaces and collections against the rules for their declared geometry type.
-This page also covers optional properties such as simplicity and closure, with valid examples and the violations produced by invalid values.
+This page covers ordinary type validity and explicit closure contracts, with valid examples and the violations produced by invalid values.
+Optional [simplicity validators](./simplicity-validators.md) have a dedicated page.
 Use `Spatial` for automatic type dispatch, or select an explicit constraint for the contract your application requires.
 
 Use this setup for the examples below; each prints the violation code and its default English message.
@@ -120,14 +121,13 @@ and reuse the setup above. Paths such as `points[1]` identify the second Point; 
 
 A LineString joins positions in order with straight segments. A non-empty valid line contains at least two valid non-EMPTY Points,
 with matching metadata and no consecutive duplicate positions. It need not be closed or simple; an EMPTY line is also valid.
-This open route A → B → C passes ordinary validity and explicit simplicity.
+This open route A → B → C passes ordinary validity. See [line simplicity](./simplicity-validators.md#simplelinestring) for the optional check.
 
 ![Three distinct Points form an open, valid and simple LineString A–B–C.](../../assets/images/spatial-validator/line-valid.svg)
 
 ```php
 $spatialObject = new LineString([new Point(0, 0), new Point(2, 1), new Point(4, 0)]);
 $showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleLineString()); // No violations.
 ```
 
 ### At least two Points
@@ -179,30 +179,6 @@ $showViolations($spatialObject);
 
 ```text
 points[2] | noconsecutiveduplicatepoints-invalid: Consecutive points must have different spatial positions.
-```
-
-### Optional simplicity check
-
-This crossing line passes ordinary `Spatial` validation: its Points and consecutive positions are valid.
-Apply `SimpleLineString` explicitly to reject the self-intersection.
-
-![A crossing LineString is valid under ordinary checks but fails explicit simplicity.](../../assets/images/spatial-validator/line-simplicity.svg)
-
-```php
-$spatialObject = new LineString([
-    new Point(0, 0), new Point(2, 2), new Point(0, 2), new Point(2, 0),
-]);
-$showViolations($spatialObject); // No violations.
-
-$violations = $validator->validate($spatialObject, new SpatialAssert\SimpleLineString());
-foreach ($violations as $violation) {
-    echo ($violation->getPropertyPath() ?: '[root]') . ' | '
-        . $violation->getCode() . ': ' . $violation->getMessage() . PHP_EOL;
-}
-```
-
-```text
-[root] | simplelinestring-invalid: The line has a forbidden segment intersection or overlap.
 ```
 
 ## Linear-ring checks
@@ -281,7 +257,7 @@ Use these constraints explicitly for a standalone LineString: generic `Spatial` 
 
 A CircularString describes arcs using successive groups of three defining Points, with neighbouring arcs sharing an endpoint.
 `Spatial` selects `CircularString` validation, which checks components, Point coordinates and the two structural rules below.
-`SimpleCircularString` adds an explicit simplicity check.
+Optional [circular-curve simplicity](./simplicity-validators.md#simplecircularstring) is covered separately.
 These examples follow the [circular-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#circular-curve-rules)
 and reuse the setup above. The small subclasses simulate malformed input that the standard constructor rejects.
 
@@ -296,7 +272,6 @@ This upper semicircle uses A (-1, 0), B (0, 1) and C (1, 0); it is open, valid a
 ```php
 $spatialObject = new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]);
 $showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleCircularString()); // No violations.
 ```
 
 ### An odd number of at least three Points
@@ -365,39 +340,14 @@ points[1] | circulararcpoints-invalid: A circular arc must not contain an EMPTY 
 The two endpoints may coincide: A → B → A can define a full circle when B is distinct from A.
 This differs from an intermediate Point coinciding with an endpoint; the four-position minimum for linear rings does not apply to circular arcs.
 
-### Optional simplicity: SimpleCircularString
-
-`SimpleCircularString` first checks ordinary CircularString validity, then looks for forbidden arc intersections and overlaps.
-This example follows the upper semicircle from A through B to C, then retraces the same semicircle through B back to A.
-It passes ordinary `Spatial` validation but fails explicit simplicity. The two arrows show opposite travel directions on the same arc.
-
-![The upper semicircle is traversed from A to C and then retraced from C to A; the overlapping arcs fail simplicity.](../../assets/images/spatial-validator/circular-retracing.svg)
-
-```php
-$spatialObject = new CircularString([
-    new Point(-1, 0), new Point(0, 1), new Point(1, 0), new Point(0, 1), new Point(-1, 0),
-]);
-$showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleCircularString());
-```
-
-```text
-arcs[1] | simplecircularstring-invalid: Circular arcs have a forbidden intersection or overlap.
-```
-
-`arcs[1]` identifies the second arc. EMPTY passes ordinary validity and simplicity.
 Collinear defining Points represent the segment between the endpoints, rather than two chords.
-Spatial checks use XYZ when Z exists and otherwise XY; M is ignored spatially but must remain finite.
-Non-empty Geography simplicity is unavailable. A single XYZ full circle encoded A → B → A is simple,
-but comparisons with other arcs cannot determine its plane and report an unavailable-check warning.
-The warning code is `simplecircularstring-unavailable`, with the message
-`Circular simplicity is unavailable for this spatial model or arc plane.` and default payload `['severity' => 'warning']`.
+Geometry defining-position checks use XYZ when Z exists and otherwise XY; M must remain finite but is ignored spatially.
 
 ## Compound-curve checks
 
 A CompoundCurve joins LineString and CircularString components in order, for example a curved road followed by a straight section.
 `Spatial` selects `CompoundCurve` validation: it checks each component and its metadata, rejects EMPTY members and verifies consecutive joins.
-`SimpleCompoundCurve` additionally checks the whole curve for forbidden intersections and overlaps.
+Optional [whole-curve simplicity](./simplicity-validators.md#simplecompoundcurve) is covered separately.
 These examples follow the [compound-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#compound-curve-rules)
 and reuse the setup above.
 
@@ -405,7 +355,7 @@ and reuse the setup above.
 
 A valid non-empty CompoundCurve is an ordered chain of valid non-EMPTY line or circular components with matching metadata and consecutive endpoints.
 It may be open; simplicity is checked separately. This road follows an upper semicircle from A (-1, 0) through B (0, 1) to C (1, 0), then a straight section to D (2, 0).
-Both components meet at C, so the compound curve is valid. It also passes explicit simplicity.
+Both components meet at C, so the compound curve is valid.
 
 ![An upper semicircle joins a straight segment at C, forming a valid simple compound curve.](../../assets/images/spatial-validator/compound-connected.svg)
 
@@ -415,7 +365,6 @@ $spatialObject = new CompoundCurve([
     new LineString([new Point(1, 0), new Point(2, 0)]),
 ]);
 $showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleCompoundCurve()); // No violations.
 ```
 
 If the straight section starts at (2, 0) instead, there is a gap after C (1, 0).
@@ -470,38 +419,9 @@ curves[1] | compoundcurve-empty-member: A contributing curve must not be EMPTY.
 
 This differs from a compound curve with no components: `new CompoundCurve([])` is valid EMPTY and also passes simplicity.
 
-### Whole-curve simplicity: SimpleCompoundCurve
-
-Two individually simple components can cross when joined.
-This example joins the same semicircle to a straight segment from C (1, 0) to D (-1, 1).
-The join at C is allowed, but the segment also crosses the arc at (-0.6, 0.8).
-Ordinary validity passes; explicit simplicity rejects that additional intersection.
-
-![A segment joins the semicircle at C but also crosses its interior; whole-curve simplicity fails at the straight segment.](../../assets/images/spatial-validator/compound-intersection.svg)
-
-```php
-$spatialObject = new CompoundCurve([
-    new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]),
-    new LineString([new Point(1, 0), new Point(-1, 1)]),
-]);
-$showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleCompoundCurve());
-```
-
-```text
-curves[1].segments[0] | simplecompoundcurve-invalid: Compound-curve parts have a forbidden intersection or overlap.
-```
-
-`curves[1].segments[0]` identifies the first segment of the second component.
-Simplicity checks line/line, line/arc and arc/arc interactions, allowing neighbouring endpoint joins and one global closure.
-Ordinary validity requires neither closure nor simplicity. Geometry joins compare XYZ when Z exists and otherwise XY, ignoring M.
-
+Geometry joins compare XYZ when Z exists and otherwise XY, ignoring M.
 For non-empty Geography, component and Point checks still run, but joins report `compoundcurve-unavailable`
-with `Geography compound-curve continuity is unavailable.` Explicit simplicity reports `simplecompoundcurve-unavailable`
-with `Compound-curve simplicity is unavailable for this model or arc plane.`
-These warnings default to payload `['severity' => 'warning']`.
-The indeterminate plane of an XYZ full circle encoded A → B → A also prevents simplicity comparisons with other parts;
-the validator reports a warning rather than choosing a plane.
+with `Geography compound-curve continuity is unavailable.` and a default warning payload.
 
 ## Polygon structure and supporting plane
 
@@ -616,7 +536,7 @@ Unavailable-check warnings default to payload `['severity' => 'warning']`; genui
 
 Collections validate their members recursively. `GeometryCollection` accepts different spatial types, `MultiPoint` contains Points,
 and `MultiLineString` contains LineStrings. Generic `Spatial` selects the corresponding validator.
-Simplicity and closure are separate, explicit properties: `SimpleMultiPoint`, `SimpleMultiLineString` and `ClosedMultiLineString`.
+Closure uses the explicit `ClosedMultiLineString` constraint. Optional [collection simplicity](./simplicity-validators.md#simplemultipoint) is covered separately.
 These examples follow the [collection rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#collection-rules)
 and reuse the setup above. All member indexes are zero-based.
 
@@ -655,41 +575,22 @@ $showViolations($spatialObject);
 geometries[1] | minimumpointcount-invalid: A line must contain at least 2 points unless EMPTY is allowed.
 ```
 
-### Point collections: MultiPoint and SimpleMultiPoint
+### Point collections: MultiPoint
 
 A MultiPoint groups independent Points. It is valid when its members are valid and their metadata match the collection;
-valid EMPTY members are allowed. This example also passes explicit simplicity because its non-empty positions are distinct.
+valid EMPTY members are allowed. The Points in this example have distinct positions.
 
 ![Two independent distinct Points form a valid and simple MultiPoint.](../../assets/images/spatial-validator/multipoint-valid.svg)
 
 ```php
 $spatialObject = new MultiPoint([new Point(0, 0), new Point(2, 0)]);
 $showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleMultiPoint()); // No violations.
 ```
 
-Ordinary `MultiPoint` validity checks the Points, without requiring distinct positions.
-`SimpleMultiPoint` adds that requirement, ignoring valid EMPTY members because they have no spatial position.
-Here `points[1]` and `points[3]` both occupy A (0, 0); `points[0]` is EMPTY and remains in the collection.
-
-![The first member is EMPTY; the second and fourth members coincide at A, which fails explicit MultiPoint simplicity.](../../assets/images/spatial-validator/collection-duplicate-points.svg)
-
-```php
-$spatialObject = new MultiPoint([
-    new Point(), new Point(0, 0), new Point(2, 0), new Point(0, 0),
-]);
-$showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleMultiPoint());
-```
-
-```text
-points[3] | simplemultipoint-invalid: The point repeats a spatial position.
-```
-
-### Line collections: MultiLineString and SimpleMultiLineString
+### Line collections: MultiLineString
 
 A MultiLineString groups LineStrings. It is valid when every member is valid and its metadata match the collection;
-valid EMPTY members are allowed. These two separate routes also pass explicit simplicity: neither crosses itself or the other route.
+valid EMPTY members are allowed. These two separate routes form a valid collection.
 
 ![Two separate simple LineStrings form a valid MultiLineString and pass explicit simplicity.](../../assets/images/spatial-validator/multilinestring-valid.svg)
 
@@ -699,37 +600,13 @@ $spatialObject = new MultiLineString([
     new LineString([new Point(0, 2), new Point(2, 3)]),
 ]);
 $showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString()); // No violations.
 ```
-
-Two crossing routes can form a valid MultiLineString. `SimpleMultiLineString` additionally requires each member to be simple
-and restricts contacts between different lines to their shared boundaries.
-These two simple segments meet at their interiors, so the explicit simplicity check reports the second line.
-
-![Two individually simple segments cross at (1, 1); the MultiLineString is valid but fails explicit simplicity.](../../assets/images/spatial-validator/collection-crossing-lines.svg)
-
-```php
-$spatialObject = new MultiLineString([
-    new LineString([new Point(0, 0), new Point(2, 2)]),
-    new LineString([new Point(0, 2), new Point(2, 0)]),
-]);
-$showViolations($spatialObject); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString());
-```
-
-```text
-lineStrings[1] | simplemultilinestring-invalid: The lines intersect outside their shared boundaries or overlap.
-```
-
-A contact at the actual endpoints of both open lines is allowed. Crossings, overlaps and an endpoint lying inside another line fail.
-A closed line has an empty boundary, so another line cannot touch it even at its repeated starting position.
-A member's own simplicity failure retains its `simplelinestring-invalid` code at `lineStrings[index]`.
 
 ### Every member closed: ClosedMultiLineString
 
 `ClosedMultiLineString` requires a non-EMPTY aggregate in which every member returns to its own starting position.
 These two separate triangular loops satisfy that requirement: each member is individually closed and valid.
-They also pass explicit simplicity because they are simple and do not touch.
+The two loops are disjoint; [simplicity](./simplicity-validators.md#simplemultilinestring) is a separate optional property.
 
 ![Two disjoint triangular LineString loops are individually closed, valid and simple.](../../assets/images/spatial-validator/multilinestring-closed-valid.svg)
 
@@ -740,7 +617,6 @@ $spatialObject = new MultiLineString([
 ]);
 $showViolations($spatialObject); // No violations.
 $showViolations($spatialObject, new SpatialAssert\ClosedMultiLineString()); // No violations.
-$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString()); // No violations.
 ```
 
 Joining several open lines into a loop is insufficient. Here A → B → C and C → D → A together draw a square,
@@ -773,12 +649,7 @@ These rules do not permit EMPTY Points inside a LineString.
 An EMPTY MultiLineString fails explicit closure with
 `[root] | closedmultilinestring-invalid: An EMPTY MultiLineString is not closed.`
 In a mixed non-empty aggregate, each EMPTY line instead fails its own endpoint-closure check at `lineStrings[index]`.
-Simplicity ignores absent EMPTY positions, while non-empty Geometry position comparisons use XYZ when Z exists and otherwise XY, ignoring M.
-
-Non-empty Geography simplicity reports unavailable-check warnings, including `simplemultipoint-unavailable`
-with `Geography SimpleMultiPoint validation is not implemented yet.` and `simplemultilinestring-unavailable`
-with `Geography SimpleMultiLineString validation is not implemented yet.` Member simplicity can also report its own warning.
-Member closure uses `firstpointequalslastpoint-unavailable` with `Geography line closure is not implemented yet.`
+Member closure on non-empty Geography uses `firstpointequalslastpoint-unavailable` with `Geography line closure is not implemented yet.`
 Warnings default to payload `['severity' => 'warning']`; ordinary collection errors default to null.
 
 ## Polygon topology and orientation
@@ -1244,3 +1115,17 @@ Globally reversing all patch directions preserves the result. No patches are rep
 Non-empty Geography retains available component checks and reports `polyhedralsurface-unavailable` with
 `Geography PolyhedralSurface topology is not implemented yet.` and default warning payload `['severity' => 'warning']`.
 M must remain finite but is ignored spatially; an XYZ full surface is evaluated using its actual three-dimensional patch geometry.
+
+## Unavailable geometry types
+
+Dispatch support does not establish complete geometric validity. The following dispatched cases are placeholders:
+**BRepSolid, Circle, Clothoid, CompoundSurface, Curve, CurvePolygon,
+EllipticalCurve, GeodesicString, Geometry, MultiCurve, MultiSurface, NURBSCurve, Solid, SpiralCurve, Surface and TIN**.
+Their admissible objects, including EMPTY, produce `<Type> validation is not implemented yet.` with default warning payload.
+Several are dispatch placeholders without a concrete model type; they do not advertise constructible or geometrically validated objects.
+
+Available structural and Point checks run for Geometry and Geography; Cartesian topology never substitutes for unavailable geodetic calculations.
+Unavailable checks produce warnings, as explained in [diagnostics](./diagnostics-and-composition.md#warning-payloads).
+The implemented profile does not claim general SQL/MM conformity. The primary SQL/MM source used for this documentation is
+ISO/IEC CD 13249-3:201x(E), dated 2009-01-16, a Committee Draft rather than a final published edition;
+see the [SQL/MM reference](../../standards/iso/iso-iec-13249-3.md) for context.

@@ -6,6 +6,7 @@ sidebar_position: 5
 
 A route can cross itself and still be a valid LineString. A parcel boundary needs stronger rules: its ring must also be simple and closed.
 Select the constraint for the property your application needs; a closed curve is not automatically simple.
+See [simplicity validators](./simplicity-validators.md) for the optional constraints, illustrated examples and diagnostic messages.
 
 ## Independent curve properties
 
@@ -115,7 +116,7 @@ Generic dispatch never infers a different type from a shape. Genuine EMPTY Trian
 MultiPolygon recursively validates each Polygon/Triangle and checks filled surfaces, including holes.
 Filled interiors must not overlap or intersect. Shared boundary intervals are invalid; isolated admissible contacts are permitted.
 XYZ members need not share a plane: separate parallel planes with overlapping XY shadows can be valid.
-The [coverage profile](./coverage-and-rules.md#normative-sources-and-longitudeone-choices) specifies the approved boundary/interior contact rule.
+The [MultiPolygon examples](./geometric-types.md#multipolygon-checks) explain the approved boundary/interior contact rule.
 
 `PolyhedralSurface` validates complete Polygon/Triangle patches, surface intersections, edge incidence, opposite shared-edge direction,
 edge connectivity and manifold vertex neighborhoods. Coplanar adjacent patches are permitted; a vertex-only contact cannot connect separate components.

@@ -12,7 +12,8 @@ it does not announce a released RC or claim general SQL/MM conformity.
 
 - [Get started with Spatial Validator](./v1/index.md).
 - [Choose validity, simplicity or closure](./v1/curves-and-surfaces.md).
-- [Understand supported types and rules](./v1/coverage-and-rules.md).
+- [Apply geometry type validators](./v1/geometric-types.md).
+- [Apply optional simplicity validators](./v1/simplicity-validators.md).
 - [Interpret errors and warnings](./v1/diagnostics-and-composition.md).
 
 `spatial-types` owns the object model; `spatial-validator` performs explicit functional validation.

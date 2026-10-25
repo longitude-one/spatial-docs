@@ -1,0 +1,45 @@
+{
+  "library": "doctrine-spatial",
+  "branches": [
+    {
+      "version": "5.x",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2024-05-15",
+      "activeSupportUntil": "2026-08-31",
+      "securitySupportUntil": "2026-12-31",
+      "php": "^8.1",
+      "notes": "Previously listed tests: PHP 8.1 to 8.3; Doctrine ORM ^2.1, ^3.0 and ^4.0.x-dev."
+    },
+    {
+      "version": "6.x",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2026-09-12",
+      "activeSupportUntil": "2027-12-31",
+      "securitySupportUntil": "2028-12-31",
+      "php": "^8.4",
+      "notes": "Previously listed tests: PHP 8.4 and 8.5; Doctrine ORM ^3.6 and ^4.0.x-dev."
+    },
+    {
+      "version": "7.x",
+      "status": "planned",
+      "plannedReleaseDate": null,
+      "releaseDate": null,
+      "activeSupportUntil": null,
+      "securitySupportUntil": null,
+      "php": null,
+      "notes": "Previously listed PHP target: 8.4 and 8.5; Composer constraint unannounced. Doctrine ORM target: ^3.6 and ^4.0.x-dev."
+    },
+    {
+      "version": "8.x",
+      "status": "planned",
+      "plannedReleaseDate": null,
+      "releaseDate": null,
+      "activeSupportUntil": "2028-12-31",
+      "securitySupportUntil": "2029-12-31",
+      "php": null,
+      "notes": "Release forecast: January 2028; exact date unannounced. Previously listed PHP target: 8.5; Composer constraint unannounced. Doctrine ORM test target: ^3.6 and ^4.0.x-dev."
+    }
+  ]
+}

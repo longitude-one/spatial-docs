@@ -250,6 +250,42 @@ html[data-theme='dark'] {
   color: var(--ifm-heading-color);
 }
 
+.markdown .roadmap-timeline {
+  overflow-x: auto;
+}
+
+.markdown .roadmap-timeline a {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+}
+
+.markdown .roadmap-timeline img {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.markdown .roadmap-support-table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.markdown .roadmap-support-table th {
+  min-width: 6rem;
+}
+
+.markdown .roadmap-support-table td:last-child {
+  min-width: 14rem;
+}
+
+.markdown .roadmap-timeline a:focus-visible,
+.markdown .roadmap-support-table:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: -2px;
+}
+
 .library-version-nav {
   display: flex;
   flex-wrap: wrap;

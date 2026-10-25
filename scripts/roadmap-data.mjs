@@ -50,7 +50,7 @@ export function calendarDay(value, context, field) {
   return timestamp / day;
 }
 
-/** Return a validated copy shared by SVG generation and the future roadmap table. */
+/** Return a validated copy shared by SVG generation and the roadmap table. */
 export function validateRoadmapData(input) {
   const context = { library: typeof input?.library === 'string' ? input.library : '<unknown library>', branch: '<configuration>' };
   record(input, ['library', 'branches'], context, 'roadmap');

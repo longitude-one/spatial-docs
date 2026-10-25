@@ -3,9 +3,9 @@ title: Spatial Validator roadmap
 description: Planned evolution of LongitudeOne Spatial Validator across major releases.
 ---
 
-This roadmap tracks planned work across Spatial Validator releases.
+This roadmap shows announced support dates and release forecasts for spatial-validator.
 
-| Version            | PHP compatibility | Tested on | Released      | Active support   | Security fixes   |
-| ------------------ | ----------------- | --------- | ------------- | ---------------- | ---------------- |
-| [1](./v1/index.md) | 8.4 - 8.5         | 8.4 - 8.5 | November 2026 | 31 December 2027 | 31 December 2028 |
-| 2                  | 8.5               | 8.5       | January 2028  | 31 December 2028 | 31 December 2029 |
+See the [1.x documentation](./v1/index.md) for the planned first major version.
+
+Dates and Composer constraints come from the [shared roadmap configuration](../shared/support-timeline-generation.md#maintaining-library-roadmaps).
+Support dates retain the existing roadmap commitments. Monthly release forecasts remain approximate until an exact date is announced.

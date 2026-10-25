@@ -20,6 +20,36 @@ import { fileURLToPath } from 'node:url';
 const execute = promisify(execFile);
 const repository = fileURLToPath(new URL('../', import.meta.url));
 
+test('export generates roadmap images and portable support tables from one configuration', async (t) => {
+  const roadmap = { library: 'example-library', branches: [{
+    version: '1.x', status: 'planned', plannedReleaseDate: '2027-02-01', releaseDate: null,
+    activeSupportUntil: '2028-12-31', securitySupportUntil: '2029-12-31', php: '^8.4 || ^8.5', notes: null,
+  }] };
+  const { root, run } = await fixture(t, {
+    'docs/index.md': document('Home', 'Home.', '[Roadmap](./example-library/roadmap.md)'),
+    'docs/example-library/roadmap.md': document('Roadmap', 'Release and support roadmap.'),
+    'config/roadmaps/window.json': JSON.stringify({ startDate: '2024-01-01', endDate: '2029-12-31' }),
+    'config/roadmaps/example-library.json': JSON.stringify(roadmap),
+  });
+  await run();
+  const output = await readFile(path.join(root, '.generated-markdown/example-library/roadmap.md'), 'utf8');
+  assert.match(output, /2027-02-01 \(forecast\)/);
+  assert.match(output, /\^8.4.*\^8.5/);
+  assert.match(output, /\.\.\/assets\/roadmaps\/example-library.svg/);
+  const manifest = JSON.parse(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8'));
+  assert.ok(manifest['assets/roadmaps/example-library.svg']);
+  assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-02-01/);
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, '.docusaurus/roadmap-support.json'), 'utf8')), { 'example-library': roadmap });
+  const original = output;
+  roadmap.branches[0].plannedReleaseDate = '2027-03-01';
+  await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(roadmap));
+  await run();
+  const updated = await readFile(path.join(root, '.generated-markdown/example-library/roadmap.md'), 'utf8');
+  assert.notEqual(updated, original);
+  assert.match(updated, /2027-03-01 \(forecast\)/);
+  assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-03-01/);
+});
+
 function document(title, description, body = '', extraMetadata = '') {
   return `---\ntitle: ${title}\ndescription: ${description}\n${extraMetadata}---\n${body}`;
 }
@@ -34,6 +64,9 @@ async function fixture(t, sources) {
   await cp(path.join(repository, 'scripts/library-landing-pages.mjs'), path.join(root, 'scripts/library-landing-pages.mjs'));
   await cp(path.join(repository, 'scripts/documentation-links.mjs'), path.join(root, 'scripts/documentation-links.mjs'));
   await cp(path.join(repository, 'scripts/shared-assets.mjs'), path.join(root, 'scripts/shared-assets.mjs'));
+  for (const name of ['roadmap-publication.mjs', 'roadmap-data.mjs', 'roadmap-timeline.mjs']) {
+    await cp(path.join(repository, 'scripts', name), path.join(root, 'scripts', name));
+  }
   for (const name of ['llms-config.mjs', 'llms-index.mjs', 'llms-full.mjs', 'navbar-items.mjs']) await cp(path.join(repository, 'scripts', name), path.join(root, 'scripts', name));
   await mkdir(path.join(root, 'config'));
   const entries = Object.keys(sources).filter((name) => name.startsWith('docs/') && name.endsWith('.md') && !name.includes('/_') && !/draft: true|unlisted: true/.test(sources[name])).map((name) => ({path: name.slice(5), label: 'Selected resource', description: 'Fixture selected resource.'}));

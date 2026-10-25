@@ -3,10 +3,8 @@ title: Spatial Core roadmap
 description: Planned evolution of LongitudeOne Spatial Core across major releases.
 ---
 
-This roadmap tracks planned work across Spatial Core releases.
+This roadmap shows announced support dates and release forecasts for spatial-core.
 
-| Version | PHP compatibility  | Tested on       | Released       | Active support   | Security fixes   |
-|---------|--------------------|-----------------|----------------|------------------|------------------|
-| 1       | 8.3 - 8.4 - 8.5    | 8.3 - 8.4 - 8.5 | 04 May 2024    | 31 December 2026 | 31 December 2027 |
-| 2       | 8.4 - 8.5 - 8.6    | 8.4 - 8.5 - 8.6 | September 2026 | 31 December 2027 | 31 December 2028 |
-| 3       | 8.5 - 8.6          | 8.5 - 8.6       | January 2028   | 31 December 2028 | 31 December 2029 |
+Dates and Composer constraints come from the [shared roadmap configuration](../shared/support-timeline-generation.md#maintaining-library-roadmaps).
+Support dates retain the existing roadmap commitments. Monthly release forecasts remain approximate until an exact date is announced.
+Actual initial release dates are verified against the [published releases](https://github.com/longitude-one/spatial-core/releases).

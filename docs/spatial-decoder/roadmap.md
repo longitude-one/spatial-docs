@@ -3,9 +3,7 @@ title: Spatial Decoder roadmap
 description: Planned evolution of LongitudeOne Spatial Decoder across major releases.
 ---
 
-This roadmap tracks planned work across Spatial Decoder releases.
+This roadmap shows announced support dates and release forecasts for spatial-decoder.
 
-| Version | PHP compatibility  | Tested on       | Released         | Active support   | Security fixes   |
-|---------|--------------------|-----------------|------------------|------------------|------------------|
-| 1       | 8.4 - 8.5          | 8.4 - 8.5       | Not yet released | 31 December 2027 | 31 December 2028 |
-| 2       | 8.5                | 8.5             | January 2028     | 31 December 2028 | 31 December 2029 |
+Dates and Composer constraints come from the [shared roadmap configuration](../shared/support-timeline-generation.md#maintaining-library-roadmaps).
+Support dates retain the existing roadmap commitments. Monthly release forecasts remain approximate until an exact date is announced.

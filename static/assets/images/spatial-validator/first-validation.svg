@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 440" role="img" aria-labelledby="title description">
+  <title id="title">Three points and a LineString</title>
+  <desc id="description">A is at (5, -1), B at (7, 3) and C at (3, 1). The line connects B to C. A is separate from the line. Both axes use the same scale.</desc>
+  <rect width="560" height="440" fill="#F5F8FA"/>
+  <g fill="none" stroke="#183D55" stroke-width="1.5">
+    <path d="M 80,390 V 55 M 75,63 L 80,55 L 85,63"/>
+    <path d="M 60,300 H 530 M 522,295 L 530,300 L 522,305"/>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="57" y="325">0</text>
+    <text x="525" y="330">X</text>
+    <text x="52" y="63">Y</text>
+  </g>
+  <!-- Uniform scale: svgX = 80 + 60*x; svgY = 300 - 60*y. -->
+  <path d="M 500,120 L 260,240" fill="none" stroke="#2784C2" stroke-width="4"/>
+  <g fill="#2784C2" stroke="#183D55" stroke-width="2">
+    <circle cx="380" cy="360" r="7"/>
+    <circle cx="500" cy="120" r="7"/>
+    <circle cx="260" cy="240" r="7"/>
+  </g>
+  <g font-family="sans-serif" font-size="20" fill="#183D55">
+    <text x="335" y="400">A (5, -1)</text>
+    <text x="425" y="90">B (7, 3)</text>
+    <text x="155" y="236">C (3, 1)</text>
+    <text x="290" y="155">LineString B → C</text>
+  </g>
+</svg>

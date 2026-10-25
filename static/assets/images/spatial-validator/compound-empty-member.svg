@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 280" role="img" aria-labelledby="title description">
+<title id="title">EMPTY contributing component</title><desc id="description">The first component is a valid segment. A separate schematic box represents an EMPTY second component with no spatial position.</desc>
+<rect width="720" height="280" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 50 + 140*x; svgY = 105 - 140*y. -->
+<path d="M 50,105 H 190" stroke="#2784C2" stroke-width="4"/>
+<rect x="35" y="180" width="250" height="55" rx="5" fill="none" stroke="#B33131" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="55" y="214" font-family="sans-serif" font-size="18" fill="#B33131">curves[1]: EMPTY</text>
+<circle cx="50" cy="105" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="50" y="85" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="190" cy="105" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="190" y="85" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<text x="330" y="85" font-family="sans-serif" font-size="18" fill="#183D55">curves[0]: valid line</text>
+<text x="330" y="125" font-family="sans-serif" font-size="18" fill="#183D55">curves[1]: EMPTY</text>
+<text x="330" y="165" font-family="sans-serif" font-size="18" fill="#B33131">Invalid contributing member</text>
+</svg>

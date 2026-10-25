@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" role="img" aria-labelledby="title description">
+  <title id="title">Minimum point count</title>
+  <desc id="description">A single valid Point cannot form a non-empty LineString.</desc>
+  <rect width="640" height="250" fill="#F5F8FA"/>
+  <text x="25" y="40" font-family="sans-serif" fill="#183D55" font-size="20" font-weight="bold">Minimum point count</text>
+  <g transform="translate(0 0)">
+<circle cx="120" cy="135" r="7" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+  <g font-family="sans-serif" fill="#183D55" font-size="18">
+    <text x="85" y="175">A (0, 0)</text>
+    <text x="280" y="115">One valid Point</text>
+    <text x="280" y="150" fill="#B33131">Invalid line: needs two Points</text>
+  </g>
+  </g>
+</svg>

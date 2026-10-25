@@ -92,7 +92,7 @@ Shared structure errors retain their own codes, such as `polygonstructure-degene
 Optional rules use separate unavailable codes, such as `simplelinestring-unavailable` and `firstpointequalslastpoint-unavailable`.
 Use stable codes for application branching; messages can be localized by Symfony's configured translator and should be presented as text.
 
-For the outside-hole example in [curves and surfaces](./curves-and-surfaces.md#one-complete-polygon-constraint), inspect a diagnostic like this:
+For the outside-hole example in [geometry type validators](./geometric-types.md#a-hole-outside-the-exterior), inspect a diagnostic like this:
 
 ```php
 foreach ($violations as $violation) {
@@ -104,3 +104,21 @@ foreach ($violations as $violation) {
 This last excerpt assumes `$violations` contains that Polygon result, not the Geography warning list above.
 The [executable examples](../../assets/examples/spatial-validator/validation-examples.php) also check a nested
 `geometries[0].rings[1]` path with its original `polygon-outside` code.
+
+## Numerical comparisons
+
+Finite coordinate equality uses this approved LongitudeOne comparison, separately for each spatial ordinate:
+
+```text
+abs(a - b) <= PHP_FLOAT_EPSILON * max(1.0, abs(a), abs(b))
+```
+
+It includes Z when present and ignores M. Thus two XYM positions that differ only in M are spatially equal.
+This is a floating-point comparison policy, not a configurable business distance tolerance or a general topology predicate.
+Orientation, intersection, planarity, arc and volume calculations use robust intermediate predicates adapted to their quantities;
+the delivered Geometry algorithms use exact rational/algebraic signs over the supplied finite binary coordinates.
+
+No determinant threshold is obtained by blindly reusing the coordinate epsilon.
+There is no extra proximity tolerance, snapping, rounding, merging or coordinate movement.
+Nearby disjoint shapes do not become touching merely because the gap is small.
+Approximate endpoint equality does not excuse a real interior crossing or replace the original coordinates.

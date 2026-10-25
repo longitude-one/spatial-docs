@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" role="img" aria-labelledby="title description">
+<title id="title">A valid linear ring</title><desc id="description">A (0,0), B (2,0), C (1,2), A form a non-empty closed simple line with four positions.</desc>
+<rect width="760" height="330" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 70 + 80*x; svgY = 260 - 80*y. -->
+<path d="M 70,260 L 230,260 L 150,100 Z" fill="none" stroke="#2784C2" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="70" cy="260" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="70" y="287" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="230" cy="260" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="230" y="287" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="150" cy="100" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/><text x="150" y="80" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<text x="355" y="100" font-family="sans-serif" font-size="18" fill="#183D55">A → B → C → A</text>
+<text x="355" y="140" font-family="sans-serif" font-size="18" fill="#183D55">Four positions; three vertices</text>
+<text x="355" y="180" font-family="sans-serif" font-size="18" fill="#183D55">Closed, simple, non-empty</text>
+</svg>

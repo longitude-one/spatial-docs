@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img" aria-labelledby="title description">
+  <title id="title">Valid points and line, invalid triangular boundary</title>
+  <desc id="description">Three valid points A, B and C form a valid open LineString A to B to C, shown in blue.
+    The red shaded area illustrates the intended triangle, whose boundary is invalid because the closing segment C to A is missing.
+    A red dashed guide marks that missing segment; it is not part of the LineString.</desc>
+  <rect width="720" height="440" fill="#F5F8FA"/>
+  <!-- Same coordinates as the first example: A (5, -1), B (7, 3), C (3, 1).
+       Uniform scale: svgX = -20 + 60*x; svgY = 300 - 60*y. -->
+  <path d="M 280,360 L 400,120 L 160,240 Z" fill="#D45151" fill-opacity="0.22"/>
+  <path d="M 160,240 L 280,360" fill="none" stroke="#B33131" stroke-width="3" stroke-dasharray="8 6"/>
+  <path d="M 280,360 L 400,120 L 160,240" fill="none" stroke="#2784C2" stroke-width="5" stroke-linejoin="round"/>
+  <g fill="#2784C2" stroke="#183D55" stroke-width="2">
+    <circle cx="280" cy="360" r="8"/>
+    <circle cx="400" cy="120" r="8"/>
+    <circle cx="160" cy="240" r="8"/>
+  </g>
+  <g font-family="sans-serif" font-size="20" fill="#183D55">
+    <text x="265" y="400">A</text>
+    <text x="392" y="95">B</text>
+    <text x="128" y="246">C</text>
+    <text x="455" y="155">Valid points</text>
+    <text x="455" y="190">Valid open LineString</text>
+    <text x="455" y="220">A → B → C</text>
+    <text x="455" y="280" fill="#B33131">Invalid triangle boundary</text>
+    <text x="455" y="310">Missing segment C → A</text>
+    <text x="45" y="355" fill="#B33131">Missing closure</text>
+  </g>
+  <path d="M 180,341 L 214,301" fill="none" stroke="#B33131" stroke-width="1.5"/>
+</svg>

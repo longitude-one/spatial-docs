@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title description">
+<title id="title">A loop made of open members</title><desc id="description">The first member follows A (0,0), B (2,0), C (2,2). The second follows C, D (0,2), A. Together they trace a square but each is open, so closure fails for both.</desc>
+<rect width="760" height="300" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 60 + 80*x; svgY = 220 - 80*y. -->
+<path d="M 60,220 L 220,220 L 220,60" stroke="#2784C2" stroke-width="4" fill="none"/>
+<path d="M 220,60 L 60,60 L 60,220" stroke="#B26A2D" stroke-width="4" stroke-dasharray="9 4" fill="none"/>
+<circle cx="60" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="60" y="252" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">A</text>
+<circle cx="220" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="220" y="252" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">B</text>
+<circle cx="220" cy="60" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="220" y="92" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">C</text>
+<circle cx="60" cy="60" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="60" y="92" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">D</text>
+<text x="360" y="85" font-family="sans-serif" font-size="18" fill="#183D55">Line 0: A → B → C</text>
+<text x="360" y="125" font-family="sans-serif" font-size="18" fill="#183D55">Line 1: C → D → A</text>
+<text x="360" y="165" font-family="sans-serif" font-size="18" fill="#B33131">Each member is open</text>
+</svg>

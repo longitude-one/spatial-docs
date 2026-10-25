@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" role="img" aria-labelledby="title description">
+  <title id="title">No consecutive duplicate positions</title>
+  <desc id="description">The second and third Points share position B. A red ring marks the consecutive duplicate.</desc>
+  <rect width="640" height="250" fill="#F5F8FA"/>
+  <text x="25" y="40" font-family="sans-serif" fill="#183D55" font-size="20" font-weight="bold">No consecutive duplicate positions</text>
+  <g transform="translate(0 -500)">
+<path d="M 60,635 H 220" stroke="#2784C2" stroke-width="4"/>
+  <g fill="#2784C2" stroke="#183D55" stroke-width="2">
+    <circle cx="60" cy="635" r="7"/><circle cx="220" cy="635" r="7"/>
+  </g>
+  <circle cx="220" cy="635" r="14" fill="none" stroke="#B33131" stroke-width="2"/>
+  <g font-family="sans-serif" fill="#183D55" font-size="18">
+    <text x="25" y="680">A (0, 0)</text><text x="185" y="680">B (2, 0)</text>
+    <text x="110" y="605" fill="#B33131">points[1] = points[2]</text>
+    <text x="280" y="620">Sequence: A → B → B</text>
+    <text x="280" y="655" fill="#B33131">Invalid line: consecutive duplicate</text>
+  </g>
+  </g>
+</svg>

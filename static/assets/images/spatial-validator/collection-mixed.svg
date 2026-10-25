@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title description">
+<title id="title">Mixed valid geometry types</title><desc id="description">A Point (0,0), a line from (1,0) to (2,1), and a triangular Polygon (3,0),(5,0),(4,2),(3,0) form a valid GeometryCollection.</desc>
+<rect width="760" height="300" fill="#F5F8FA"/>
+<!-- Uniform scale: svgX = 40 + 40*x; svgY = 220 - 40*y. -->
+<path d="M 80,220 L 120,180" stroke="#2784C2" stroke-width="3" fill="none"/>
+<path d="M 160,220 L 240,220 L 200,140 Z" stroke="#2784C2" stroke-width="3" fill="#39A576" fill-opacity="0.2"/>
+<circle cx="40" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="40" y="252" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#183D55">0</text>
+<circle cx="80" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<circle cx="120" cy="180" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<circle cx="160" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<circle cx="240" cy="220" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<circle cx="200" cy="140" r="6" fill="#2784C2" stroke="#183D55" stroke-width="2"/>
+<text x="360" y="85" font-family="sans-serif" font-size="18" fill="#183D55">geometries[0]: Point</text>
+<text x="360" y="125" font-family="sans-serif" font-size="18" fill="#183D55">geometries[1]: LineString</text>
+<text x="360" y="165" font-family="sans-serif" font-size="18" fill="#183D55">geometries[2]: Polygon</text>
+</svg>

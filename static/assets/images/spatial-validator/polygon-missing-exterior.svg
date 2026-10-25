@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 310" role="img" aria-labelledby="title description">
+<title id="title">Missing exterior boundary</title><desc id="description">A schematic dashed box indicates the absent exterior boundary. The object reports non-empty, but stores no rings.</desc>
+<rect width="760" height="310" fill="#F5F8FA"/>
+<rect x="50" y="65" width="240" height="155" fill="none" stroke="#B33131" stroke-width="3" stroke-dasharray="8 6"/>
+<text x="170" y="140" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#B33131">No boundary data</text>
+<text x="50" y="270" font-family="sans-serif" font-size="16" fill="#183D55">Schematic placeholder</text>
+<text x="370" y="95" font-family="sans-serif" font-size="18" fill="#183D55">isEmpty(): false</text>
+<text x="370" y="135" font-family="sans-serif" font-size="18" fill="#183D55">getRings(): []</text>
+<text x="370" y="175" font-family="sans-serif" font-size="18" fill="#B33131">Invalid structural state</text>
+</svg>

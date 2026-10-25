@@ -8,11 +8,11 @@ Use it when accepting a route, parcel boundary or collection of positions in an 
 Constructing a spatial object and checking its geometric validity are separate operations.
 
 The [1.x documentation](./v1/index.md) targets `1.0.0-RC.0`. It describes the delivered validation contracts and their coverage limits;
-it does not announce a released RC or claim general SQL/MM conformity.
+it does not announce a released RC or claim general [SQL/MM conformity](https://www.iso.org/standard/60343.html).
 
-- [Start with Symfony validation](./v1/symfony-validation.md).
-- [Choose validity, simplicity or closure](./v1/curves-and-surfaces.md).
-- [Understand supported types and rules](./v1/coverage-and-rules.md).
+- [Get started with Spatial Validator](./v1/index.md).
+- [Apply geometry type validators](./v1/geometric-types.md).
+- [Apply optional simplicity validators](./v1/simplicity-validators.md).
 - [Interpret errors and warnings](./v1/diagnostics-and-composition.md).
 
 `spatial-types` owns the object model; `spatial-validator` performs explicit functional validation.

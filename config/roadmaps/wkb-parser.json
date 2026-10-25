@@ -1,0 +1,25 @@
+{
+  "library": "wkb-parser",
+  "branches": [
+    {
+      "version": "2.x",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2024-04-08",
+      "activeSupportUntil": "2024-12-31",
+      "securitySupportUntil": "2025-12-31",
+      "php": "^8.1",
+      "notes": null
+    },
+    {
+      "version": "3.x",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2024-04-27",
+      "activeSupportUntil": "2026-12-31",
+      "securitySupportUntil": "2027-12-31",
+      "php": "^8.1",
+      "notes": null
+    }
+  ]
+}

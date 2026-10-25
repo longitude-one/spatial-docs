@@ -1,0 +1,25 @@
+{
+  "library": "spatial-decoder",
+  "branches": [
+    {
+      "version": "1.x",
+      "status": "planned",
+      "plannedReleaseDate": null,
+      "releaseDate": null,
+      "activeSupportUntil": "2027-12-31",
+      "securitySupportUntil": "2028-12-31",
+      "php": "^8.4",
+      "notes": null
+    },
+    {
+      "version": "2.x",
+      "status": "planned",
+      "plannedReleaseDate": null,
+      "releaseDate": null,
+      "activeSupportUntil": "2028-12-31",
+      "securitySupportUntil": "2029-12-31",
+      "php": null,
+      "notes": "Release forecast: January 2028; exact date unannounced. Previously listed PHP target: 8.5; Composer constraint unannounced."
+    }
+  ]
+}

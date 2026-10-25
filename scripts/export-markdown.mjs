@@ -16,6 +16,7 @@ import { generateLlmsIndex, verifyLlmsIndex } from './llms-index.mjs';
 import { generateLlmsFull } from './llms-full.mjs';
 import { publicationUrls } from './llms-config.mjs';
 import { appendLibraryLandingNavigation } from './library-landing-pages.mjs';
+import { appendRoadmapSupport, generateRoadmapAssets } from './roadmap-publication.mjs';
 
 const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = path.join(rootDirectory, 'docs');
@@ -293,6 +294,7 @@ async function stagedOutputMatches(stagingDirectory) {
 
 async function exportMarkdown() {
   const sourceFiles = await findDocumentationFiles(docsDirectory);
+  const roadmaps = await generateRoadmapAssets(rootDirectory);
   const generated = [];
   const documents = new Map();
   for (const sourceFile of sourceFiles.sort()) {
@@ -304,6 +306,7 @@ async function exportMarkdown() {
       || metadata.unlisted === true || metadata.unlisted === 'true') {
       continue;
     }
+    appendRoadmapSupport(tree, sourcePath, roadmaps);
     documents.set(sourcePath, { tree, metadata, anchors: documentationAnchors(tree, sourcePath) });
   }
   const assetManifest = await collectSharedAssets(rootDirectory);
@@ -360,6 +363,7 @@ async function exportMarkdown() {
   await rm(path.join(staticDirectory, 'markdown'), { recursive: true, force: true });
   await rm(path.join(staticDirectory, 'llms.txt'), { force: true });
   await writeManifest(rootDirectory, libraries);
+  await writeFile(path.join(rootDirectory, '.docusaurus/roadmap-support.json'), `${JSON.stringify(roadmaps, null, 2)}\n`);
 }
 
 async function verifyBuild() {

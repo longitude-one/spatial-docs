@@ -10,12 +10,16 @@ import { createNavbarItems, libraryCategories } from './scripts/navbar-items.mjs
 import remarkLibraryLandingPages from './scripts/library-landing-pages.mjs';
 import remarkSharedAssets from './scripts/remark-shared-assets.mjs';
 import localSearch from './scripts/local-search.mjs';
+import remarkRoadmapSupport from './scripts/roadmap-publication.mjs';
 
 const rootDirectory = process.cwd();
 let libraries = {};
 try { libraries = JSON.parse(readFileSync(path.join(rootDirectory, '.docusaurus/library-versions.json'), 'utf8')); }
 catch (error) { if (error.code !== 'ENOENT') throw error; }
 let publishedDocuments = [];
+let roadmaps = {};
+try { roadmaps = JSON.parse(readFileSync(path.join(rootDirectory, '.docusaurus/roadmap-support.json'), 'utf8')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
 try {
   publishedDocuments = readdirSync(path.join(rootDirectory, '.generated-markdown'), { recursive: true })
     .filter((filename) => filename.endsWith('.md')).map((filename) => filename.split(path.sep).join('/'));
@@ -63,6 +67,7 @@ const config = {
         docs: {
           routeBasePath: '/',
           beforeDefaultRemarkPlugins: [
+            [remarkRoadmapSupport, { roadmaps, docsDirectory: path.join(rootDirectory, 'docs') }],
             [remarkSharedAssets, { docsDirectory: path.join(rootDirectory, 'docs'), baseUrl }],
             [remarkLibraryLandingPages, { libraries, docsDirectory: path.join(rootDirectory, 'docs') }],
           ],

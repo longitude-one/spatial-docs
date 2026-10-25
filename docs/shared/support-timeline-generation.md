@@ -7,9 +7,9 @@ The Node.js timeline generator turns announced release and support dates into a 
 It follows the shared calendar layout of [PHP's Supported Versions page](https://www.php.net/supported-versions.php),
 using LongitudeOne's colors and absolute dates. It does not copy PHP's support durations.
 
-This contract is shared by the SVG generator and the roadmap table integration in
-[Story #127](https://github.com/longitude-one/spatial-docs/issues/127).
-The generator itself does not migrate roadmaps, run automatically during the site build, or change Packagist-based version classification.
+Every library roadmap uses this JSON contract for its generated timeline and support table.
+The Markdown export step generates the images before asset validation; Docusaurus and portable Markdown receive the same table data.
+Packagist-based documentation version classification remains independent of this roadmap configuration.
 
 ## Example calendar
 
@@ -157,5 +157,51 @@ diagnostics, file loading and determinism checks. The fixture SVG in this page i
 node scripts/generate-roadmap-timeline.mjs tests/fixtures/roadmaps/example-library.json tests/fixtures/roadmaps/window.json static/assets/diagrams/support-timeline-example.svg
 ```
 
-The roadmap integration must consume this validated data directly for its table rather than maintaining a second date source.
-Follow the [shared assets publication contract](./shared-assets-publication-contract.md) when including generated calendars in HTML and portable Markdown.
+## Maintaining library roadmaps
+
+Edit `config/roadmaps/<library>.json` to update a roadmap. Both the SVG and table consume that file on the next build.
+Keep editorial introductions in `docs/<library>/roadmap.md`; do not add a second hand-written support table there.
+Every existing roadmap must have a matching JSON configuration, and every library JSON must have a matching roadmap page.
+The build fails when either side is missing or when a date is invalid.
+
+1. Add or update a branch with every required field, using `null` for unannounced values.
+2. Keep `status: planned` until the initial stable release actually occurs, even if a forecast date has passed.
+3. Set `plannedReleaseDate` only when an exact forecast day is announced. Preserve a month-only forecast in `notes` and leave the date `null`.
+4. On release, explicitly set `status: released` and `releaseDate` to the actual initial release day. A pre-release does not establish a stable release date.
+5. Set each support end explicitly from the maintainer's announced schedule. Do not infer support ends from PHP's policy or treat `null` as unlimited support.
+6. Copy the announced Composer PHP constraint into `php` exactly, for example `^8.4`. A list of tested PHP versions is not a Composer constraint.
+7. Change `config/roadmaps/window.json` to adjust the common display bounds for every library together.
+8. Run `npm test`, `npm run build`, and `sh .githooks/pre-commit`; inspect each affected roadmap in both themes and at mobile width.
+
+`npm start` also runs the exporter. Restart it after changing JSON configuration to refresh the images and shared data snapshot.
+No daily refresh, browser-side generation, automatic status promotion, or current-date calculation is needed.
+Generated SVGs live under `static/assets/roadmaps/` and are ignored by Git; the next export regenerates them.
+The exporter writes an internal build snapshot consumed by Docusaurus for the HTML table.
+The same in-memory data produces the portable Markdown table and the image, so both publication formats retain identical dates and constraints.
+
+The integration covers these ten roadmaps:
+
+| Library | Initial migration evidence |
+| --- | --- |
+| `doctrine-spatial` | Initial releases 5.0.0 and 6.0.0; Composer constraints `^8.1` and `^8.4` at those tags. |
+| `geo-parser` | Initial releases 3.0.0 and 4.0.0; Composer constraints `^8.1` and `^8.3` at those tags. |
+| `spatial-core` | Initial release 1.0.0; Composer constraint `^8.3` at that tag. |
+| `spatial-types` | No stable release; `^8.4` from the 1.0.0-beta Composer manifest. |
+| `spatial-validator` | No stable release; `^8.4` from its Composer manifest. |
+| `spatial-decoder` | No stable release; `^8.4` from its Composer manifest. |
+| `spatial-encoder` | No stable release; `^8.4` from its Composer manifest. |
+| `spatial-transformer` | No stable release or announced Composer constraint. |
+| `wkb-parser` | Initial releases 2.0.0 and 3.0.0; Composer constraint `^8.1` at both tags. |
+| `wkt-parser` | Initial releases 2.0.0 and 3.0.0; Composer constraint `^8.1` at both tags. |
+
+The migration retains previously documented support ends and approximate forecasts; it does not establish a new support policy.
+Actual release dates use the respective GitHub release publication dates, correcting inaccurate dates in the old tables.
+Future branches without an announced Composer constraint use `null`, with previously listed PHP targets retained in their notes.
+The support table shows branch status, actual or forecast dates, the literal Composer constraint, and notes; no durations or countdowns are generated.
+If no branches are configured, the image and table explicitly state that no schedule is announced.
+If a branch has support ends but no release date, the table still exposes those dates while the image draws no invented period.
+
+Images are linked so readers can open and zoom them. HTML calendars and tables scroll horizontally on narrow screens;
+the table retains semantic column headers and the standalone SVG retains its own title, description and legend.
+Portable Markdown includes the complete GFM table and relative image reference, without build metadata, MDX or raw HTML.
+The [shared assets publication contract](./shared-assets-publication-contract.md) validates and publishes the generated images alongside other shared resources.

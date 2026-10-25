@@ -56,6 +56,7 @@ test('table preserves Composer constraints, text safety and semantic column head
   assert.deepEqual(table.children[0].children.map((cell) => cell.children[0].value),
     ['Branch', 'Initial Release', 'Active Support Until', 'Security Support Until', 'PHP Compatibility', 'Notes']);
   assert.equal(table.children[1].children.length, 6);
+  assert.equal(table.children[1].children[0].children[0].value, '1 | 2');
   assert.equal(table.children[1].children[4].children[0].value, '^8.4 || ^8.5');
   assert.equal(table.children[1].children[4].children[0].type, 'inlineCode');
   assert.equal(table.children[1].children[5].children.map(({ value }) => value).join(''), 'A | B <script> `code` & value');
@@ -64,7 +65,8 @@ test('table preserves Composer constraints, text safety and semantic column head
 
 test('planned dates and support are forecasts; unknown values and no stable releases remain explicit', () => {
   const output = markdown(roadmap([branch({ status: 'planned', releaseDate: null, plannedReleaseDate: '2024-05-01', php: null })]));
-  assert.match(output, /1.x \(planned\)/);
+  assert.equal(processor.parse(output).children.find(({ type }) => type === 'table').children[1].children[0].children[0].value, '1.x');
+  assert.doesNotMatch(output, /\(planned\)|\(released\)/);
   for (const date of ['2024-05-01', '2024-06-30', '2024-12-31']) assert.ok(output.includes(`${date} (forecast)`));
   assert.match(output, /No stable release/);
   assert.match(output, /Unannounced/);
@@ -111,4 +113,10 @@ test('missing and orphaned configurations fail the inventory check', async (t) =
   await assert.rejects(generateRoadmapAssets(root), /example-library.json/);
   await writeFile(path.join(root, 'config/roadmaps/orphan.json'), '{}');
   await assert.rejects(generateRoadmapAssets(root), /orphan.json has no/);
+});
+
+
+test('generated roadmaps omit the timeline instructions and support explanatory paragraphs', () => {
+  const output = markdown(roadmap());
+  assert.doesNotMatch(output, /Open the timeline to zoom|Solid slate bars|Dashed outlines identify forecasts|Planned branches and their support dates are forecasts|The table remains usable without the timeline/);
 });

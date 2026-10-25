@@ -34,7 +34,7 @@ function marker(kind, x, y, title) {
   return `<g data-kind="${kind}-release" stroke="${colors.text}" stroke-width="1.5"><title>${escape(title)}</title>${shape}</g>`;
 }
 
-function period(kind, start, end, label, geometry, y, planned) {
+function period(kind, start, end, label, geometry, y, planned, branchLabel) {
   const { first, last, x } = geometry;
   // Intervals are half-open internally, with one added day for inclusive support end dates.
   if (end <= first || start >= last) return '';
@@ -45,6 +45,11 @@ function period(kind, start, end, label, geometry, y, planned) {
   const fill = kind === 'active' ? colors.active : 'url(#security-pattern)';
   let result = `<g data-kind="${kind}" data-start="${start}" data-end="${end}" data-continues-before="${before}" data-continues-after="${after}"><title>${escape(label)}${before ? '; continues before display window' : ''}${after ? '; continues after display window' : ''}</title>`;
   result += `<rect x="${number(left)}" y="${y - 12}" width="${number(right - left)}" height="24" fill="${fill}" stroke="${colors.text}" stroke-width="1"${planned ? ' stroke-dasharray="4 3"' : ''}/>`;
+  if (kind === 'active' && branchLabel) {
+    const available = Math.max(1, right - left - 28);
+    const fit = Array.from(branchLabel).length * 8 > available ? ` textLength="${number(available)}" lengthAdjust="spacingAndGlyphs"` : '';
+    result += `<text x="${number((left + right) / 2)}" y="${y + 5}" text-anchor="middle" font-size="14" font-weight="600" fill="${colors.background}"${fit}>${escape(branchLabel)}</text>`;
+  }
   // White arrows remain visible against both support fills, without relying on color alone.
   if (before) result += `<path d="M ${number(left + 8)} ${y - 6} l -6 6 6 6" fill="none" stroke="${colors.background}" stroke-width="2"/>`;
   if (after) result += `<path d="M ${number(right - 8)} ${y - 6} l 6 6 -6 6" fill="none" stroke="${colors.background}" stroke-width="2"/>`;
@@ -67,17 +72,15 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
   // Preserve room for every annual label even if a caller requests a very narrow or unusually long calendar.
   const width = Math.max(requestedWidth, (Number(window.endDate.slice(0, 4)) - Number(window.startDate.slice(0, 4)) + 1) * 54 + 48);
   const plotWidth = width - 48;
-  // A conservative one-em character budget also leaves room for wide Unicode glyphs.
-  const columns = Math.floor(plotWidth / 14);
   const title = `${roadmap.library} support timeline`;
   const heading = wrap(title, Math.floor(plotWidth / 20));
-  const windowLabel = wrap(`Display window: ${window.startDate} to ${window.endDate}`, columns);
   let y = 32 + heading.length * 20;
-  const axisY = y + windowLabel.length * 20 + 38;
+  const axisY = y + 18;
   const geometry = { first, last, x: (date) => 24 + plotWidth * (date - first) / (last - first) };
   const rows = [];
   const description = [`${title}. Display window ${window.startDate} through ${window.endDate}.`];
-  y = axisY + 32;
+  // The first bar starts at the calendar baseline.
+  y = axisY - 2;
   for (const [index, branch] of roadmap.branches.entries()) {
     const planned = branch.status === 'planned';
     const releaseDate = planned ? branch.plannedReleaseDate : branch.releaseDate;
@@ -88,24 +91,22 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
     const support = `Active support until: ${shown(branch.activeSupportUntil)}; security support until: ${shown(branch.securitySupportUntil)}.`;
     const metadata = `PHP: ${branch.php ?? 'unannounced'}.${branch.notes === null ? '' : ` Notes: ${branch.notes}`}`;
     description.push(`${label}. ${support} ${metadata}`);
-    const labels = wrap(label, columns);
-    const details = wrap(`${support} ${metadata}`, columns);
-    const trackY = y + labels.length * 20 + 14;
-    const bottom = trackY + 34 + details.length * 20;
-    let row = `<g data-branch="${escape(branch.version)}" data-status="${branch.status}"><rect x="12" y="${y - 17}" width="${number(width - 24)}" height="${bottom - y + 9}" rx="4" fill="${index % 2 ? colors.background : colors.surface}"/>`;
-    row += textLines(labels, 24, y, { weight: 600 });
+    const branchLabel = `Branch v${branch.version.replace(/^v/u, '')}`;
+    const trackY = y + 14;
+    let row = `<g data-branch="${escape(branch.version)}" data-status="${branch.status}"><rect x="12" y="${trackY - 12}" width="${number(width - 24)}" height="24" fill="${index % 2 ? colors.background : colors.surface}"/>`;
     row += `<path d="M 24 ${trackY} H ${number(width - 24)}" stroke="${colors.text}" stroke-opacity="0.25"/>`;
-    for (const tick of years) row += `<path d="M ${number(geometry.x(tick.position))} ${trackY - 17} v 34" stroke="${colors.text}" stroke-opacity="0.18"/>`;
-    if (release !== null && active !== null) row += period('active', release, active + 1, `Active support: ${releaseDate} through ${branch.activeSupportUntil}${planned ? ' (planned)' : ''}`, geometry, trackY, planned);
+    for (const tick of years) row += `<path d="M ${number(geometry.x(tick.position))} ${trackY - 12} v 24" stroke="${colors.text}" stroke-opacity="0.18"/>`;
+    if (release !== null && active !== null) row += period('active', release, active + 1, `Active support: ${releaseDate} through ${branch.activeSupportUntil}${planned ? ' (planned)' : ''}`, geometry, trackY, planned, branchLabel);
     if (release !== null && active !== null && security !== null && security > active) {
       row += period('security', active + 1, security + 1, `Security fixes only: after ${branch.activeSupportUntil} through ${branch.securitySupportUntil}${planned ? ' (planned)' : ''}`, geometry, trackY, planned);
     }
     if (release !== null && release >= first && release < last) row += marker(branch.status, geometry.x(release), trackY, `${planned ? 'Planned release' : 'Release'}: ${releaseDate}`);
-    row += textLines(details, 24, trackY + 38);
+    if (release === null) row += textLines([`${branchLabel} — release unannounced`], 24, trackY + 5, { weight: 600 });
     rows.push(`${row}</g>`);
-    y = bottom + 26;
+    y += 24;
   }
   if (!rows.length) { rows.push(textLines(['No branches announced.'], 24, y, { weight: 600 })); y += 48; }
+  y += 26;
   const legend = [];
   for (const [index, label] of ['Planned release (diamond)', 'Actual release (circle)', 'Active support', 'Security fixes only (hatched)'].entries()) {
     const itemY = y + index * 30;
@@ -114,8 +115,7 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
     legend.push(textLines([label], 56, itemY));
   }
   y += 130;
-  const footnote = wrap('Arrows indicate support continuing beyond the display window. Dashed outlines mark announced support for planned branches. Unannounced dates create no periods.', columns);
-  const height = y + footnote.length * 20 + 20;
+  const height = y + 20;
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${number(width)}" height="${height}" viewBox="0 0 ${number(width)} ${height}" role="img" aria-labelledby="timeline-title timeline-description">`,
     `<title id="timeline-title">${escape(title)}</title>`,
@@ -124,9 +124,8 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
     `<rect width="100%" height="100%" fill="${colors.background}"/>`,
     `<g fill="${colors.text}" font-family="system-ui, -apple-system, sans-serif">`,
     textLines(heading, 24, 30, { size: 20, weight: 650 }),
-    textLines(windowLabel, 24, axisY - windowLabel.length * 20 - 14),
     `<path d="M 24 ${axisY} H ${number(width - 24)}" stroke="${colors.text}"/>`,
     ...years.map((tick) => `<g data-year="${tick.year}"><path d="M ${number(geometry.x(tick.position))} ${axisY - 7} v 7" stroke="${colors.text}"/><text x="${number(geometry.x(tick.position))}" y="${axisY - 12}" text-anchor="${tick.position === first ? 'start' : 'middle'}" font-size="12">${tick.year}</text></g>`),
-    ...rows, ...legend, textLines(footnote, 24, y), '</g>', '</svg>', '',
+    ...rows, ...legend, '</g>', '</svg>', '',
   ].join('\n');
 }

@@ -1,0 +1,35 @@
+{
+  "library": "example-library",
+  "branches": [
+    {
+      "version": "1.x",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2024-05-04",
+      "activeSupportUntil": "2026-12-31",
+      "securitySupportUntil": "2027-12-31",
+      "php": "^8.3",
+      "notes": "Fictional schedule for documentation and tests."
+    },
+    {
+      "version": "2.x",
+      "status": "planned",
+      "plannedReleaseDate": "2027-02-01",
+      "releaseDate": null,
+      "activeSupportUntil": "2028-12-31",
+      "securitySupportUntil": "2029-12-31",
+      "php": "^8.4",
+      "notes": null
+    },
+    {
+      "version": "3.x",
+      "status": "planned",
+      "plannedReleaseDate": null,
+      "releaseDate": null,
+      "activeSupportUntil": null,
+      "securitySupportUntil": null,
+      "php": null,
+      "notes": "No release schedule announced."
+    }
+  ]
+}

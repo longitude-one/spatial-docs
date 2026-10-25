@@ -29,6 +29,9 @@ into published pages, while the original migration corpus remains unchanged.
 [Using documentation assets](./using-documentation-assets.md) shows how to add
 and reference shared images, diagrams, schemas, examples and downloads.
 
+[Generating library support timelines](./support-timeline-generation.md) defines the shared JSON contract,
+Node.js renderer and deterministic SVG calendar rules used by library roadmaps.
+
 The [Shared assets publication contract](./shared-assets-publication-contract.md)
 defines supported formats, validation, the generated manifest and atomic publication.
 

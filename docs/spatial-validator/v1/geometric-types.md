@@ -1142,6 +1142,5 @@ Several are dispatch placeholders without a concrete model type; they do not adv
 
 Available structural and Point checks run for Geometry and Geography; Cartesian topology never substitutes for unavailable geodetic calculations.
 Unavailable checks produce warnings, as explained in [diagnostics](./diagnostics-and-composition.md#warning-payloads).
-The implemented profile does not claim general SQL/MM conformity. The primary SQL/MM source used for this documentation is
-ISO/IEC CD 13249-3:201x(E), dated 2009-01-16, a Committee Draft rather than a final published edition;
-see the [SQL/MM reference](../../standards/iso/iso-iec-13249-3.md) for context.
+The implemented profile does not claim general [SQL/MM conformity](https://www.iso.org/standard/60343.html).
+See [ISO/IEC 13249-3](https://www.iso.org/standard/60343.html) and the [SQL/MM reference](../../standards/iso/iso-iec-13249-3.md) for context.

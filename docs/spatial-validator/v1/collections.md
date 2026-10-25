@@ -1,6 +1,6 @@
 ---
 title: Collections and EMPTY members
-description: Validate collection members, preserve EMPTY values and distinguish geometric validity from SQL/MM method restrictions.
+description: Validate collection members, preserve EMPTY values and distinguish geometric validity from method-specific restrictions.
 sidebar_position: 6
 ---
 
@@ -89,14 +89,15 @@ A closed line has an empty boundary, so its closing vertex is not an allowed int
 An EMPTY member fails explicit closure in a mixed aggregate. Simplicity and closure remain independent.
 Non-empty Geography simplicity and closure calculations that are unavailable produce warnings; available structural checks still run.
 
-## SQL/MM methods have a separate scope
+## [SQL/MM](https://www.iso.org/standard/60343.html) methods have a separate scope
 
-The inspected ISO/IEC CD 13249-3:201x(E), 2009-01-16 Committee Draft, describes member well-formedness in
+[ISO/IEC 13249-3](https://www.iso.org/standard/60343.html) describes member well-formedness in
 9.2.1 Description 7 for MultiPoint and 9.4.1 Description 3 for MultiLineString.
-The approved LongitudeOne geometric profile permits valid EMPTY members rather than applying a blanket prohibition.
-OGC SFA 1.2.1, 6.1.5 and 6.1.8–6.1.9 are the related collection definitions.
 
-Specific SQL/MM mutation/cast paths impose stricter input restrictions:
+The approved LongitudeOne geometric profile permits valid EMPTY members rather than applying a blanket prohibition.
+[OGC SFA 1.2.1](https://www.ogc.org/standards/sfa/), 6.1.5 and 6.1.8–6.1.9 are the related collection definitions.
+
+Specific [SQL/MM](https://www.iso.org/standard/60343.html) mutation/cast paths impose stricter input restrictions:
 
 | Inspected path | Consequence |
 | --- | --- |

@@ -45,6 +45,22 @@ $showViolations = static function ($spatialObject, $constraint = null) use ($val
 The generic `Spatial` constraint applies three coordinate rules to Points, as listed in the
 [coordinate rules reference](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#coordinate-rules).
 
+### A valid Point
+
+A Point represents one position. A non-empty Point is valid when every declared coordinate is present and finite;
+a Geography Point must also respect longitude and latitude bounds. An EMPTY Point has no coordinates and is also valid.
+Here (10, 20) is valid both as a Geometry position and as Geography longitude/latitude in degrees.
+
+![Point P at (10, 20) has two finite coordinates and is also within Geography longitude and latitude bounds.](../../assets/images/spatial-validator/point-valid.svg)
+
+```php
+$spatialObject = new Point(10, 20);
+$showViolations($spatialObject); // No violations.
+
+$spatialObject = new GeographyPoint(10, 20);
+$showViolations($spatialObject); // No violations.
+```
+
 ### Consistent coordinates and EMPTY state
 
 `CoordinateLayout` checks that all declared ordinates are present, or all are absent for an EMPTY Point.
@@ -97,6 +113,20 @@ For a LineString, `Spatial` validates its component Points and their metadata, t
 EMPTY members and consecutive duplicate positions. A line may be open or cross itself; simplicity requires an explicit constraint.
 These examples follow the [line rules reference](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#line-rules)
 and reuse the setup above. Paths such as `points[1]` identify the second Point; `[root]` identifies the line itself.
+
+### A valid LineString
+
+A LineString joins positions in order with straight segments. A non-empty valid line contains at least two valid non-EMPTY Points,
+with matching metadata and no consecutive duplicate positions. It need not be closed or simple; an EMPTY line is also valid.
+This open route A → B → C passes ordinary validity and explicit simplicity.
+
+![Three distinct Points form an open, valid and simple LineString A–B–C.](../../assets/images/spatial-validator/line-valid.svg)
+
+```php
+$spatialObject = new LineString([new Point(0, 0), new Point(2, 1), new Point(4, 0)]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleLineString()); // No violations.
+```
 
 ### At least two Points
 
@@ -179,6 +209,22 @@ A parcel boundary needs more than an ordinary valid line: it must return to its 
 The [linear-ring rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#linear-ring-rules)
 provide two explicit constraints on LineString objects. The helper above accepts an optional constraint for these examples.
 
+### A valid linear ring
+
+A linear ring is a closed, simple, non-empty LineString used as a boundary.
+It needs at least four positions, including the repeated starting position, and must pass line and Point validation.
+This triangular boundary A → B → C → A is valid under both closure and complete `Ring` checks.
+
+![Three vertices form a simple closed triangular boundary with four positions, satisfying Ring validation.](../../assets/images/spatial-validator/ring-valid.svg)
+
+```php
+$spatialObject = new LineString([
+    new Point(0, 0), new Point(2, 0), new Point(1, 2), new Point(0, 0),
+]);
+$showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint()); // No violations.
+$showViolations($spatialObject, new SpatialAssert\Ring()); // No violations.
+```
+
 ### Closure only: FirstPointEqualsLastPoint
 
 `FirstPointEqualsLastPoint` checks that the first and last Points are finite, non-empty and at the same spatial position.
@@ -197,14 +243,7 @@ $showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint());
 [root] | firstpointequalslastpoint-invalid: A closed line requires finite non-empty endpoints at the same position.
 ```
 
-Appending A closes this boundary and removes the violation:
-
-```php
-$spatialObject = new LineString([
-    new Point(0, 0), new Point(2, 0), new Point(1, 2), new Point(0, 0),
-]);
-$showViolations($spatialObject, new SpatialAssert\FirstPointEqualsLastPoint()); // No violations.
-```
+Appending A closes this boundary, producing the valid ring shown at the start of this section.
 
 Closure alone does not check the whole line or establish ring validity.
 It compares XY, or XYZ when Z exists, and ignores M. EMPTY fails because it has no endpoints.
@@ -214,11 +253,7 @@ with the message `Geography line closure is not implemented yet.` and a default 
 ### A complete linear boundary: Ring
 
 `Ring` requires a non-empty, valid, closed and simple line with at least four positions, counting the repeated starting position.
-The closed triangle A → B → C → A above passes `Ring` as well:
-
-```php
-$showViolations($spatialObject, new SpatialAssert\Ring()); // No violations.
-```
+The triangular ring at the start of this section satisfies these requirements.
 
 A closed boundary can still cross itself. This bow-tie returns to A and contains five positions, but fails the simplicity rule composed by `Ring`.
 
@@ -247,6 +282,20 @@ A CircularString describes arcs using successive groups of three defining Points
 `SimpleCircularString` adds an explicit simplicity check.
 These examples follow the [circular-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#circular-curve-rules)
 and reuse the setup above. The small subclasses simulate malformed input that the standard constructor rejects.
+
+### A valid CircularString
+
+A CircularString joins circular arcs. A non-empty valid curve has an odd number of at least three valid non-EMPTY defining Points,
+matching metadata, and each arc's intermediate position differs from both endpoints. EMPTY is also valid.
+This upper semicircle uses A (-1, 0), B (0, 1) and C (1, 0); it is open, valid and simple.
+
+![A circular arc passes through A (-1, 0), B (0, 1) and C (1, 0), forming a valid simple upper semicircle.](../../assets/images/spatial-validator/circular-valid.svg)
+
+```php
+$spatialObject = new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleCircularString()); // No violations.
+```
 
 ### An odd number of at least three Points
 
@@ -352,7 +401,8 @@ and reuse the setup above.
 
 ### Connected components: CompoundCurve
 
-This road follows an upper semicircle from A (-1, 0) through B (0, 1) to C (1, 0), then a straight section to D (2, 0).
+A valid non-empty CompoundCurve is an ordered chain of valid non-EMPTY line or circular components with matching metadata and consecutive endpoints.
+It may be open; simplicity is checked separately. This road follows an upper semicircle from A (-1, 0) through B (0, 1) to C (1, 0), then a straight section to D (2, 0).
 Both components meet at C, so the compound curve is valid. It also passes explicit simplicity.
 
 ![An upper semicircle joins a straight segment at C, forming a valid simple compound curve.](../../assets/images/spatial-validator/compound-connected.svg)
@@ -462,6 +512,8 @@ The examples below reuse the setup above.
 
 ### A valid plane can be vertical
 
+A valid non-empty Polygon has a simple closed exterior and valid interior rings, all with matching metadata in one non-degenerate plane.
+Its holes and boundary contacts must also satisfy the topology rules presented below.
 Planarity does not require a horizontal surface. This rectangle lies entirely in the vertical plane X = 0.
 Its exterior is closed, simple and contains non-collinear positions, so it passes validation.
 The illustration is an oblique projection of the XYZ coordinates, not a map view.
@@ -568,7 +620,8 @@ and reuse the setup above. All member indexes are zero-based.
 
 ### Mixed spatial types: GeometryCollection
 
-A collection can contain a survey marker, a route and a parcel boundary together.
+A GeometryCollection groups spatial objects. It is valid when each member passes its own validation and matches the collection metadata;
+valid EMPTY members are retained. A collection can contain a survey marker, a route and a parcel boundary together.
 Their different types and topological dimensions are allowed; their Geometry/Geography family, coordinate variant and full spatial reference must match.
 General collection validity does not prohibit intersections between members or add a whole-collection simplicity check.
 
@@ -602,6 +655,17 @@ geometries[1] | minimumpointcount-invalid: A line must contain at least 2 points
 
 ### Point collections: MultiPoint and SimpleMultiPoint
 
+A MultiPoint groups independent Points. It is valid when its members are valid and their metadata match the collection;
+valid EMPTY members are allowed. This example also passes explicit simplicity because its non-empty positions are distinct.
+
+![Two independent distinct Points form a valid and simple MultiPoint.](../../assets/images/spatial-validator/multipoint-valid.svg)
+
+```php
+$spatialObject = new MultiPoint([new Point(0, 0), new Point(2, 0)]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleMultiPoint()); // No violations.
+```
+
 Ordinary `MultiPoint` validity checks the Points, without requiring distinct positions.
 `SimpleMultiPoint` adds that requirement, ignoring valid EMPTY members because they have no spatial position.
 Here `points[1]` and `points[3]` both occupy A (0, 0); `points[0]` is EMPTY and remains in the collection.
@@ -621,6 +685,20 @@ points[3] | simplemultipoint-invalid: The point repeats a spatial position.
 ```
 
 ### Line collections: MultiLineString and SimpleMultiLineString
+
+A MultiLineString groups LineStrings. It is valid when every member is valid and its metadata match the collection;
+valid EMPTY members are allowed. These two separate routes also pass explicit simplicity: neither crosses itself or the other route.
+
+![Two separate simple LineStrings form a valid MultiLineString and pass explicit simplicity.](../../assets/images/spatial-validator/multilinestring-valid.svg)
+
+```php
+$spatialObject = new MultiLineString([
+    new LineString([new Point(0, 0), new Point(2, 1)]),
+    new LineString([new Point(0, 2), new Point(2, 3)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString()); // No violations.
+```
 
 Two crossing routes can form a valid MultiLineString. `SimpleMultiLineString` additionally requires each member to be simple
 and restricts contacts between different lines to their shared boundaries.
@@ -648,6 +726,21 @@ A member's own simplicity failure retains its `simplelinestring-invalid` code at
 ### Every member closed: ClosedMultiLineString
 
 `ClosedMultiLineString` requires a non-EMPTY aggregate in which every member returns to its own starting position.
+These two separate triangular loops satisfy that requirement: each member is individually closed and valid.
+They also pass explicit simplicity because they are simple and do not touch.
+
+![Two disjoint triangular LineString loops are individually closed, valid and simple.](../../assets/images/spatial-validator/multilinestring-closed-valid.svg)
+
+```php
+$spatialObject = new MultiLineString([
+    new LineString([new Point(0, 0), new Point(2, 0), new Point(0, 2), new Point(0, 0)]),
+    new LineString([new Point(3, 0), new Point(5, 0), new Point(3, 2), new Point(3, 0)]),
+]);
+$showViolations($spatialObject); // No violations.
+$showViolations($spatialObject, new SpatialAssert\ClosedMultiLineString()); // No violations.
+$showViolations($spatialObject, new SpatialAssert\SimpleMultiLineString()); // No violations.
+```
+
 Joining several open lines into a loop is insufficient. Here A → B → C and C → D → A together draw a square,
 but neither of the two members is closed.
 
@@ -933,6 +1026,7 @@ Member family, coordinate variant and full spatial reference must match, includi
 
 ### An isolated corner contact is valid
 
+A valid MultiPolygon has valid members whose filled interiors do not intersect and whose contacts are isolated.
 Two parcels may meet at a single corner without sharing an edge or overlapping their interiors.
 The squares below touch only at (2, 2).
 
@@ -1017,6 +1111,8 @@ Every patch receives full validation, retaining paths such as `patches[0].rings[
 
 ### A valid open surface
 
+A valid non-empty PolyhedralSurface has valid non-EMPTY patches connected through edges, consistent shared-edge directions,
+no forbidden face intersections or branching, and a connected local face fan at every vertex. It may have open boundary edges.
 Two triangular panels meet along AB, like an open book. They traverse the shared edge in opposite directions.
 This is a valid PolyhedralSurface, but it does not enclose a volume and therefore fails explicit closure.
 The drawing uses an oblique XYZ projection.

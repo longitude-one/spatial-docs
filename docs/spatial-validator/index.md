@@ -11,7 +11,6 @@ The [1.x documentation](./v1/index.md) targets `1.0.0-RC.0`. It describes the de
 it does not announce a released RC or claim general SQL/MM conformity.
 
 - [Get started with Spatial Validator](./v1/index.md).
-- [Choose validity, simplicity or closure](./v1/curves-and-surfaces.md).
 - [Apply geometry type validators](./v1/geometric-types.md).
 - [Apply optional simplicity validators](./v1/simplicity-validators.md).
 - [Interpret errors and warnings](./v1/diagnostics-and-composition.md).

@@ -76,7 +76,8 @@ Using a plain list of presence and spatial constraints runs both checks, so an e
 | An EMPTY XYZ PolyhedralSurface | Valid ordinarily; explicit closure fails | No enclosing envelope |
 
 The names in this table are spatial model classes, except `Ring`, which is a validator constraint.
-See [collections](./collections.md) for all-EMPTY and mixed members, and [curves and surfaces](./curves-and-surfaces.md) for optional contracts.
+See [collections](./collections.md) for all-EMPTY and mixed members, and [simplicity validators](./simplicity-validators.md) for optional simplicity and
+[geometry type validators](./geometric-types.md#linear-ring-checks) for closure and ring contracts.
 
 A Point supplied through `PointInterface` must provide every ordinate declared by its variant, or consistently represent EMPTY.
 For example, XY values `(null, 2)` fail `CoordinateLayout`; `(null, null)` with `isEmpty() === true` is EMPTY.

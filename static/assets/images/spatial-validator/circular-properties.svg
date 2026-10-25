@@ -5,7 +5,9 @@
   <g fill="#183D55" font-family="sans-serif" font-size="18" text-anchor="middle">
     <text x="150" y="30">Open semicircle</text><text x="450" y="30">Retraced semicircle</text><text x="750" y="30">Closed circle</text>
     <text x="150" y="266">A → B → C</text><text x="450" y="266">A → B → C → B → A</text><text x="750" y="266">A → B → C → D → A</text>
-    <text x="150" y="296">Valid · Simple · Open</text><text x="450" y="296">Valid · Non-simple · Closed</text><text x="750" y="296">Valid · Simple · Closed</text>
+    <text x="150" y="296"><tspan fill="#24724D">Valid</tspan> · <tspan fill="#24724D">Simple</tspan> · Open</text>
+    <text x="450" y="296"><tspan fill="#24724D">Valid</tspan> · <tspan fill="#A45B19">Non-simple</tspan> · Closed</text>
+    <text x="750" y="296"><tspan fill="#24724D">Valid</tspan> · <tspan fill="#24724D">Simple</tspan> · Closed</text>
   </g>
   <g fill="none" stroke="#183D55" stroke-width="1">
     <path d="M40 150 H260 M150 55 V235 M340 150 H560 M450 55 V235 M640 150 H860 M750 55 V235"/>

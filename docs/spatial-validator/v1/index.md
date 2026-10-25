@@ -101,7 +101,6 @@ See [geometry type validators](./geometric-types.md) for the checks applied to e
 | Select when constraints run                      | [Validation groups](#use-validation-groups)                     |
 | Handle null, strings and presence checks         | [Input and EMPTY values](./input-and-empty.md)                  |
 | Check optional simplicity properties             | [Simplicity validators](./simplicity-validators.md)             |
-| Validate curves, rings, polygons and surfaces    | [Curves and surfaces](./curves-and-surfaces.md)                 |
 | Use collections without discarding EMPTY members | [Collections](./collections.md)                                 |
 | Read paths, codes and warning payloads           | [Diagnostics and composition](./diagnostics-and-composition.md) |
 

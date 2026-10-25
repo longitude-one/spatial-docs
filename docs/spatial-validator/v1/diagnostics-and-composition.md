@@ -92,7 +92,7 @@ Shared structure errors retain their own codes, such as `polygonstructure-degene
 Optional rules use separate unavailable codes, such as `simplelinestring-unavailable` and `firstpointequalslastpoint-unavailable`.
 Use stable codes for application branching; messages can be localized by Symfony's configured translator and should be presented as text.
 
-For the outside-hole example in [curves and surfaces](./curves-and-surfaces.md#one-complete-polygon-constraint), inspect a diagnostic like this:
+For the outside-hole example in [geometry type validators](./geometric-types.md#a-hole-outside-the-exterior), inspect a diagnostic like this:
 
 ```php
 foreach ($violations as $violation) {

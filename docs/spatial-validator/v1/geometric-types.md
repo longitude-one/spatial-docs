@@ -261,18 +261,34 @@ Optional [circular-curve simplicity](./simplicity-validators.md#simplecircularst
 These examples follow the [circular-curve rules](https://github.com/longitude-one/spatial-validator/blob/main/docs/validators.md#circular-curve-rules)
 and reuse the setup above. The small subclasses simulate malformed input that the standard constructor rejects.
 
-### A valid CircularString
+### Three valid CircularStrings with different properties
 
-A CircularString joins circular arcs. A non-empty valid curve has an odd number of at least three valid non-EMPTY defining Points,
-matching metadata, and each arc's intermediate position differs from both endpoints. EMPTY is also valid.
-This upper semicircle uses A (-1, 0), B (0, 1) and C (1, 0); it is open, valid and simple.
+A non-empty CircularString is valid when it has an odd number of at least three valid non-EMPTY defining Points with matching metadata,
+and each arc's intermediate position differs from both endpoints. EMPTY is also valid.
+The three examples below all satisfy ordinary validity: an open semicircle, the same semicircle retraced in reverse, and a full circle.
+They differ in simplicity and closure. Being closed does not make a curve simple; retracing an arc does not fail ordinary CircularString validity.
 
-![A circular arc passes through A (-1, 0), B (0, 1) and C (1, 0), forming a valid simple upper semicircle.](../../assets/images/spatial-validator/circular-valid.svg)
+![Three valid CircularStrings: an open simple semicircle, a closed non-simple retraced semicircle and a simple closed circle.](../../assets/images/spatial-validator/circular-properties.svg)
 
 ```php
-$spatialObject = new CircularString([new Point(-1, 0), new Point(0, 1), new Point(1, 0)]);
-$showViolations($spatialObject); // No violations.
+$open = new CircularString([[-1, 0], [0, 1], [1, 0]]);
+$retraced = new CircularString([[-1, 0], [0, 1], [1, 0], [0, 1], [-1, 0]]);
+$circle = new CircularString([[-1, 0], [0, 1], [1, 0], [0, -1], [-1, 0]]);
+
+foreach (['Open semicircle' => $open, 'Retraced semicircle' => $retraced, 'Closed circle' => $circle] as $label => $spatialObject) {
+    $violations = $validator->validate($spatialObject, new SpatialAssert\Spatial());
+    echo $label . ': ' . count($violations) . PHP_EOL;
+}
 ```
+
+```text
+Open semicircle: 0
+Retraced semicircle: 0
+Closed circle: 0
+```
+
+Apply [SimpleCircularString](./simplicity-validators.md#simplecircularstring) explicitly when your application also requires simplicity.
+A circular ring must be non-empty, simple and closed; its defining-point count differs from the four-position minimum for a linear ring.
 
 ### An odd number of at least three Points
 

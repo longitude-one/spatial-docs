@@ -189,7 +189,7 @@ The integration covers these ten roadmaps:
 | `spatial-types` | No stable release; `^8.4` from the 1.0.0-beta Composer manifest. |
 | `spatial-validator` | No stable release; `^8.4` from its Composer manifest. |
 | `spatial-decoder` | No stable release; `^8.4` from its Composer manifest. |
-| `spatial-encoder` | No stable release or announced Composer constraint. |
+| `spatial-encoder` | No stable release; `^8.4` from its Composer manifest. |
 | `spatial-transformer` | No stable release or announced Composer constraint. |
 | `wkb-parser` | Initial releases 2.0.0 and 3.0.0; Composer constraint `^8.1` at both tags. |
 | `wkt-parser` | Initial releases 2.0.0 and 3.0.0; Composer constraint `^8.1` at both tags. |

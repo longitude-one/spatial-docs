@@ -18,7 +18,7 @@ composer require longitude-one/spatial-validator:^1.0
 
 ## Validate your first objects
 
-After [installing the package](./symfony-validation.md#install-and-run), validate an object with the generic `Spatial` constraint:
+After [installing the package](#install), validate an object with the generic `Spatial` constraint:
 
 ```php
 <?php
@@ -49,7 +49,23 @@ The example creates three points and a line connecting B to C, then validates po
 You do not need to choose a validator for each spatial type: the generic `Spatial` constraint automatically selects the appropriate validator
 from the object's declared spatial type. The same constraint validates both the point and the line above.
 Use a specialized constraint such as `Point` or `Polygon` only when your application also needs to require that particular type.
-The [Symfony validation guide](./symfony-validation.md) covers specialized constraints and validation groups.
+See [geometry type validators](./geometric-types.md) for type-specific contracts and examples.
+
+## Use validation groups
+
+Groups let your application select when a constraint runs, for example during an import.
+Select the same group in the constraint and in Symfony's `validate()` call. Reuse `$validator` and `$pointA` from the example above:
+
+```php
+$constraint = new SpatialAssert\Spatial(groups: ['Import']);
+$violations = $validator->validate($pointA, $constraint, ['Import']);
+echo count($violations); // 0
+```
+
+Delegation and component recursion preserve the active group, validation root and property path.
+`Spatial` creates the specialized constraint with the selected groups, retaining the specialized defaults for diagnostic payloads.
+Its own payload is not copied to every delegated diagnostic.
+For custom metadata on a particular rule, apply that constraint explicitly and inspect the constraint associated with each violation.
 
 ## Understand the result
 
@@ -75,13 +91,14 @@ the sequence must return to its starting point, A → B → C → A, to close it
 
 The red fill shows the intended triangle; the dashed closing segment is missing from the actual line.
 
-See [geometric types](./geometric-types.md) for the dedicated page on the different types.
+See [geometry type validators](./geometric-types.md) for the checks applied to each geometry type and concrete examples.
 
 ## Choose your next step
 
 | Your task                                        | Read                                                            |
 | ------------------------------------------------ | --------------------------------------------------------------- |
-| Install the package and validate an object       | [Symfony validation](./symfony-validation.md)                   |
+| Apply type-specific validation rules             | [Geometry type validators](./geometric-types.md)                |
+| Select when constraints run                      | [Validation groups](#use-validation-groups)                     |
 | Handle null, strings and presence checks         | [Input and EMPTY values](./input-and-empty.md)                  |
 | Select rules for a type, family and dimension.   | [Coverage and rule catalogue](./coverage-and-rules.md)          |
 | Validate curves, rings, polygons and surfaces    | [Curves and surfaces](./curves-and-surfaces.md)                 |
@@ -91,3 +108,14 @@ See [geometric types](./geometric-types.md) for the dedicated page on the differ
 ## Requirements and example verification
 
 This documentation covers **version 1.0**. Examples use PHP 8.4 or later within PHP 8 and Symfony Validator 5.4, 6, 7 or 8.
+The package requires `spatial-core ^1.3` and `spatial-types ^1.0@beta`; Composer resolves these dependencies.
+
+Download [validation-examples.php](../../assets/examples/spatial-validator/validation-examples.php) to verify the documented contracts.
+In a project containing the package, run:
+
+```sh
+php validation-examples.php vendor/autoload.php
+```
+
+The script fails if an expected result changes and prints `Spatial validation examples passed.` on success.
+It exercises generic and specialized constraints, groups, input handling, EMPTY members, curves, Polygon, Triangle and surface closure.

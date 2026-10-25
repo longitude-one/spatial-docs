@@ -10,7 +10,7 @@ Constructing a spatial object and checking its geometric validity are separate o
 The [1.x documentation](./v1/index.md) targets `1.0.0-RC.0`. It describes the delivered validation contracts and their coverage limits;
 it does not announce a released RC or claim general SQL/MM conformity.
 
-- [Start with Symfony validation](./v1/symfony-validation.md).
+- [Get started with Spatial Validator](./v1/index.md).
 - [Choose validity, simplicity or closure](./v1/curves-and-surfaces.md).
 - [Understand supported types and rules](./v1/coverage-and-rules.md).
 - [Interpret errors and warnings](./v1/diagnostics-and-composition.md).

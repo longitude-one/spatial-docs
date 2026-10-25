@@ -1,10 +1,12 @@
 ---
-title: Geometric validators
-description: Geometric types and their validators rules in Spatial Validator 1.0.
+title: Geometry type validators
+description: Validate Points, curves, surfaces and collections with geometry type validators in Spatial Validator 1.0.
 sidebar_position: 2
 ---
 
-This page presents the checks performed for each geometric type, with examples of invalid values and the violations they produce.
+Geometry type validators check Points, curves, surfaces and collections against the rules for their declared geometry type.
+This page also covers optional properties such as simplicity and closure, with valid examples and the violations produced by invalid values.
+Use `Spatial` for automatic type dispatch, or select an explicit constraint for the contract your application requires.
 
 Use this setup for the examples below; each prints the violation code and its default English message.
 

@@ -16,7 +16,7 @@ async function fixture(t) {
     'spatial-decoder/v1', 'spatial-decoder/v01', 'spatial-decoder/v0', 'spatial-decoder/V2']) {
     await mkdir(path.join(docs, directory), { recursive: true });
   }
-  await writeFile(path.join(docs, 'spatial-core/roadmap.md'), 'roadmap');
+  await writeFile(path.join(docs, 'spatial-core/index.md'), 'roadmap');
   return docs;
 }
 
@@ -48,8 +48,8 @@ test('stable versions ignore prereleases and classify two libraries independentl
   assert.deepEqual(libraries['spatial-core'].versions, { v1: 'Current', v2: 'Next', v3: 'Next' });
   assert.deepEqual(libraries['spatial-decoder'].versions, { v1: 'Next' });
   assert.equal(statusFor('spatial-core/v1/geometry/point.md', libraries).status, 'Current');
-  assert.equal(statusFor('spatial-core/roadmap.md', libraries), null);
-  assert.match(markdownStatus(statusFor('spatial-core/v1/geometry/point.md', libraries), 'spatial-core/v1/geometry/point.md'), /\.\.\/\.\.\/roadmap\.md/);
+  assert.equal(statusFor('spatial-core/index.md', libraries), null);
+  assert.match(markdownStatus(statusFor('spatial-core/v1/geometry/point.md', libraries), 'spatial-core/v1/geometry/point.md'), /\.\.\/\.\.\/index\.md/);
   assert.doesNotMatch(markdownStatus(statusFor('spatial-decoder/v1/index.md', libraries), 'spatial-decoder/v1/index.md'), /roadmap/);
 });
 
@@ -125,8 +125,8 @@ test('HTML status plugin marks every versioned page and links the HTML roadmap',
   plugin({ libraries, docsDirectory })(tree, { path: path.join(docsDirectory, 'spatial-core/v1/geometry/point.md') });
   assert.equal(tree.children[0].type, 'blockquote');
   assert.match(tree.children[0].children[0].children[1].value, /current major version of spatial-core/);
-  assert.equal(tree.children[0].children[1].children[0].attributes[0].value, 'pathname:///spatial-core/roadmap.html');
+  assert.equal(tree.children[0].children[1].children[0].attributes[0].value, 'pathname:///spatial-core/index.html');
   const plain = { children: [] };
-  plugin({ libraries, docsDirectory })(plain, { path: path.join(docsDirectory, 'spatial-core/roadmap.md') });
+  plugin({ libraries, docsDirectory })(plain, { path: path.join(docsDirectory, 'spatial-core/index.md') });
   assert.deepEqual(plain.children, []);
 });

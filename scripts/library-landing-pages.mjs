@@ -10,7 +10,7 @@ export function libraryLandingNavigation(sourcePath, libraries) {
   const match = /^([^/]+)\/index\.md$/.exec(sourcePath);
   const library = match?.[1];
   const info = libraries[library];
-  if (!info) return null;
+  if (!info || info.roadmap) return null;
   const current = Object.entries(info.versions).find(([, status]) => status === 'Current')?.[0];
   const lines = ['## Get started', ''];
   if (current) {
@@ -19,7 +19,6 @@ export function libraryLandingNavigation(sourcePath, libraries) {
   } else {
     lines.push('No stable release is currently available. The Next documentation below describes work ahead of a stable release.', '');
   }
-  if (info.roadmap) lines.push('[View the library roadmap](./roadmap.md)', '');
   lines.push('## Documentation versions', '', '| Major version | Status |', '| --- | --- |');
   for (const [version, status] of Object.entries(info.versions).sort(([a], [b]) => Number(b.slice(1)) - Number(a.slice(1)))) {
     lines.push(`| [${version}](./${version}/index.md) | ${status} |`);

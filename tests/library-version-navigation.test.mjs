@@ -4,13 +4,13 @@ import { libraryVersionNavigation } from '../scripts/library-version-navigation.
 
 const context = {
   libraryVersions: {
-    'spatial-core': { versions: { v1: 'Older', v2: 'Current', v3: 'Next' } },
+    'spatial-core': { roadmap: true, versions: { v1: 'Older', v2: 'Current', v3: 'Next' } },
     'wkt-parser': { versions: { v3: 'Current' } },
     'spatial-decoder': { versions: { v1: 'Next' } },
   },
   libraryNames: { 'spatial-core': 'Spatial Core', 'wkt-parser': 'WKT Parser', 'spatial-decoder': 'Spatial Decoder' },
   publishedDocuments: [
-    'spatial-core/index.md', 'spatial-core/roadmap.md',
+    'spatial-core/index.md',
     'spatial-core/v1/index.md', 'spatial-core/v1/geometry/point.md',
     'spatial-core/v2/index.md', 'spatial-core/v2/geometry/point.md',
     'spatial-core/v3/index.md', 'spatial-core/v3/unpublished.md',
@@ -40,14 +40,14 @@ test('switching versions preserves a published counterpart and falls back to an 
 });
 
 test('overview and roadmap context stays unversioned with stable documentation as the entry point', () => {
-  for (const page of ['index.md', 'roadmap.md']) {
+  for (const page of ['index.md']) {
     const navigation = libraryVersionNavigation(`spatial-core/${page}`, context);
     assert.equal(navigation.version, null);
     assert.equal(navigation.status, null);
     assert.equal(navigation.current.version, 'v2');
     assert.ok(navigation.versions.every(({ selected }) => !selected));
   }
-  assert.equal(libraryVersionNavigation('spatial-core/roadmap.md', context).context, 'Roadmap');
+  assert.equal(libraryVersionNavigation('spatial-core/index.md', context).context, 'Roadmap');
 });
 
 test('a library with only Next documentation never acquires a stable default', () => {

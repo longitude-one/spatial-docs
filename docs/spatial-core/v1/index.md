@@ -233,4 +233,4 @@ The coverage outputs are written to `.phpunit.cache/code-coverage/`, including `
 
 - [Geometry primitives](./geometry/index.md)
 - [Spatial Types implementation coverage](../../spatial-types/v1/instantiable-spatial-types.md)
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)

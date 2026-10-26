@@ -12,4 +12,4 @@ See the library roadmap for the planned release overview.
 
 ## Related documentation
 
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)

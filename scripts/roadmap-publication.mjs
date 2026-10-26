@@ -1,6 +1,9 @@
 import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { readRoadmapData, validateRoadmapData } from './roadmap-data.mjs';
+import { load } from 'js-yaml';
+import { validateRoadmapData, validateTimelineWindow, RoadmapDataError } from './roadmap-data.mjs';
+import { discoverLibraries } from './library-versions.mjs';
+import { baseUrl } from './site-settings.mjs';
 import { generateSupportTimeline } from './roadmap-timeline.mjs';
 
 const text = (value) => ({ type: 'text', value });
@@ -8,9 +11,25 @@ const paragraph = (value) => ({ type: 'paragraph', children: [text(value)] });
 const heading = (value) => ({ type: 'heading', depth: 2, children: [text(value)] });
 const headers = ['Branch', 'Initial Release', 'Active Support Until', 'Security Support Until', 'PHP Compatibility', 'Notes'];
 
+function versionLink(library, version, label, html) {
+  return { type: 'link', url: html ? `pathname://${baseUrl}${library}/${version}/index.html` : `${version}/index.md`,
+    children: [text(label)] };
+}
+
+function remainingVersionNodes(roadmap, library, versions, html) {
+  const represented = new Set((roadmap?.branches ?? []).map(({ version }) => /^(?:v)?([1-9][0-9]*)\.x$/u.exec(version)?.[1]));
+  const remaining = versions.filter((version) => !represented.has(version.slice(1)));
+  if (!remaining.length) return [];
+  return [heading('Documentation versions'), { type: 'list', ordered: false, spread: false,
+    children: remaining.map((version) => ({ type: 'listItem', spread: false, children: [{ type: 'paragraph',
+      children: [versionLink(library, version, version, html)] }] })) }];
+}
+
 /** Portable MDAST shared by Docusaurus and Markdown export; no HTML or MDX. */
-export function roadmapSupportNodes(input) {
+export function roadmapSupportNodes(input, { library = input?.library, versions = [], html = false } = {}) {
+  if (input === null) return [paragraph('The roadmap for this library has not been established yet.'), ...remainingVersionNodes(null, library, versions, html)];
   const roadmap = validateRoadmapData(input);
+  if (!roadmap.branches.length) return roadmapSupportNodes(null, { library: roadmap.library, versions, html });
   const image = `../assets/roadmaps/${roadmap.library}.svg`;
   const children = [heading('Release timeline'), {
     type: 'paragraph', data: { hProperties: { className: ['roadmap-timeline'] } }, children: [{ type: 'link', url: image, children: [{
@@ -27,7 +46,12 @@ export function roadmapSupportNodes(input) {
     const date = (value) => value === null ? 'Unannounced' : `${value}${planned ? ' (forecast)' : ''}`;
     return {
       type: 'tableRow', children: [
-        [text(branch.version)],
+        [(() => {
+          const major = /^(?:v)?([1-9][0-9]*)\.x$/u.exec(branch.version)?.[1];
+          const version = `v${major}`;
+          if (!major || !versions.includes(version)) return text(branch.version);
+          return versionLink(roadmap.library, version, branch.version, html);
+        })()],
         [text(date(release))],
         [text(date(branch.activeSupportUntil))],
         [text(date(branch.securitySupportUntil))],
@@ -36,51 +60,77 @@ export function roadmapSupportNodes(input) {
       ].map((nodes) => ({ type: 'tableCell', children: nodes })),
     };
   });
-  if (!rows.length) {
-    children.push(paragraph('No branches or release schedule have been announced.'));
-    rows.push({ type: 'tableRow', children: headers.map((_, index) => ({
-      type: 'tableCell', children: [text(index === 5 ? 'No schedule announced.' : 'Unannounced')],
-    })) });
-  }
   children.push({ type: 'table', data: { hProperties: { className: ['roadmap-support-table'], tabIndex: 0, ariaLabel: `${roadmap.library} branch support` } },
     align: headers.map(() => null), children: [
     { type: 'tableRow', children: headers.map((value) => ({ type: 'tableCell', children: [text(value)] })) }, ...rows,
   ] });
-  return children;
+  return [...children, ...remainingVersionNodes(roadmap, roadmap.library, versions, html)];
 }
 
-export function appendRoadmapSupport(tree, sourcePath, roadmaps) {
-  if (!/^[^/]+\/roadmap\.md$/.test(sourcePath)) return;
+export function appendRoadmapSupport(tree, sourcePath, roadmaps, { html = false } = {}) {
+  if (!/^[^/]+\/index\.md$/.test(sourcePath)) return;
   const library = sourcePath.split('/')[0];
-  if (!Object.hasOwn(roadmaps, library)) throw new Error(`${sourcePath}: missing roadmap JSON configuration.`);
-  tree.children.push(...roadmapSupportNodes(roadmaps[library]));
+  if (!Object.hasOwn(roadmaps, library)) return;
+  const { roadmap, versions } = roadmaps[library];
+  // Keep source metadata, replacing every body node. Reapplying is idempotent.
+  tree.children = [...tree.children.filter(({ type }) => type === 'yaml'), ...roadmapSupportNodes(roadmap, { library, versions, html })];
 }
 
 export default function remarkRoadmapSupport({ roadmaps, docsDirectory }) {
-  return (tree, file) => appendRoadmapSupport(tree, path.relative(docsDirectory, file.path).split(path.sep).join('/'), roadmaps);
+  return (tree, file) => appendRoadmapSupport(tree, path.relative(docsDirectory, file.path).split(path.sep).join('/'), roadmaps, { html: true });
+}
+
+async function optionalRoadmap(filename, library) {
+  let raw;
+  try { raw = await readFile(filename, 'utf8'); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+  if (!raw.trim()) return null;
+  let input;
+  try { input = JSON.parse(raw); }
+  catch (error) { throw new Error(`Cannot read roadmap JSON ${filename}: ${error.message}`, { cause: error }); }
+  if (input && typeof input === 'object' && !Array.isArray(input) && !Object.keys(input).length) return null;
+  const roadmap = validateRoadmapData(input);
+  if (roadmap.library !== library) {
+    throw new RoadmapDataError(roadmap.library, '<configuration>', 'library', 'must match the library JSON filename.');
+  }
+  return roadmap.branches.length ? roadmap : null;
 }
 
 /** Validate the complete inventory before generating any build-time images. */
 export async function generateRoadmapAssets(root) {
   const docs = path.join(root, 'docs');
-  const libraries = [];
-  for (const entry of await readdir(docs, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    if ((await readdir(path.join(docs, entry.name))).includes('roadmap.md')) libraries.push(entry.name);
-  }
+  const libraries = await discoverLibraries(docs);
   const directory = path.join(root, 'config/roadmaps');
   let configurations = [];
   try { configurations = (await readdir(directory)).filter((name) => name.endsWith('.json') && name !== 'window.json'); }
-  catch (error) { if (error.code !== 'ENOENT' || libraries.length) throw error; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
   for (const filename of configurations) {
-    if (!libraries.includes(filename.slice(0, -5))) throw new Error(`Roadmap configuration ${filename} has no docs/<library>/roadmap.md.`);
+    if (!Object.hasOwn(libraries, filename.slice(0, -5))) throw new Error(`Roadmap configuration ${filename} has no documented library.`);
   }
   const roadmaps = {};
   const images = [];
-  for (const library of libraries.sort()) {
-    const { roadmap, window } = await readRoadmapData(path.join(directory, `${library}.json`), path.join(directory, 'window.json'));
-    roadmaps[library] = roadmap;
-    images.push([`${library}.svg`, generateSupportTimeline(roadmap, window)]);
+  let window;
+  for (const [library, { majors, roadmap: hasIndex }] of Object.entries(libraries).sort(([a], [b]) => a.localeCompare(b))) {
+    if (!hasIndex) throw new Error(`${library}: missing library landing page docs/${library}/index.md.`);
+    const roadmap = await optionalRoadmap(path.join(directory, `${library}.json`), library);
+    const versions = [];
+    for (const major of majors) {
+      try {
+        const source = await readFile(path.join(docs, library, `v${major}`, 'index.md'), 'utf8');
+        // Draft/unlisted pages are not published version destinations.
+        const metadata = load(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/u.exec(source)?.[1] ?? '') ?? {};
+        if (![true, 'true'].includes(metadata.draft) && ![true, 'true'].includes(metadata.unlisted)) versions.push(`v${major}`);
+      } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    }
+    roadmaps[library] = { roadmap, versions };
+    if (roadmap) {
+      if (!window) {
+        const filename = path.join(directory, 'window.json');
+        try { window = validateTimelineWindow(JSON.parse(await readFile(filename, 'utf8'))); }
+        catch (error) { throw new Error(`Cannot read roadmap display window ${filename}: ${error.message}`, { cause: error }); }
+      }
+      images.push([`${library}.svg`, generateSupportTimeline(roadmap, window)]);
+    }
   }
   const destination = path.join(root, 'static/assets/roadmaps');
   if (images.length) await mkdir(destination, { recursive: true });

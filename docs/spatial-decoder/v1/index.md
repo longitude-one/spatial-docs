@@ -8,4 +8,4 @@ sidebar_position: 1
 
 This documentation is being prepared ahead of the first stable Spatial Decoder release.
 
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)

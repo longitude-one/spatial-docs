@@ -123,7 +123,7 @@ const svg = generateSupportTimeline(roadmap, window);
 The validators and `RoadmapDataError` are exported from `scripts/roadmap-data.mjs`.
 `options.width` defaults to `960` and must be a safe integer of at least `360` pixels.
 The SVG may be wider than requested to preserve at least 54 pixels per displayed year; its `viewBox` preserves all content when scaled.
-Long labels and notes wrap, increasing the height rather than being truncated.
+Long headings wrap. Branch names appear inside active-support bars; detailed dates and notes remain in the accessible description and support table.
 The opaque ivory background, site-palette text, patterned security bars and distinct marker shapes remain readable independently of the surrounding theme.
 When an image is rendered narrower than its intrinsic width, allow zoom or horizontal scrolling in the consuming layout.
 
@@ -160,9 +160,26 @@ node scripts/generate-roadmap-timeline.mjs tests/fixtures/roadmaps/example-libra
 ## Maintaining library roadmaps
 
 Edit `config/roadmaps/<library>.json` to update a roadmap. Both the SVG and table consume that file on the next build.
-Keep editorial introductions in `docs/<library>/roadmap.md`; do not add a second hand-written support table there.
-Every existing roadmap must have a matching JSON configuration, and every library JSON must have a matching roadmap page.
-The build fails when either side is missing or when a date is invalid.
+The library landing page is `docs/<library>/index.md`. Keep its required `title` and `description` front matter appropriate to the library.
+The build replaces the entire body with the generated timeline and table in both HTML and portable Markdown; it does not append to existing prose.
+Source files are not rewritten during the build. Version landing pages such as `docs/<library>/v2/index.md` remain separate and unchanged.
+Do not keep a separate library-level `roadmap.md` page or a hand-written support table.
+
+A missing library JSON file, a blank file, an empty JSON object (`{}`), or a valid configuration with no branches displays:
+
+> The roadmap for this library has not been established yet.
+
+No timeline or support table is generated in that case, and a previously generated image is removed on the next export.
+A populated branch list remains configured even if every date is `null`. Malformed non-empty JSON, invalid populated data,
+and configurations for unknown libraries fail the build with an error. An otherwise empty branch list must still satisfy the full schema.
+The shared display-window file is required when at least one configured roadmap needs a timeline.
+
+Each branch matching a documented major (for example `2.x`) links to that version's published landing page when it exists:
+`v2/index.md` in portable Markdown and the corresponding explicit `.html` resource on the website.
+A missing, draft, or unlisted version landing page leaves the branch label as plain text. No documentation page is invented.
+Published version landing pages absent from the branch list remain accessible through a short documentation-version list below the support table.
+When no roadmap is established, that list follows the default message; it is navigation, not a support schedule.
+Navigation and version-status messages link to the library index, including when its roadmap has not yet been established.
 
 1. Add or update a branch with every required field, using `null` for unannounced values.
 2. Keep `status: planned` until the initial stable release actually occurs, even if a forecast date has passed.
@@ -197,8 +214,8 @@ The integration covers these ten roadmaps:
 The migration retains previously documented support ends and approximate forecasts; it does not establish a new support policy.
 Actual release dates use the respective GitHub release publication dates, correcting inaccurate dates in the old tables.
 Future branches without an announced Composer constraint use `null`, with previously listed PHP targets retained in their notes.
-The support table shows branch status, actual or forecast dates, the literal Composer constraint, and notes; no durations or countdowns are generated.
-If no branches are configured, the image and table explicitly state that no schedule is announced.
+The support table shows branch versions, actual or forecast dates, the literal Composer constraint, and notes; no durations or countdowns are generated.
+If no branches are configured, the library landing page displays the default message above without an image or table.
 If a branch has support ends but no release date, the table still exposes those dates while the image draws no invented period.
 
 Images are linked so readers can open and zoom them. HTML calendars and tables scroll horizontally on narrow screens;

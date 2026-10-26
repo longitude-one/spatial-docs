@@ -111,11 +111,12 @@ status are separate decisions.
 
 ## Roadmaps and historical documentation
 
-A library may have an optional, non-versioned roadmap outside its major-version directories, such as
-`spatial-core/roadmap`. It belongs to the library as a whole. When present, the version-status
-message links to the roadmap's corresponding representation: HTML links to
-`/spatial-core/roadmap.html`, and portable Markdown links to the relative `.md` representation. A
-missing roadmap must not fail the build.
+Each library's non-versioned landing page is its roadmap, such as `spatial-core/index.md`.
+It belongs to the library as a whole, outside the major-version directories. The version-status
+message links to the corresponding representation: HTML links to `/spatial-core/index.html`,
+and portable Markdown links to the relative `index.md` representation.
+A missing or unpopulated roadmap configuration displays the default message described in the
+[roadmap generation guide](../shared/support-timeline-generation.md#maintaining-library-roadmaps); it does not fail the build.
 
 Documentation remains editable while its major release line is maintained. Once that line is no
 longer maintained, retain its documentation as historical content. Retain documentation for

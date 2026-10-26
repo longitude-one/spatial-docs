@@ -26,7 +26,7 @@ export function libraryVersionNavigation(source, { libraryVersions = {}, publish
     overview: available.has(`${library}/index.md`) ? `/${library}/index.html` : null,
     version,
     status: version ? info.versions[version] : null,
-    context: version ? 'Versioned documentation' : directory === 'roadmap.md' ? 'Roadmap' : 'Library overview',
+    context: version ? 'Versioned documentation' : directory === 'index.md' && info.roadmap ? 'Roadmap' : 'Library overview',
     versions,
     currentVersion: currentVersion ?? null,
     current: currentEntry && available.has(currentEntry) ? { version: currentVersion, to: toHtml(currentEntry) } : null,

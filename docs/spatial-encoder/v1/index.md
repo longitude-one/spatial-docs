@@ -22,5 +22,5 @@ See [serialization strategies](./strategies.md) for all six strategies, examples
 
 ## Related documentation
 
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)
 - [Spatial formats](../../concepts/formats.md)

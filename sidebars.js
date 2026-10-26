@@ -16,8 +16,7 @@ const sidebars = {
 // Discover documented majors from sources, independently of release status.
 for (const [library, label] of libraryCategories.flatMap(({ libraries }) => libraries)) {
   if (!existsSync(`docs/${library}/index.md`)) continue;
-  sidebars[`${library}Overview`] = [`${library}/index`,
-    ...(existsSync(`docs/${library}/roadmap.md`) ? [`${library}/roadmap`] : [])];
+  sidebars[`${library}Overview`] = [`${library}/index`];
   for (const entry of readdirSync(`docs/${library}`, { withFileTypes: true })) {
     if (!entry.isDirectory() || !/^v[1-9][0-9]*$/.test(entry.name)) continue;
     sidebars[`${library}_${entry.name}`] = [{

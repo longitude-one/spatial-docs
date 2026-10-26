@@ -16,18 +16,16 @@ function versionLink(library, version, label, html) {
     children: [text(label)] };
 }
 
-function remainingVersionNodes(roadmap, library, versions, html) {
-  const represented = new Set((roadmap?.branches ?? []).map(({ version }) => /^(?:v)?([1-9][0-9]*)\.x$/u.exec(version)?.[1]));
-  const remaining = versions.filter((version) => !represented.has(version.slice(1)));
-  if (!remaining.length) return [];
+function documentationVersionNodes(library, versions, html) {
+  if (!versions.length) return [];
   return [heading('Documentation versions'), { type: 'list', ordered: false, spread: false,
-    children: remaining.map((version) => ({ type: 'listItem', spread: false, children: [{ type: 'paragraph',
+    children: versions.map((version) => ({ type: 'listItem', spread: false, children: [{ type: 'paragraph',
       children: [versionLink(library, version, version, html)] }] })) }];
 }
 
 /** Portable MDAST shared by Docusaurus and Markdown export; no HTML or MDX. */
 export function roadmapSupportNodes(input, { library = input?.library, versions = [], html = false } = {}) {
-  if (input === null) return [paragraph('The roadmap for this library has not been established yet.'), ...remainingVersionNodes(null, library, versions, html)];
+  if (input === null) return [paragraph('The roadmap for this library has not been established yet.'), ...documentationVersionNodes(library, versions, html)];
   const roadmap = validateRoadmapData(input);
   if (!roadmap.branches.length) return roadmapSupportNodes(null, { library: roadmap.library, versions, html });
   const image = `../assets/roadmaps/${roadmap.library}.svg`;
@@ -64,7 +62,7 @@ export function roadmapSupportNodes(input, { library = input?.library, versions 
     align: headers.map(() => null), children: [
     { type: 'tableRow', children: headers.map((value) => ({ type: 'tableCell', children: [text(value)] })) }, ...rows,
   ] });
-  return [...children, ...remainingVersionNodes(roadmap, roadmap.library, versions, html)];
+  return [...children, ...documentationVersionNodes(roadmap.library, versions, html)];
 }
 
 export function appendRoadmapSupport(tree, sourcePath, roadmaps, { html = false } = {}) {

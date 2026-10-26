@@ -199,12 +199,18 @@ test('fully unannounced branches remain a configured roadmap', async (t) => {
 });
 
 
-test('documented versions absent from the schedule stay reachable without inventing branch data', () => {
+test('documentation versions list includes every published version even when linked in the support table', () => {
   for (const input of [roadmap(), null]) {
-    const nodes = roadmapSupportNodes(input, { library: 'example-library', versions: ['v1', 'v2'] });
-    const list = nodes.find(({ type }) => type === 'list');
-    const links = list.children.map((item) => item.children[0].children[0]);
-    assert.deepEqual(links.map(({ url }) => url), input ? ['v2/index.md'] : ['v1/index.md', 'v2/index.md']);
-    if (!input) assert.ok(!nodes.some(({ type }) => type === 'table'));
+    for (const html of [false, true]) {
+      const nodes = roadmapSupportNodes(input, { library: 'example-library', versions: ['v1', 'v2'], html });
+      const list = nodes.find(({ type }) => type === 'list');
+      const links = list.children.map((item) => item.children[0].children[0]);
+      assert.deepEqual(links.map(({ url }) => url), html
+        ? ['pathname:///example-library/v1/index.html', 'pathname:///example-library/v2/index.html']
+        : ['v1/index.md', 'v2/index.md']);
+      assert.deepEqual(links.map(({ children }) => children[0].value), ['v1', 'v2']);
+      if (!input) assert.ok(!nodes.some(({ type }) => type === 'table'));
+    }
   }
+  assert.ok(!roadmapSupportNodes(roadmap(), { versions: [] }).some(({ type }) => type === 'list'));
 });

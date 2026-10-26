@@ -7,6 +7,8 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
+import remarkFrontmatter from 'remark-frontmatter';
+import { discoverLibraries } from '../scripts/library-versions.mjs';
 import remarkRoadmapSupport, { roadmapSupportNodes, generateRoadmapAssets, appendRoadmapSupport } from '../scripts/roadmap-publication.mjs';
 
 const repository = new URL('../', import.meta.url);
@@ -16,14 +18,15 @@ const branch = (changes = {}) => ({
 });
 const roadmap = (branches = [branch()]) => ({ library: 'example-library', branches });
 const window = { startDate: '2024-01-01', endDate: '2029-12-31' };
-const processor = unified().use(remarkParse).use(remarkGfm).use(remarkStringify);
+const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ['yaml']).use(remarkStringify);
 const markdown = (data) => processor.stringify({ type: 'root', children: roadmapSupportNodes(data) });
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'roadmap-publication-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  await mkdir(path.join(root, 'docs/example-library'), { recursive: true });
-  await writeFile(path.join(root, 'docs/example-library/roadmap.md'), 'Roadmap');
+  await mkdir(path.join(root, 'docs/example-library/v1'), { recursive: true });
+  await writeFile(path.join(root, 'docs/example-library/v1/index.md'), 'Version');
+  await writeFile(path.join(root, 'docs/example-library/index.md'), 'Roadmap');
   await mkdir(path.join(root, 'config/roadmaps'), { recursive: true });
   await writeFile(path.join(root, 'config/roadmaps/window.json'), JSON.stringify(window));
   await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(roadmap()));
@@ -32,10 +35,7 @@ async function fixture(t) {
 
 test('all ten real roadmaps have validated JSON and retain shared data and explicit display bounds', async () => {
   const docs = new URL('docs/', repository);
-  const names = [];
-  for (const entry of await readdir(docs, { withFileTypes: true })) {
-    if (entry.isDirectory() && (await readdir(new URL(`${entry.name}/`, docs))).includes('roadmap.md')) names.push(entry.name);
-  }
+  const names = Object.keys(await discoverLibraries(docs.pathname));
   const files = (await readdir(new URL('config/roadmaps/', repository))).filter((name) => name !== 'window.json');
   assert.equal(names.length, 10);
   assert.deepEqual(files.sort(), names.map((name) => `${name}.json`).sort());
@@ -43,8 +43,11 @@ test('all ten real roadmaps have validated JSON and retain shared data and expli
     const input = JSON.parse(await readFile(new URL(`config/roadmaps/${name}.json`, repository), 'utf8'));
     assert.equal(input.library, name);
     assert.equal(roadmapSupportNodes(input).at(-1).children.length, input.branches.length + 1);
-    const source = await readFile(new URL(`docs/${name}/roadmap.md`, repository), 'utf8');
+    const source = await readFile(new URL(`docs/${name}/index.md`, repository), 'utf8');
     assert.doesNotMatch(source, /^\|/m, 'No duplicate hand-written support table');
+    assert.ok(!(await readdir(new URL(`${name}/`, docs))).includes('roadmap.md'));
+    assert.match(source, /^title: .+/m);
+    assert.match(source, /^description: .+/m);
   }
 });
 
@@ -71,21 +74,23 @@ test('planned dates and support are forecasts; unknown values and no stable rele
   assert.match(output, /No stable release/);
   assert.match(output, /Unannounced/);
   const empty = markdown(roadmap([]));
-  assert.match(empty, /No branches or release schedule have been announced/);
-  assert.equal(processor.parse(empty).children.find(({ type }) => type === 'table').children.length, 2);
+  assert.equal(empty.trim(), 'The roadmap for this library has not been established yet.');
+  assert.ok(!processor.parse(empty).children.some(({ type }) => ['table', 'image'].includes(type)));
 });
 
 test('HTML and portable Markdown consumers receive identical table and image nodes', () => {
-  const data = { 'example-library': roadmap() };
+  const data = { 'example-library': { roadmap: roadmap(), versions: [] } };
   const portable = { type: 'root', children: [] };
   const html = structuredClone(portable);
-  appendRoadmapSupport(portable, 'example-library/roadmap.md', data);
-  remarkRoadmapSupport({ roadmaps: data, docsDirectory: '/site/docs' })(html, { path: '/site/docs/example-library/roadmap.md' });
+  appendRoadmapSupport(portable, 'example-library/index.md', data);
+  remarkRoadmapSupport({ roadmaps: data, docsDirectory: '/site/docs' })(html, { path: '/site/docs/example-library/index.md' });
   assert.deepEqual(html, portable);
   const image = portable.children[1].children[0].children[0];
   assert.match(image.alt, /release and support timeline/);
   assert.equal(image.url, '../assets/roadmaps/example-library.svg');
-  assert.throws(() => appendRoadmapSupport({ children: [] }, 'missing/roadmap.md', data), /missing roadmap JSON/);
+  const unrelated = { children: [{ type: 'text', value: 'Unrelated' }] };
+  appendRoadmapSupport(unrelated, 'concepts/index.md', data);
+  assert.equal(unrelated.children[0].value, 'Unrelated');
 });
 
 test('build-time assets use shared JSON and window; invalid inputs preserve existing images', async (t) => {
@@ -98,7 +103,7 @@ test('build-time assets use shared JSON and window; invalid inputs preserve exis
   await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(changed));
   const after = await generateRoadmapAssets(root);
   assert.notDeepEqual(after, initial);
-  assert.match(markdown(after['example-library']), /2024-07-31/);
+  assert.match(markdown(after['example-library'].roadmap), /2024-07-31/);
   const updatedImage = await readFile(image, 'utf8');
   assert.notEqual(updatedImage, before);
   assert.match(updatedImage, /2024-07-31/);
@@ -107,10 +112,12 @@ test('build-time assets use shared JSON and window; invalid inputs preserve exis
   assert.equal(await readFile(image, 'utf8'), updatedImage);
 });
 
-test('missing and orphaned configurations fail the inventory check', async (t) => {
+test('missing configuration shows the default message, while orphaned configuration fails', async (t) => {
   const root = await fixture(t);
   await rm(path.join(root, 'config/roadmaps/example-library.json'));
-  await assert.rejects(generateRoadmapAssets(root), /example-library.json/);
+  const data = await generateRoadmapAssets(root);
+  assert.equal(data['example-library'].roadmap, null);
+  assert.equal(markdown(data['example-library'].roadmap).trim(), 'The roadmap for this library has not been established yet.');
   await writeFile(path.join(root, 'config/roadmaps/orphan.json'), '{}');
   await assert.rejects(generateRoadmapAssets(root), /orphan.json has no/);
 });
@@ -119,4 +126,85 @@ test('missing and orphaned configurations fail the inventory check', async (t) =
 test('generated roadmaps omit the timeline instructions and support explanatory paragraphs', () => {
   const output = markdown(roadmap());
   assert.doesNotMatch(output, /Open the timeline to zoom|Solid slate bars|Dashed outlines identify forecasts|Planned branches and their support dates are forecasts|The table remains usable without the timeline/);
+});
+
+
+for (const configuration of ['', '  \n', '{}', JSON.stringify(roadmap([]))]) {
+  test(`unpopulated configuration ${JSON.stringify(configuration)} has no timeline or support table`, async (t) => {
+    const root = await fixture(t);
+    await generateRoadmapAssets(root);
+    await writeFile(path.join(root, 'config/roadmaps/example-library.json'), configuration);
+    const data = await generateRoadmapAssets(root);
+    assert.equal(data['example-library'].roadmap, null);
+    assert.deepEqual(await readdir(path.join(root, 'static/assets/roadmaps')), []);
+    assert.equal(markdown(data['example-library'].roadmap).trim(), 'The roadmap for this library has not been established yet.');
+  });
+}
+
+for (const configuration of ['{', 'null', '[]', '{"branches":[]}', JSON.stringify({ ...roadmap([]), library: 'wrong' }),
+  JSON.stringify({ ...roadmap([]), unexpected: true }), JSON.stringify(roadmap([branch({ releaseDate: 'bad' })]))]) {
+  test(`nonempty invalid configuration ${configuration} is an error`, async (t) => {
+    const root = await fixture(t);
+    await writeFile(path.join(root, 'config/roadmaps/example-library.json'), configuration);
+    await assert.rejects(generateRoadmapAssets(root));
+  });
+}
+
+test('replacement preserves front matter, removes stale body and remains idempotent', () => {
+  const source = '---\ntitle: Library\ndescription: Library roadmap.\nsidebar_position: 2\n---\n\nStale introduction.\n\n## Old content\n';
+  const tree = processor.parse(source);
+  const metadata = structuredClone(tree.children[0]);
+  const data = { 'example-library': { roadmap: roadmap(), versions: ['v1'] } };
+  appendRoadmapSupport(tree, 'example-library/index.md', data);
+  const first = structuredClone(tree);
+  appendRoadmapSupport(tree, 'example-library/index.md', data);
+  assert.deepEqual(tree, first);
+  assert.deepEqual(tree.children[0], metadata);
+  assert.doesNotMatch(processor.stringify(tree), /Stale introduction|Old content/);
+  const versionTree = processor.parse(source);
+  appendRoadmapSupport(versionTree, 'example-library/v1/index.md', data);
+  assert.deepEqual(versionTree, processor.parse(source));
+});
+
+test('documented majors link to version landing pages in both representations, missing versions stay text', async (t) => {
+  const root = await fixture(t);
+  await mkdir(path.join(root, 'docs/example-library/v2'));
+  await mkdir(path.join(root, 'docs/example-library/v3'));
+  await writeFile(path.join(root, 'docs/example-library/v3/index.md'), '---\ntitle: Draft\ndescription: Draft.\ndraft: true\n---\n');
+  await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(roadmap([
+    branch(), branch({ version: '2.x' }), branch({ version: '3.x' }), branch({ version: '4.x' }),
+  ])));
+  const data = await generateRoadmapAssets(root);
+  assert.deepEqual(data['example-library'].versions, ['v1']);
+  for (const html of [false, true]) {
+    const tree = { children: [] };
+    appendRoadmapSupport(tree, 'example-library/index.md', data, { html });
+    const table = tree.children.find(({ type }) => type === 'table');
+    const labels = table.children.slice(1).map((row) => row.children[0].children[0]);
+    assert.equal(labels[0].type, 'link');
+    assert.equal(labels[0].url, html ? 'pathname:///example-library/v1/index.html' : 'v1/index.md');
+    assert.deepEqual(labels.slice(1).map(({ type }) => type), ['text', 'text', 'text']);
+  }
+});
+
+test('fully unannounced branches remain a configured roadmap', async (t) => {
+  const root = await fixture(t);
+  const input = roadmap([branch({ status: 'planned', releaseDate: null, plannedReleaseDate: null,
+    activeSupportUntil: null, securitySupportUntil: null, php: null })]);
+  await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(input));
+  const data = await generateRoadmapAssets(root);
+  assert.deepEqual(data['example-library'].roadmap, input);
+  assert.match(markdown(input), /Unannounced/);
+  assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /release unannounced/);
+});
+
+
+test('documented versions absent from the schedule stay reachable without inventing branch data', () => {
+  for (const input of [roadmap(), null]) {
+    const nodes = roadmapSupportNodes(input, { library: 'example-library', versions: ['v1', 'v2'] });
+    const list = nodes.find(({ type }) => type === 'list');
+    const links = list.children.map((item) => item.children[0].children[0]);
+    assert.deepEqual(links.map(({ url }) => url), input ? ['v2/index.md'] : ['v1/index.md', 'v2/index.md']);
+    if (!input) assert.ok(!nodes.some(({ type }) => type === 'table'));
+  }
 });

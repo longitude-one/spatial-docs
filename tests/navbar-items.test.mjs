@@ -8,7 +8,7 @@ import { createLibraryCategories, createNavbarItems } from '../scripts/navbar-it
 test('library navigation uses Current discovery and never defaults to a Next release', (t) => {
   const docs = mkdtempSync(path.join(os.tmpdir(), 'navbar-docs-'));
   t.after(() => rmSync(docs, { recursive: true, force: true }));
-  for (const source of ['doctrine-spatial/v6/index.md', 'doctrine-spatial/v7/index.md', 'spatial-types/v1/index.md', 'spatial-types/roadmap.md']) {
+  for (const source of ['doctrine-spatial/v6/index.md', 'doctrine-spatial/v7/index.md', 'spatial-types/v1/index.md', 'spatial-types/index.md']) {
     mkdirSync(path.dirname(path.join(docs, source)), { recursive: true });
     writeFileSync(path.join(docs, source), 'fixture');
   }
@@ -17,18 +17,18 @@ test('library navigation uses Current discovery and never defaults to a Next rel
     'spatial-types': { versions: { v1: 'Next' } },
   }, docs);
   assert.equal(categories[0].items[0].to, '/doctrine-spatial/v6/index.html');
-  assert.deepEqual(categories[1].items[0], { label: 'Spatial Types', to: '/spatial-types/roadmap.html', note: 'Roadmap' });
+  assert.deepEqual(categories[1].items[0], { label: 'Spatial Types', to: '/spatial-types/index.html' });
   assert.equal(categories[1].items[2].to, undefined);
 });
 
-test('missing discovery or a missing Current document falls back to an existing roadmap', (t) => {
+test('missing discovery or a missing Current document uses the library landing page', (t) => {
   const docs = mkdtempSync(path.join(os.tmpdir(), 'navbar-docs-'));
   t.after(() => rmSync(docs, { recursive: true, force: true }));
   mkdirSync(path.join(docs, 'doctrine-spatial'));
-  writeFileSync(path.join(docs, 'doctrine-spatial/roadmap.md'), 'fixture');
-  assert.equal(createLibraryCategories({}, docs)[0].items[0].to, '/doctrine-spatial/roadmap.html');
+  writeFileSync(path.join(docs, 'doctrine-spatial/index.md'), 'fixture');
+  assert.equal(createLibraryCategories({}, docs)[0].items[0].to, '/doctrine-spatial/index.html');
   assert.equal(createLibraryCategories({ 'doctrine-spatial': { versions: { v6: 'Current' } } }, docs)[0].items[0].to,
-    '/doctrine-spatial/roadmap.html');
+    '/doctrine-spatial/index.html');
 });
 
 test('library landing pages remain the menu destinations when the current major changes', (t) => {

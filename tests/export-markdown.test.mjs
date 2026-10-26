@@ -26,25 +26,35 @@ test('export generates roadmap images and portable support tables from one confi
     activeSupportUntil: '2028-12-31', securitySupportUntil: '2029-12-31', php: '^8.4 || ^8.5', notes: null,
   }] };
   const { root, run } = await fixture(t, {
-    'docs/index.md': document('Home', 'Home.', '[Roadmap](./example-library/roadmap.md)'),
-    'docs/example-library/roadmap.md': document('Roadmap', 'Release and support roadmap.'),
+    'docs/index.md': document('Home', 'Home.', '[Roadmap](./example-library/index.md)'),
+    'docs/example-library/index.md': document('Example Library', 'Release and support roadmap.', 'Stale body must be replaced.'),
+    'docs/example-library/v1/index.md': document('Version 1', 'Version documentation.'),
     'config/roadmaps/window.json': JSON.stringify({ startDate: '2024-01-01', endDate: '2029-12-31' }),
     'config/roadmaps/example-library.json': JSON.stringify(roadmap),
   });
-  await run();
-  const output = await readFile(path.join(root, '.generated-markdown/example-library/roadmap.md'), 'utf8');
+  const preload = path.join(root, 'mock-fetch.mjs');
+  await writeFile(preload, 'globalThis.fetch = async () => ({ status: 404, ok: false });');
+  const exportRoadmap = () => run({ NODE_OPTIONS: `--import=${preload}` });
+  await exportRoadmap();
+  const output = await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8');
   assert.match(output, /2027-02-01 \(forecast\)/);
+  assert.doesNotMatch(output, /Stale body must be replaced|Get started/);
+  assert.match(output, /\[1\.x\]\(v1\/index\.md\)/);
   assert.match(output, /\^8.4.*\^8.5/);
   assert.match(output, /\.\.\/assets\/roadmaps\/example-library.svg/);
   const manifest = JSON.parse(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8'));
   assert.ok(manifest['assets/roadmaps/example-library.svg']);
   assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-02-01/);
-  assert.deepEqual(JSON.parse(await readFile(path.join(root, '.docusaurus/roadmap-support.json'), 'utf8')), { 'example-library': roadmap });
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, '.docusaurus/roadmap-support.json'), 'utf8')), { 'example-library': { roadmap, versions: ['v1'] } });
   const original = output;
+  await exportRoadmap();
+  assert.equal(await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8'), original);
+  assert.match(output, /title: Example Library/);
+  assert.match(output, /description: Release and support roadmap/);
   roadmap.branches[0].plannedReleaseDate = '2027-03-01';
   await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(roadmap));
-  await run();
-  const updated = await readFile(path.join(root, '.generated-markdown/example-library/roadmap.md'), 'utf8');
+  await exportRoadmap();
+  const updated = await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8');
   assert.notEqual(updated, original);
   assert.match(updated, /2027-03-01 \(forecast\)/);
   assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-03-01/);
@@ -133,20 +143,31 @@ async function landingFixture(t, entryDocument = 'index.md') {
   return { ...result, exportLanding: () => result.run({ NODE_OPTIONS: `--import=${preload}` }) };
 }
 
-test('exports library entry navigation as portable Markdown using the discovered stable major', async (t) => {
+test('exports unestablished library landing pages without superseded navigation or support content', async (t) => {
   const { root, exportLanding } = await landingFixture(t);
   await exportLanding();
   const landing = await readFile(path.join(root, '.generated-markdown/spatial-core/index.md'), 'utf8');
-  assert.match(landing, /current stable documentation \(v1\)\]\(v1\/index\.md\)/);
-  assert.match(landing, /composer require longitude-one\/spatial-core:\^1\.0@stable/);
-  assert.match(landing, /\[v2\].*Next/);
-  assert.match(landing, /\[v1\].*Current/);
-  assert.doesNotMatch(landing, /pathname:|<a|> \*\*Current version/);
+  assert.match(landing, /The roadmap for this library has not been established yet\./);
+  assert.match(landing, /\[v1\]\(v1\/index\.md\)/);
+  assert.match(landing, /\[v2\]\(v2\/index\.md\)/);
+  assert.doesNotMatch(landing, /Library summary|Requirements|Get started|composer require|Release timeline|Branch support/);
+  const version = await readFile(path.join(root, '.generated-markdown/spatial-core/v1/index.md'), 'utf8');
+  assert.match(version, /View the library roadmap\]\(\.\.\/index\.md\)/);
 });
 
-test('fails publication if generated library entry navigation has no documentation destination', async (t) => {
-  const { exportLanding } = await landingFixture(t, 'geometry.md');
-  await assert.rejects(exportLanding(), /Missing or unpublished source document/);
+test('a missing version landing page does not generate a broken branch link', async (t) => {
+  const { root, exportLanding } = await landingFixture(t, 'geometry.md');
+  await mkdir(path.join(root, 'config/roadmaps'));
+  await writeFile(path.join(root, 'config/roadmaps/window.json'), JSON.stringify({ startDate: '2024-01-01', endDate: '2029-12-31' }));
+  await writeFile(path.join(root, 'config/roadmaps/spatial-core.json'), JSON.stringify({ library: 'spatial-core', branches: [{
+    version: '1.x', status: 'planned', plannedReleaseDate: null, releaseDate: null,
+    activeSupportUntil: null, securitySupportUntil: null, php: null, notes: null,
+  }] }));
+  await exportLanding();
+  const landing = await readFile(path.join(root, '.generated-markdown/spatial-core/index.md'), 'utf8');
+  assert.match(landing, /1\.x/);
+  assert.doesNotMatch(landing, /\[1\.x\]|v1\/index\.md/);
+  assert.match(landing, /Unannounced/);
 });
 
 test('preserves the source hierarchy and excludes drafts, unlisted, and hidden pages', async (t) => {

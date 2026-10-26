@@ -10,7 +10,7 @@ import { baseUrl } from '../scripts/site-settings.mjs';
 
 const parser = unified().use(remarkParse).use(remarkGfm);
 const libraries = {
-  'spatial-core': { roadmap: true, versions: { v1: 'Older', v2: 'Current', v3: 'Next' } },
+  'spatial-core': { roadmap: false, versions: { v1: 'Older', v2: 'Current', v3: 'Next' } },
   'spatial-decoder': { roadmap: false, versions: { v1: 'Next' } },
 };
 
@@ -22,7 +22,7 @@ test('landing navigation selects the current stable major and exposes every docu
   assert.match(markdown, /\[v3\].*Next/);
   assert.match(markdown, /\[v2\].*Current/);
   assert.match(markdown, /\[v1\].*Older/);
-  assert.match(markdown, /\.\/roadmap\.md/);
+  assert.doesNotMatch(markdown, /roadmap\.md/);
   assert.ok(markdown.indexOf('[v3]') < markdown.indexOf('[v2]'));
 });
 
@@ -58,4 +58,12 @@ test('HTML and portable Markdown share navigation content with representation-sp
   }));
   assert.deepEqual(html.children.filter(({ type }) => type === 'heading'), markdown.children.filter(({ type }) => type === 'heading'));
   assert.equal(html.children.at(-1).children[0].value, 'Existing content.');
+});
+
+
+test('roadmap landing pages do not receive the superseded getting-started body', () => {
+  const tree = parser.parse('The roadmap for this library has not been established yet.');
+  const before = structuredClone(tree);
+  appendLibraryLandingNavigation(tree, 'spatial-core/index.md', { 'spatial-core': { roadmap: true, versions: { v1: 'Current' } } });
+  assert.deepEqual(tree, before);
 });

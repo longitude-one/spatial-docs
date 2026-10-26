@@ -4,7 +4,7 @@ import { logicalBreadcrumbs, contextualPagination } from '../scripts/contextual-
 
 const fields = {
   libraryNames: { 'spatial-core': 'Spatial Core', 'geo-parser': 'Geo Parser' },
-  publishedDocuments: ['index.md', 'spatial-core/index.md', 'spatial-core/roadmap.md',
+  publishedDocuments: ['index.md', 'spatial-core/index.md',
     'spatial-core/v1/index.md', 'spatial-core/v1/geometry/index.md', 'spatial-core/v2/index.md',
     'geo-parser/v4/index.md', 'standards/iso/index.md', 'standards/iso/iso-19111.md',
     'concepts/index.md', 'concepts/formats.md', 'dbms/mysql.md'],
@@ -20,8 +20,6 @@ test('library breadcrumb hierarchy uses logical names and native nested topic la
 test('unversioned entries and reference domains retain their own logical context', () => {
   assert.deepEqual(logicalBreadcrumbs('@site/docs/spatial-core/index.md', [], fields).map((item) => item.label),
     ['Libraries', 'Spatial Core']);
-  assert.deepEqual(logicalBreadcrumbs('@site/docs/spatial-core/roadmap.md', [], fields).map((item) => item.label),
-    ['Libraries', 'Spatial Core', 'Roadmap']);
   assert.deepEqual(logicalBreadcrumbs('@site/docs/standards/iso/iso-19111.md', [{ label: 'ISO' }, { label: 'ISO 19111' }], fields)
     .map((item) => item.label), ['Standards', 'ISO', 'ISO 19111']);
   assert.deepEqual(logicalBreadcrumbs('@site/docs/concepts/index.md', [], fields).map((item) => item.label), ['Concepts']);
@@ -41,5 +39,5 @@ test('pagination cannot cross a library, major or reference domain, or point to 
     assert.equal(contextualPagination('@site/docs/spatial-core/v1/index.md', { title: 'Target', permalink }, fields), undefined);
   }
   assert.equal(contextualPagination('@site/docs/concepts/index.md', { title: 'MySQL', permalink: '/dbms/mysql' }, fields), undefined);
-  assert.ok(contextualPagination('@site/docs/spatial-core/index.md', { title: 'Spatial Core roadmap', permalink: '/spatial-core/roadmap' }, fields));
+  assert.equal(contextualPagination('@site/docs/spatial-core/index.md', { title: 'Old roadmap', permalink: '/spatial-core/roadmap' }, fields), undefined);
 });

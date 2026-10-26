@@ -16,7 +16,7 @@ export default function remarkVersionStatus({ libraries, docsDirectory }) {
       children.push({ type: 'paragraph', children: [{
         type: 'mdxJsxTextElement',
         name: 'a',
-        attributes: [{ type: 'mdxJsxAttribute', name: 'href', value: `pathname:///${info.library}/roadmap.html` }],
+        attributes: [{ type: 'mdxJsxAttribute', name: 'href', value: `pathname:///${info.library}/index.html` }],
         children: [{ type: 'text', value: 'View the library roadmap' }],
       }] });
     }

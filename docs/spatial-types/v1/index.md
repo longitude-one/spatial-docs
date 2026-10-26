@@ -85,4 +85,4 @@ declaring a reference and transforming coordinates.
 
 - [Spatial validators](./validators.md)
 - [Empty MultiLineString interoperability](./empty-multilinestring-interoperability.md)
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)

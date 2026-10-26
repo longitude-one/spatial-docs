@@ -26,10 +26,6 @@ export function createLibraryCategories(libraries, docsDirectory) {
       if (currentSource && existsSync(path.join(docsDirectory, currentSource))) {
         return { label: title, to: `/${currentSource.replace(/\.md$/, '.html')}` };
       }
-      const roadmapSource = `${name}/roadmap.md`;
-      if (existsSync(path.join(docsDirectory, roadmapSource))) {
-        return { label: title, to: `/${name}/roadmap.html`, note: 'Roadmap' };
-      }
       return { label: title, note: 'Documentation unavailable' };
     }),
   }));

@@ -1,19 +1,11 @@
 ---
 title: Spatial Validator
-description: Validate LongitudeOne spatial objects explicitly with Symfony constraints and localized diagnostics.
+description: Planned evolution of LongitudeOne Spatial Validator across major releases.
 ---
 
-Spatial Validator checks the geometry of LongitudeOne spatial objects through Symfony Validator.
-Use it when accepting a route, parcel boundary or collection of positions in an application.
-Constructing a spatial object and checking its geometric validity are separate operations.
+This roadmap shows announced support dates and release forecasts for spatial-validator.
 
-The [1.x documentation](./v1/index.md) targets `1.0.0-RC.0`. It describes the delivered validation contracts and their coverage limits;
-it does not announce a released RC or claim general [SQL/MM conformity](https://www.iso.org/standard/60343.html).
+See the [1.x documentation](./v1/index.md) for the planned first major version.
 
-- [Get started with Spatial Validator](./v1/index.md).
-- [Apply geometry type validators](./v1/geometric-types.md).
-- [Apply optional simplicity validators](./v1/simplicity-validators.md).
-- [Interpret errors and warnings](./v1/diagnostics-and-composition.md).
-
-`spatial-types` owns the object model; `spatial-validator` performs explicit functional validation.
-Validation does not parse serialized geometry, repair shapes, move coordinates, reorient rings or reproject a coordinate reference system.
+Dates and Composer constraints come from the [shared roadmap configuration](../shared/support-timeline-generation.md#maintaining-library-roadmaps).
+Support dates retain the existing roadmap commitments. Monthly release forecasts remain approximate until an exact date is announced.

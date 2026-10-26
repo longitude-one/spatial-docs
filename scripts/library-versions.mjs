@@ -18,7 +18,7 @@ export async function discoverLibraries(docsDirectory) {
     if (majors.length) {
       let roadmap = false;
       try {
-        roadmap = (await stat(path.join(docsDirectory, entry.name, 'roadmap.md'))).isFile();
+        roadmap = (await stat(path.join(docsDirectory, entry.name, 'index.md'))).isFile();
       } catch (error) {
         if (error.code !== 'ENOENT') throw error;
       }
@@ -106,7 +106,7 @@ export function statusText({ library, status }) {
 
 export function markdownStatus(info, sourcePath) {
   const depth = sourcePath.split('/').length - 2;
-  const roadmap = info.roadmap ? `\n> [View the library roadmap](${'../'.repeat(depth)}roadmap.md)` : '';
+  const roadmap = info.roadmap ? `\n> [View the library roadmap](${'../'.repeat(depth)}index.md)` : '';
   return `> **${info.status} version** — ${statusText(info)}${roadmap}`;
 }
 

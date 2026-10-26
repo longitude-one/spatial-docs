@@ -200,5 +200,5 @@ Previous major versions may receive security fixes only, according to the roadma
 
 ## Related documentation
 
-- [Library roadmap](../roadmap.md)
+- [Library roadmap](../index.md)
 - [Spatial formats](../../concepts/formats.md)

@@ -177,7 +177,7 @@ The shared display-window file is required when at least one configured roadmap 
 Each branch matching a documented major (for example `2.x`) links to that version's published landing page when it exists:
 `v2/index.md` in portable Markdown and the corresponding explicit `.html` resource on the website.
 A missing, draft, or unlisted version landing page leaves the branch label as plain text. No documentation page is invented.
-Published version landing pages absent from the branch list remain accessible through a short documentation-version list below the support table.
+The Documentation versions section below the support table links to every published version landing page, including versions already linked in the table.
 When no roadmap is established, that list follows the default message; it is navigation, not a support schedule.
 Navigation and version-status messages link to the library index, including when its roadmap has not yet been established.
 

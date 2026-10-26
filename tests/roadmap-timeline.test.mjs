@@ -183,13 +183,15 @@ test('SVG is standalone, XML-safe, accessible and uses the site palette without 
   assert.doesNotMatch(svg, /today|countdown|years? (?:ago|remaining)|months? (?:ago|remaining)/i);
 });
 
-test('long labels and notes wrap instead of being ellipsized; narrow calendars reserve space for annual labels', () => {
+test('long headings wrap and branch labels fit their bars; narrow calendars reserve space for annual labels', () => {
   const input = { library: 'Library'.repeat(20), branches: [branch({ version: 'Branch'.repeat(20), notes: 'Long note '.repeat(20) })] };
   const svg = generateSupportTimeline(input, window, { width: 360 });
   const root = xml(svg);
   assert.equal(root.attributes.width, '360');
-  assert.ok(Number(root.attributes.height) > 500);
-  assert.ok(all(root, (node) => node.name === 'tspan').length > 20);
+  const shortHeading = xml(generateSupportTimeline({ ...input, library: 'Library' }, window, { width: 360 }));
+  assert.ok(Number(root.attributes.height) > Number(shortHeading.attributes.height));
+  assert.ok(all(root, (node) => node.name === 'tspan').length > 10);
+  assert.match(svg, /lengthAdjust="spacingAndGlyphs"/);
   assert.doesNotMatch(svg, /…|\.\.\./);
   assert.equal(root.attributes.height, root.attributes.viewBox.split(' ')[3]);
   const longWindow = xml(generateSupportTimeline(data(), { startDate: '2020-01-01', endDate: '2030-12-31' }, { width: 360 }));
@@ -298,4 +300,38 @@ test('file failures and mismatched library filenames are actionable and cannot s
   await assert.rejects(readRoadmapData(file, bounds), /Cannot read roadmap JSON.*example-library.json/);
   await writeFile(file, JSON.stringify({ ...data(branch()), library: 'other-library' }));
   await assert.rejects(readRoadmapData(file, bounds), /other-library.*must match the library JSON filename/);
+});
+
+
+test('visible timeline labels use branch versions inside active bars without verbose metadata', () => {
+  const svg = generateSupportTimeline(data(branch(), branch({ version: '2.x', status: 'planned', releaseDate: null, plannedReleaseDate: '2024-02-01' })), window);
+  const root = xml(svg);
+  const visible = all(root, (node) => node.name === 'text' || node.name === 'tspan').map((node) => node.text).join(' ');
+  assert.doesNotMatch(visible, /Display window:|— Released|— Planned|Active support until:|security support until:|PHP:|Arrows indicate|Dashed outlines mark|Unannounced dates create/);
+  for (const [index, label] of ['Branch v1.x', 'Branch v2.x'].entries()) {
+    const bar = kinds(rows(svg)[index], 'active')[0];
+    const text = bar.children.find((node) => node.name === 'text');
+    assert.equal(text.text, label);
+    const shape = bar.children.find((node) => node.name === 'rect');
+    assert.ok(Number(text.attributes.x) > Number(shape.attributes.x));
+    assert.ok(Number(text.attributes.x) < Number(shape.attributes.x) + Number(shape.attributes.width));
+  }
+});
+
+
+test('branch bars have zero spacing from the calendar and each other', () => {
+  const svg = generateSupportTimeline(data(branch(), branch({ version: '2.x' })), window);
+  const [first, second] = rows(svg);
+  const firstBar = rect(first, 'active').attributes;
+  const secondBar = rect(second, 'active').attributes;
+  assert.equal(Number(secondBar.y), Number(firstBar.y) + Number(firstBar.height));
+  const axis = xml(svg).children.find((node) => node.name === 'g').children.find((node) => node.name === 'path');
+  const axisY = Number(axis.attributes.d.split(' ')[2]);
+  assert.equal(Number(firstBar.y), axisY);
+  for (const row of [first, second]) {
+    const background = row.children.find((node) => node.name === 'rect').attributes;
+    const bar = rect(row, 'active').attributes;
+    assert.equal(background.y, bar.y);
+    assert.equal(background.height, bar.height);
+  }
 });

@@ -17,11 +17,7 @@ export function roadmapSupportNodes(input) {
       type: 'image', url: image,
       alt: `${roadmap.library} release and support timeline. Planned releases use diamonds; actual releases use circles. Full dates and PHP compatibility follow in the support table.`,
     }] }],
-  }, paragraph('Open the timeline to zoom. Solid slate bars show active support; hatched cognac bars show security fixes only. '
-    + 'Dashed outlines identify forecasts, and arrows indicate periods continuing beyond the displayed dates.'),
-  heading('Branch support'),
-  paragraph('Planned branches and their support dates are forecasts. Unannounced means no exact date or Composer constraint has been announced; '
-    + 'it does not mean indefinite support. The table remains usable without the timeline.')];
+  }, heading('Branch support')];
   if (!roadmap.branches.some(({ status }) => status === 'released')) {
     children.push(paragraph('No stable release is announced in this roadmap. Available forecasts are listed below.'));
   }
@@ -31,7 +27,7 @@ export function roadmapSupportNodes(input) {
     const date = (value) => value === null ? 'Unannounced' : `${value}${planned ? ' (forecast)' : ''}`;
     return {
       type: 'tableRow', children: [
-        [text(`${branch.version} (${branch.status})`)],
+        [text(branch.version)],
         [text(date(release))],
         [text(date(branch.activeSupportUntil))],
         [text(date(branch.securitySupportUntil))],

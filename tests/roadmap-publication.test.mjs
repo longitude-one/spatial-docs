@@ -12,6 +12,10 @@ import { discoverLibraries } from '../scripts/library-versions.mjs';
 import remarkRoadmapSupport, { roadmapSupportNodes, generateRoadmapAssets, appendRoadmapSupport } from '../scripts/roadmap-publication.mjs';
 
 const repository = new URL('../', import.meta.url);
+// Keep exact deployment destinations independent of the URL generator under test.
+const expectedHtmlDirectory = process.env.DOCUSAURUS_DEPLOYMENT === 'development'
+  ? 'pathname:///spatial-docs/example-library/'
+  : 'pathname:///example-library/';
 const branch = (changes = {}) => ({
   version: '1.x', status: 'released', plannedReleaseDate: null, releaseDate: '2024-01-01',
   activeSupportUntil: '2024-06-30', securitySupportUntil: '2024-12-31', php: '^8.4 || ^8.5', notes: null, ...changes,
@@ -182,7 +186,7 @@ test('documented majors link to version landing pages in both representations, m
     const table = tree.children.find(({ type }) => type === 'table');
     const labels = table.children.slice(1).map((row) => row.children[0].children[0]);
     assert.equal(labels[0].type, 'link');
-    assert.equal(labels[0].url, html ? 'pathname:///example-library/v1/index.html' : 'v1/index.md');
+    assert.equal(labels[0].url, html ? `${expectedHtmlDirectory}v1/index.html` : 'v1/index.md');
     assert.deepEqual(labels.slice(1).map(({ type }) => type), ['text', 'text', 'text']);
   }
 });
@@ -206,7 +210,7 @@ test('documentation versions list includes every published version even when lin
       const list = nodes.find(({ type }) => type === 'list');
       const links = list.children.map((item) => item.children[0].children[0]);
       assert.deepEqual(links.map(({ url }) => url), html
-        ? ['pathname:///example-library/v1/index.html', 'pathname:///example-library/v2/index.html']
+        ? [`${expectedHtmlDirectory}v1/index.html`, `${expectedHtmlDirectory}v2/index.html`]
         : ['v1/index.md', 'v2/index.md']);
       assert.deepEqual(links.map(({ children }) => children[0].value), ['v1', 'v2']);
       if (!input) assert.ok(!nodes.some(({ type }) => type === 'table'));

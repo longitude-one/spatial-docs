@@ -5,6 +5,6 @@ description: Planned evolution of LongitudeOne WKT Parser across major releases.
 
 This roadmap shows announced support dates and release forecasts for wkt-parser.
 
-Dates and Composer constraints come from the [shared roadmap configuration](../shared/support-timeline-generation.md#maintaining-library-roadmaps).
-Support dates retain the existing roadmap commitments. Monthly release forecasts remain approximate until an exact date is announced.
-Actual initial release dates are verified against the [published releases](https://github.com/longitude-one/wkt-parser/releases).
+After the 1st January 2027, WKT Parser will be deprecated and only receive security support until 31st December 2027.
+The library will be replaced by the [Spatial Decoder](../spatial-decoder/index.md) library and its WKT Decoder strategy,
+which will provide a more comprehensive and robust solution for decoding Well-Known Text (WKT) into PHP spatial objects.

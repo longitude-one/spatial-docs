@@ -19,7 +19,7 @@
       "activeSupportUntil": "2026-12-31",
       "securitySupportUntil": "2027-12-31",
       "php": "^8.1",
-      "notes": null
+      "notes": "This library will be deprecated after 1st January 2027 and it will be replaced by the Spatial Decoder library."
     }
   ]
 }

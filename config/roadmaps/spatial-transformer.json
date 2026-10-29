@@ -4,7 +4,7 @@
     {
       "version": "1.x",
       "status": "planned",
-      "plannedReleaseDate": null,
+      "plannedReleaseDate": "2027-01-01",
       "releaseDate": null,
       "activeSupportUntil": "2027-12-31",
       "securitySupportUntil": "2028-12-31",
@@ -14,7 +14,7 @@
     {
       "version": "2.x",
       "status": "planned",
-      "plannedReleaseDate": null,
+      "plannedReleaseDate": "2028-01-01",
       "releaseDate": null,
       "activeSupportUntil": "2028-12-31",
       "securitySupportUntil": "2029-12-31",

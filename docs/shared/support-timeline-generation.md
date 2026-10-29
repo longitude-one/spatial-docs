@@ -161,7 +161,9 @@ node scripts/generate-roadmap-timeline.mjs tests/fixtures/roadmaps/example-libra
 
 Edit `config/roadmaps/<library>.json` to update a roadmap. Both the SVG and table consume that file on the next build.
 The library landing page is `docs/<library>/index.md`. Keep its required `title` and `description` front matter appropriate to the library.
-The build replaces the entire body with the generated timeline and table in both HTML and portable Markdown; it does not append to existing prose.
+The build preserves the complete authored body in its original order in both HTML and portable Markdown.
+Generated roadmap text, timeline, support table and documentation-version links follow all authored headings, prose, lists, links, images and code blocks.
+Repeated builds do not duplicate either part; configuration changes refresh only the generated content.
 Source files are not rewritten during the build. Version landing pages such as `docs/<library>/v2/index.md` remain separate and unchanged.
 Do not keep a separate library-level `roadmap.md` page or a hand-written support table.
 
@@ -169,6 +171,7 @@ A missing library JSON file, a blank file, an empty JSON object (`{}`), or a val
 
 > The roadmap for this library has not been established yet.
 
+The default message and any documentation-version links follow the complete authored body.
 No timeline or support table is generated in that case, and a previously generated image is removed on the next export.
 A populated branch list remains configured even if every date is `null`. Malformed non-empty JSON, invalid populated data,
 and configurations for unknown libraries fail the build with an error. An otherwise empty branch list must still satisfy the full schema.

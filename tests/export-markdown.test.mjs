@@ -27,7 +27,7 @@ test('export generates roadmap images and portable support tables from one confi
   }] };
   const { root, run } = await fixture(t, {
     'docs/index.md': document('Home', 'Home.', '[Roadmap](./example-library/index.md)'),
-    'docs/example-library/index.md': document('Example Library', 'Release and support roadmap.', 'Stale body must be replaced.'),
+    'docs/example-library/index.md': document('Example Library', 'Release and support roadmap.', '## Introduction\n\nAuthored introduction with [version](./v1/index.md).\n\n- First\n- Second\n\n```php\n$example = 1;\n```\n\nFinal authored paragraph.'),
     'docs/example-library/v1/index.md': document('Version 1', 'Version documentation.'),
     'config/roadmaps/window.json': JSON.stringify({ startDate: '2024-01-01', endDate: '2029-12-31' }),
     'config/roadmaps/example-library.json': JSON.stringify(roadmap),
@@ -38,7 +38,10 @@ test('export generates roadmap images and portable support tables from one confi
   await exportRoadmap();
   const output = await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8');
   assert.match(output, /2027-02-01 \(forecast\)/);
-  assert.doesNotMatch(output, /Stale body must be replaced|Get started/);
+  assert.ok(output.indexOf('Final authored paragraph.') < output.indexOf('## Release timeline'));
+  assert.match(output, /\[version\]\(v1\/index\.md\)/);
+  assert.match(output, /```php\n\$example = 1;/);
+  const source = await readFile(path.join(root, 'docs/example-library/index.md'), 'utf8');
   assert.match(output, /\[1\.x\]\(v1\/index\.md\)/);
   assert.match(output, /\^8.4.*\^8.5/);
   assert.match(output, /\.\.\/assets\/roadmaps\/example-library.svg/);
@@ -57,7 +60,20 @@ test('export generates roadmap images and portable support tables from one confi
   const updated = await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8');
   assert.notEqual(updated, original);
   assert.match(updated, /2027-03-01 \(forecast\)/);
+  assert.equal(updated.slice(0, updated.indexOf('## Release timeline')), output.slice(0, output.indexOf('## Release timeline')));
+  assert.equal(await readFile(path.join(root, 'docs/example-library/index.md'), 'utf8'), source);
   assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-03-01/);
+  for (const configuration of [null, '', '{}', JSON.stringify({ ...roadmap, branches: [] })]) {
+    const filename = path.join(root, 'config/roadmaps/example-library.json');
+    if (configuration === null) await rm(filename);
+    else await writeFile(filename, configuration);
+    await exportRoadmap();
+    const fallback = await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8');
+    assert.ok(fallback.indexOf('Final authored paragraph.') < fallback.indexOf('The roadmap for this library'));
+    assert.ok(fallback.indexOf('The roadmap for this library') < fallback.indexOf('## Documentation versions'));
+    assert.doesNotMatch(fallback, /## Release timeline|## Branch support/);
+    assert.equal(await readFile(path.join(root, 'docs/example-library/index.md'), 'utf8'), source);
+  }
 });
 
 function document(title, description, body = '', extraMetadata = '') {
@@ -143,14 +159,16 @@ async function landingFixture(t, entryDocument = 'index.md') {
   return { ...result, exportLanding: () => result.run({ NODE_OPTIONS: `--import=${preload}` }) };
 }
 
-test('exports unestablished library landing pages without superseded navigation or support content', async (t) => {
+test('exports unestablished library landing pages after authored content without invented support content', async (t) => {
   const { root, exportLanding } = await landingFixture(t);
   await exportLanding();
   const landing = await readFile(path.join(root, '.generated-markdown/spatial-core/index.md'), 'utf8');
   assert.match(landing, /The roadmap for this library has not been established yet\./);
   assert.match(landing, /\[v1\]\(v1\/index\.md\)/);
   assert.match(landing, /\[v2\]\(v2\/index\.md\)/);
-  assert.doesNotMatch(landing, /Library summary|Requirements|Get started|composer require|Release timeline|Branch support/);
+  assert.ok(landing.indexOf('Library summary') < landing.indexOf('## Requirements'));
+  assert.ok(landing.indexOf('## Requirements') < landing.indexOf('The roadmap for this library'));
+  assert.doesNotMatch(landing, /Get started|composer require|Release timeline|Branch support/);
   const version = await readFile(path.join(root, '.generated-markdown/spatial-core/v1/index.md'), 'utf8');
   assert.match(version, /View the library roadmap\]\(\.\.\/index\.md\)/);
 });

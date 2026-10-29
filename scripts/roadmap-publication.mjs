@@ -70,8 +70,11 @@ export function appendRoadmapSupport(tree, sourcePath, roadmaps, { html = false 
   const library = sourcePath.split('/')[0];
   if (!Object.hasOwn(roadmaps, library)) return;
   const { roadmap, versions } = roadmaps[library];
-  // Keep source metadata, replacing every body node. Reapplying is idempotent.
-  tree.children = [...tree.children.filter(({ type }) => type === 'yaml'), ...roadmapSupportNodes(roadmap, { library, versions, html })];
+  // Refresh only build-owned nodes; authored content (including metadata) stays in order.
+  const authored = tree.children.filter((node) => !node.data?.generatedRoadmapSupport);
+  const generated = roadmapSupportNodes(roadmap, { library, versions, html });
+  for (const node of generated) node.data = { ...node.data, generatedRoadmapSupport: true };
+  tree.children = [...authored, ...generated];
 }
 
 export default function remarkRoadmapSupport({ roadmaps, docsDirectory }) {

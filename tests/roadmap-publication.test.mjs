@@ -154,21 +154,44 @@ for (const configuration of ['{', 'null', '[]', '{"branches":[]}', JSON.stringif
   });
 }
 
-test('replacement preserves front matter, removes stale body and remains idempotent', () => {
-  const source = '---\ntitle: Library\ndescription: Library roadmap.\nsidebar_position: 2\n---\n\nStale introduction.\n\n## Old content\n';
-  const tree = processor.parse(source);
-  const metadata = structuredClone(tree.children[0]);
-  const data = { 'example-library': { roadmap: roadmap(), versions: ['v1'] } };
-  appendRoadmapSupport(tree, 'example-library/index.md', data);
-  const first = structuredClone(tree);
-  appendRoadmapSupport(tree, 'example-library/index.md', data);
-  assert.deepEqual(tree, first);
-  assert.deepEqual(tree.children[0], metadata);
-  assert.doesNotMatch(processor.stringify(tree), /Stale introduction|Old content/);
-  const versionTree = processor.parse(source);
-  appendRoadmapSupport(versionTree, 'example-library/v1/index.md', data);
-  assert.deepEqual(versionTree, processor.parse(source));
-});
+const authoredSource = '---\ntitle: Library\ndescription: Library roadmap.\nsidebar_position: 2\n---\n\n'
+  + '## Introduction\n\nAuthored **explanation** with [version](v1/index.md).\n\n'
+  + '- First item\n- Second item\n\n![Diagram](../assets/diagram.svg)\n\n'
+  + '```php\n$example = "Release timeline";\n```\n\n## Branch support\n\nFinal authored paragraph.\n';
+
+for (const html of [false, true]) {
+  for (const input of [roadmap(), null, roadmap([])]) {
+    test(`authored content precedes generated content and survives refresh (html=${html}, roadmap=${input?.branches.length ?? 'missing'})`, () => {
+      const tree = processor.parse(authoredSource);
+      const authored = structuredClone(tree.children);
+      const data = { 'example-library': { roadmap: input, versions: ['v1'] } };
+      const apply = () => html
+        ? remarkRoadmapSupport({ roadmaps: data, docsDirectory: '/site/docs' })(tree, { path: '/site/docs/example-library/index.md' })
+        : appendRoadmapSupport(tree, 'example-library/index.md', data);
+      apply();
+      assert.deepEqual(tree.children.slice(0, authored.length), authored);
+      assert.equal(tree.children[authored.length].type, input?.branches.length ? 'heading' : 'paragraph');
+      const first = structuredClone(tree);
+      apply();
+      assert.deepEqual(tree, first);
+      data['example-library'].roadmap = roadmap([branch({ notes: 'Updated configuration' })]);
+      apply();
+      assert.deepEqual(tree.children.slice(0, authored.length), authored);
+      assert.match(processor.stringify(tree), /Updated configuration/);
+      assert.equal(tree.children.filter(({ type }) => type === 'table').length, 1);
+      data['example-library'].roadmap = null;
+      apply();
+      assert.deepEqual(tree.children.slice(0, authored.length), authored);
+      assert.equal(tree.children.filter(({ type }) => type === 'table').length, 0);
+      assert.equal(tree.children[authored.length].children[0].value, 'The roadmap for this library has not been established yet.');
+      assert.equal(tree.children.at(-1).children[0].children[0].children[0].url,
+        html ? `${expectedHtmlDirectory}v1/index.html` : 'v1/index.md');
+      const versionTree = processor.parse(authoredSource);
+      appendRoadmapSupport(versionTree, 'example-library/v1/index.md', data, { html });
+      assert.deepEqual(versionTree, processor.parse(authoredSource));
+    });
+  }
+}
 
 test('documented majors link to version landing pages in both representations, missing versions stay text', async (t) => {
   const root = await fixture(t);

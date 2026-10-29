@@ -86,6 +86,18 @@ export function validateRoadmapData(input) {
   return { library, branches };
 }
 
+/** PHP uses the roadmap model as shared reference data, never as a documented library. */
+export function validatePhpReference(input) {
+  const roadmap = validateRoadmapData(input);
+  if (roadmap.library !== 'PHP') fail({ library: roadmap.library, branch: '<configuration>' }, 'library', 'must be PHP for shared PHP reference data.');
+  for (const branch of roadmap.branches) {
+    if (!/^[0-9]+\.[0-9]+$/u.test(branch.version)) {
+      fail({ library: 'PHP', branch: branch.version }, 'version', 'must be a PHP major.minor version, for example 8.4.');
+    }
+  }
+  return roadmap;
+}
+
 export function validateTimelineWindow(input, library = '<global window>') {
   const context = { library, branch: '<display window>' };
   record(input, ['startDate', 'endDate'], context, 'window');

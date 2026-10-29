@@ -1,7 +1,7 @@
 import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { load } from 'js-yaml';
-import { validateRoadmapData, validateTimelineWindow, RoadmapDataError } from './roadmap-data.mjs';
+import { validateRoadmapData, validatePhpReference, validateTimelineWindow, RoadmapDataError } from './roadmap-data.mjs';
 import { discoverLibraries } from './library-versions.mjs';
 import { baseUrl } from './site-settings.mjs';
 import { generateSupportTimeline } from './roadmap-timeline.mjs';
@@ -106,8 +106,11 @@ export async function generateRoadmapAssets(root) {
   try { configurations = (await readdir(directory)).filter((name) => name.endsWith('.json') && name !== 'window.json'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   for (const filename of configurations) {
+    if (filename === 'PHP.json') continue;
     if (!Object.hasOwn(libraries, filename.slice(0, -5))) throw new Error(`Roadmap configuration ${filename} has no documented library.`);
   }
+  const phpInput = await optionalRoadmap(path.join(directory, 'PHP.json'), 'PHP');
+  const phpReference = phpInput === null ? null : validatePhpReference(phpInput);
   const roadmaps = {};
   const images = [];
   let window;
@@ -130,7 +133,7 @@ export async function generateRoadmapAssets(root) {
         try { window = validateTimelineWindow(JSON.parse(await readFile(filename, 'utf8'))); }
         catch (error) { throw new Error(`Cannot read roadmap display window ${filename}: ${error.message}`, { cause: error }); }
       }
-      images.push([`${library}.svg`, generateSupportTimeline(roadmap, window)]);
+      images.push([`${library}.svg`, generateSupportTimeline(roadmap, window, { phpReference })]);
     }
   }
   const destination = path.join(root, 'static/assets/roadmaps');

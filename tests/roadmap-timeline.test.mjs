@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import sax from 'sax';
 import { generateSupportTimeline } from '../scripts/roadmap-timeline.mjs';
-import { readRoadmapData, validateRoadmapData, validateTimelineWindow, RoadmapDataError } from '../scripts/roadmap-data.mjs';
+import { readRoadmapData, validateRoadmapData, validatePhpReference, validateTimelineWindow, RoadmapDataError } from '../scripts/roadmap-data.mjs';
 
 const run = promisify(execFile);
 const window = { startDate: '2024-01-01', endDate: '2024-12-31' };
@@ -17,6 +17,8 @@ const branch = (changes = {}) => ({
   activeSupportUntil: '2024-06-30', securitySupportUntil: '2024-12-31', php: '^8.4', notes: null, ...changes,
 });
 const data = (...branches) => ({ library: 'example-library', branches });
+const phpData = (...branches) => ({ library: 'PHP', branches });
+const phpRows = (svg) => all(xml(svg), (node) => Object.hasOwn(node.attributes, 'data-php-version'));
 
 function xml(svg) {
   const parser = sax.parser(true);
@@ -334,4 +336,148 @@ test('branch bars have zero spacing from the calendar and each other', () => {
     assert.equal(background.y, bar.y);
     assert.equal(background.height, bar.height);
   }
+});
+
+test('PHP references share the library date axis without moving or resizing library bars', () => {
+  const library = data(branch(), branch({ version: '2.x' }));
+  const phpReference = phpData(branch({ version: '8.4' }), branch({ version: '8.5' }));
+  const snapshot = structuredClone(phpReference);
+  const svg = generateSupportTimeline(library, window, { phpReference });
+  const primary = rows(svg);
+  const secondary = phpRows(svg);
+  assert.deepEqual(primary, rows(generateSupportTimeline(library, window)));
+  assert.deepEqual(phpReference, snapshot);
+  assert.equal(secondary.length, 2);
+  for (const row of secondary) {
+    for (const kind of ['active', 'security']) {
+      const reference = rect(row, kind).attributes;
+      const main = rect(primary[0], kind).attributes;
+      assert.equal(reference.x, main.x);
+      assert.equal(reference.width, main.width);
+      assert.ok(Number(reference.height) < Number(main.height));
+      assert.notEqual(reference.fill, main.fill);
+    }
+  }
+  const libraryEnd = Number(rect(primary.at(-1), 'active').attributes.y) + 24;
+  assert.equal(Number(rect(secondary[0], 'active').attributes.y), libraryEnd);
+  assert.equal(Number(rect(secondary[1], 'active').attributes.y), libraryEnd + 16);
+  assert.notEqual(rect(secondary[0], 'active').attributes.fill, rect(secondary[0], 'security').attributes.fill);
+  assert.match(rect(secondary[0], 'security').attributes.fill, /pattern/);
+  assert.equal(generateSupportTimeline(library, window, { phpReference }), svg);
+});
+
+test('only PHP version labels are visible, with dates in non-visible metadata and no tooltip commentary', () => {
+  const input = data(branch());
+  const phpReference = phpData(branch({ version: '8.4', notes: 'Private reference notes', php: null }), branch({ version: '8.5' }));
+  for (const width of [360, 960]) {
+    const svg = generateSupportTimeline(input, window, { phpReference, width });
+    const visible = (source) => all(xml(source), (node) => node.name === 'text' || node.name === 'tspan').map((node) => node.text).filter(Boolean);
+    const original = visible(generateSupportTimeline(input, window, { width }));
+    assert.deepEqual(visible(svg).filter((value) => !original.includes(value)), ['PHP 8.4', 'PHP 8.5']);
+    for (const row of phpRows(svg)) {
+      assert.equal(all(row, (node) => node.name === 'title').length, 0);
+      const label = all(row, (node) => node.name === 'text')[0];
+      assert.equal(label.attributes['font-size'], '12');
+      assert.equal(label.attributes.textLength, undefined, 'PHP labels must not be compressed');
+    }
+    assert.match(svg, /PHP 8\.4; released release: 2024-01-01; active support until: 2024-06-30; security support until: 2024-12-31/);
+    assert.doesNotMatch(svg, /Private reference notes/);
+  }
+});
+
+test('PHP periods clip on the same inclusive window and versions wholly outside it are omitted', () => {
+  const phpReference = phpData(
+    branch({ version: '8.1', releaseDate: '2022-01-01', activeSupportUntil: '2023-12-31', securitySupportUntil: '2023-12-31' }),
+    branch({ version: '8.2', releaseDate: '2022-01-01', activeSupportUntil: '2023-12-31', securitySupportUntil: '2024-01-01' }),
+    branch({ version: '8.3', releaseDate: '2023-01-01', activeSupportUntil: '2024-06-30', securitySupportUntil: '2025-12-31' }),
+    branch({ version: '8.4', releaseDate: '2024-12-31', activeSupportUntil: '2025-12-31', securitySupportUntil: '2026-12-31' }),
+    branch({ version: '8.5', releaseDate: '2025-01-01', activeSupportUntil: '2025-12-31', securitySupportUntil: '2026-12-31' }),
+  );
+  const secondary = phpRows(generateSupportTimeline(data(branch()), window, { phpReference, width: 360 }));
+  assert.deepEqual(secondary.map((row) => row.attributes['data-php-version']), ['8.2', '8.3', '8.4']);
+  close(rect(secondary[0], 'security').attributes.width, 312 / 366);
+  assert.equal(kinds(secondary[0], 'active').length, 0);
+  assert.equal(kinds(secondary[1], 'active')[0].attributes['data-continues-before'], 'true');
+  assert.equal(kinds(secondary[1], 'security')[0].attributes['data-continues-after'], 'true');
+  close(rect(secondary[2], 'active').attributes.width, 312 / 366);
+  for (const row of secondary) {
+    const label = all(row, (node) => node.name === 'text')[0];
+    const left = Number(label.attributes.x) - (label.attributes['text-anchor'] === 'middle' ? label.text.length * 7 / 2 : 0);
+    assert.ok(left >= 24);
+    assert.ok(left + label.text.length * 7 <= 336);
+  }
+});
+
+test('PHP labels center in active support or start in security-only support without obscuring continuation arrows', async () => {
+  const phpReference = JSON.parse(await readFile(new URL('../config/roadmaps/PHP.json', import.meta.url), 'utf8'));
+  const bounds = { startDate: '2025-01-01', endDate: '2029-03-31' };
+  for (const width of [360, 960]) {
+    const references = phpRows(generateSupportTimeline(data(branch()), bounds, { phpReference, width }));
+    const php82 = references.find((row) => row.attributes['data-php-version'] === '8.2');
+    const php84 = references.find((row) => row.attributes['data-php-version'] === '8.4');
+    const php85 = references.find((row) => row.attributes['data-php-version'] === '8.5');
+    const label = (row) => all(row, (node) => node.name === 'text')[0];
+    assert.equal(kinds(php82, 'active').length, 0);
+    assert.equal(label(php82).attributes['text-anchor'], 'start');
+    close(label(php82).attributes.x, Number(rect(php82, 'security').attributes.x) + 6);
+    assert.equal(label(php84).attributes['text-anchor'], 'middle');
+    const blue = rect(php84, 'active').attributes;
+    close(label(php84).attributes.x, Number(blue.x) + Number(blue.width) / 2);
+    const before = kinds(php84, 'active')[0];
+    assert.equal(before.attributes['data-continues-before'], 'true');
+    assert.equal(before.children.filter((node) => node.name === 'path').length, 1);
+    assert.match(before.children.find((node) => node.name === 'path').attributes.d, /l -6 6 6 6$/);
+    const after = kinds(php85, 'security')[0];
+    assert.equal(after.attributes['data-continues-after'], 'true');
+    assert.equal(after.children.filter((node) => node.name === 'path').length, 1);
+    assert.match(after.children.find((node) => node.name === 'path').attributes.d, /l 6 6 -6 6$/);
+  }
+});
+
+test('PHP labels fall back from a narrow active segment to the hatched start and keep clear of a left continuation arrow', () => {
+  const phpReference = phpData(
+    branch({ version: '8.4', activeSupportUntil: '2024-01-02' }),
+    branch({ version: '8.2', releaseDate: '2022-01-01', activeSupportUntil: '2023-12-30' }),
+  );
+  for (const width of [360, 960]) {
+    const [narrow, securityOnly] = phpRows(generateSupportTimeline(data(branch()), window, { phpReference, width }));
+    for (const row of [narrow, securityOnly]) {
+      const label = all(row, (node) => node.name === 'text')[0];
+      const security = rect(row, 'security').attributes;
+      assert.equal(label.attributes['text-anchor'], 'start');
+      close(label.attributes.x, Number(security.x) + (row === securityOnly ? 16 : 6));
+      assert.equal(label.attributes.textLength, undefined);
+      assert.equal(label.attributes['font-size'], '12');
+    }
+    const continuation = kinds(securityOnly, 'security')[0];
+    assert.equal(continuation.attributes['data-continues-before'], 'true');
+    assert.equal(continuation.children.filter((node) => node.name === 'path').length, 1);
+  }
+});
+
+test('PHP unknown dates do not invent periods, equal support ends do not invent security days, and PHP alone creates no roadmap', () => {
+  const phpReference = phpData(
+    branch({ version: '8.2', status: 'planned', releaseDate: null, plannedReleaseDate: null }),
+    branch({ version: '8.3', activeSupportUntil: null }),
+    branch({ version: '8.4', securitySupportUntil: null }),
+    branch({ version: '8.5', securitySupportUntil: '2024-06-30' }),
+  );
+  const secondary = phpRows(generateSupportTimeline(data(branch()), window, { phpReference }));
+  assert.deepEqual(secondary.map((row) => row.attributes['data-php-version']), ['8.4', '8.5']);
+  assert.ok(secondary.every((row) => kinds(row, 'security').length === 0));
+  assert.equal(generateSupportTimeline(data(), window, { phpReference }), generateSupportTimeline(data(), window));
+});
+
+test('PHP reference configuration reuses schema and calendar diagnostics and rejects non-version labels', () => {
+  const phpReference = phpData(branch({ version: '8.4' }));
+  assert.deepEqual(validatePhpReference(phpReference), phpReference);
+  for (const input of [
+    { ...phpReference, library: 'php' },
+    phpData(branch({ version: 'PHP 8.4' })),
+    phpData(branch({ version: '8.4 extra commentary' })),
+    phpData(branch({ version: '8.4', activeSupportUntil: '2024-02-30' })),
+    phpData(branch({ version: '8.4', securitySupportUntil: '2024-06-29' })),
+    phpData(branch({ version: '8.4', extra: true })),
+    phpData(branch({ version: '8.4' }), branch({ version: '8.4' })),
+  ]) assert.throws(() => generateSupportTimeline(data(branch()), window, { phpReference: input }), RoadmapDataError);
 });

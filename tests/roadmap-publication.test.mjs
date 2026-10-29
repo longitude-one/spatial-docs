@@ -21,6 +21,7 @@ const branch = (changes = {}) => ({
   activeSupportUntil: '2024-06-30', securitySupportUntil: '2024-12-31', php: '^8.4 || ^8.5', notes: null, ...changes,
 });
 const roadmap = (branches = [branch()]) => ({ library: 'example-library', branches });
+const phpReference = { library: 'PHP', branches: [branch({ version: '8.4' }), branch({ version: '8.5' })] };
 const window = { startDate: '2024-01-01', endDate: '2029-12-31' };
 const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ['yaml']).use(remarkStringify);
 const markdown = (data) => processor.stringify({ type: 'root', children: roadmapSupportNodes(data) });
@@ -34,13 +35,14 @@ async function fixture(t) {
   await mkdir(path.join(root, 'config/roadmaps'), { recursive: true });
   await writeFile(path.join(root, 'config/roadmaps/window.json'), JSON.stringify(window));
   await writeFile(path.join(root, 'config/roadmaps/example-library.json'), JSON.stringify(roadmap()));
+  await writeFile(path.join(root, 'config/roadmaps/PHP.json'), JSON.stringify(phpReference));
   return root;
 }
 
 test('all ten real roadmaps have validated JSON and retain shared data and explicit display bounds', async () => {
   const docs = new URL('docs/', repository);
   const names = Object.keys(await discoverLibraries(docs.pathname));
-  const files = (await readdir(new URL('config/roadmaps/', repository))).filter((name) => name !== 'window.json');
+  const files = (await readdir(new URL('config/roadmaps/', repository))).filter((name) => !['window.json', 'PHP.json'].includes(name));
   assert.equal(names.length, 10);
   assert.deepEqual(files.sort(), names.map((name) => `${name}.json`).sort());
   for (const name of names) {
@@ -240,4 +242,82 @@ test('documentation versions list includes every published version even when lin
     }
   }
   assert.ok(!roadmapSupportNodes(roadmap(), { versions: [] }).some(({ type }) => type === 'list'));
+});
+
+test('PHP is shared SVG reference data without library discovery, tables, version lists or navigation', async (t) => {
+  const root = await fixture(t);
+  const data = await generateRoadmapAssets(root);
+  assert.deepEqual(Object.keys(data), ['example-library']);
+  assert.deepEqual(Object.keys(await discoverLibraries(path.join(root, 'docs'))), ['example-library']);
+  assert.deepEqual(await readdir(path.join(root, 'static/assets/roadmaps')), ['example-library.svg']);
+  const svg = await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8');
+  assert.match(svg, /data-php-version="8.4"/);
+  assert.match(svg, /data-php-version="8.5"/);
+  const portable = { type: 'root', children: [] };
+  const html = structuredClone(portable);
+  appendRoadmapSupport(portable, 'example-library/index.md', data);
+  remarkRoadmapSupport({ roadmaps: data, docsDirectory: path.join(root, 'docs') })(html, { path: path.join(root, 'docs/example-library/index.md') });
+  const image = (tree) => tree.children[1].children[0].children[0];
+  assert.deepEqual(image(html), image(portable));
+  for (const tree of [portable, html]) {
+    assert.doesNotMatch(JSON.stringify(tree), /PHP 8\.[45]|PHP support|PHP\/|php\/|PHP\.svg/);
+    assert.equal(tree.children.filter(({ type }) => type === 'table').length, 1);
+    const table = tree.children.find(({ type }) => type === 'table');
+    assert.equal(table.children.length, 2, 'Only library branches appear in the support table');
+  }
+  await rm(path.join(root, 'config/roadmaps/PHP.json'));
+  await generateRoadmapAssets(root);
+  assert.doesNotMatch(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /data-php-version/);
+});
+
+test('one PHP configuration refreshes every library image while preserving library tables and fallback', async (t) => {
+  const root = await fixture(t);
+  await mkdir(path.join(root, 'docs/other-library/v1'), { recursive: true });
+  await writeFile(path.join(root, 'docs/other-library/index.md'), 'Other roadmap');
+  await writeFile(path.join(root, 'config/roadmaps/other-library.json'), JSON.stringify({ ...roadmap(), library: 'other-library' }));
+  const before = await generateRoadmapAssets(root);
+  const php = structuredClone(phpReference);
+  php.branches[0].activeSupportUntil = '2024-07-31';
+  await writeFile(path.join(root, 'config/roadmaps/PHP.json'), JSON.stringify(php));
+  const after = await generateRoadmapAssets(root);
+  assert.deepEqual(after, before, 'PHP reference data must not modify library support data');
+  for (const library of ['example-library', 'other-library']) {
+    const svg = await readFile(path.join(root, `static/assets/roadmaps/${library}.svg`), 'utf8');
+    assert.match(svg, /PHP 8.4; released release: 2024-01-01; active support until: 2024-07-31/);
+  }
+  await rm(path.join(root, 'config/roadmaps/example-library.json'));
+  const fallback = await generateRoadmapAssets(root);
+  assert.equal(fallback['example-library'].roadmap, null);
+  assert.deepEqual(await readdir(path.join(root, 'static/assets/roadmaps')), ['other-library.svg']);
+});
+
+test('invalid PHP reference configuration fails before replacing any generated images', async (t) => {
+  const root = await fixture(t);
+  await generateRoadmapAssets(root);
+  const image = path.join(root, 'static/assets/roadmaps/example-library.svg');
+  const original = await readFile(image, 'utf8');
+  for (const invalid of ['{', 'null', JSON.stringify({ ...phpReference, library: 'php' }),
+    JSON.stringify({ library: 'PHP', branches: [branch({ version: '8.4', releaseDate: '2024-02-30' })] }),
+    JSON.stringify({ library: 'PHP', branches: [branch({ version: 'PHP 8.4' })] })]) {
+    await writeFile(path.join(root, 'config/roadmaps/PHP.json'), invalid);
+    await assert.rejects(generateRoadmapAssets(root), /Cannot read roadmap JSON|Roadmap/);
+    assert.equal(await readFile(image, 'utf8'), original);
+  }
+});
+
+test('only the HTML timeline receives clock-free geometry for the browser date marker', async (t) => {
+  const root = await fixture(t);
+  const data = await generateRoadmapAssets(root);
+  const metadata = data['example-library'].timeline;
+  assert.equal(metadata.bottom - metadata.top, 24 + 2 * 16);
+  const html = { type: 'root', children: [] };
+  const portable = structuredClone(html);
+  appendRoadmapSupport(html, 'example-library/index.md', data, { html: true });
+  appendRoadmapSupport(portable, 'example-library/index.md', data);
+  assert.deepEqual(JSON.parse(html.children[1].data.hProperties['data-timeline-layout']), metadata);
+  assert.equal(portable.children[1].data.hProperties['data-timeline-layout'], undefined);
+  assert.doesNotMatch(processor.stringify(portable), /data-timeline-layout|roadmap-today-marker|<span/);
+  const svg = await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8');
+  assert.doesNotMatch(svg, /roadmap-today-marker|<script|Today:/);
+  assert.doesNotMatch(JSON.stringify(metadata), /today|current|timestamp/i);
 });

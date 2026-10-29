@@ -1,0 +1,45 @@
+{
+  "library": "PHP",
+  "branches": [
+    {
+      "version": "8.2",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2022-12-08",
+      "activeSupportUntil": "2024-12-31",
+      "securitySupportUntil": "2026-12-31",
+      "php": null,
+      "notes": null
+    },
+    {
+      "version": "8.3",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2023-11-23",
+      "activeSupportUntil": "2025-12-31",
+      "securitySupportUntil": "2027-12-31",
+      "php": null,
+      "notes": null
+    },
+    {
+      "version": "8.4",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2024-11-21",
+      "activeSupportUntil": "2026-12-31",
+      "securitySupportUntil": "2028-12-31",
+      "php": null,
+      "notes": null
+    },
+    {
+      "version": "8.5",
+      "status": "released",
+      "plannedReleaseDate": null,
+      "releaseDate": "2025-11-20",
+      "activeSupportUntil": "2027-12-31",
+      "securitySupportUntil": "2029-12-31",
+      "php": null,
+      "notes": null
+    }
+  ]
+}

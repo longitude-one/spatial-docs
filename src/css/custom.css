@@ -255,6 +255,7 @@ html[data-theme='dark'] {
 }
 
 .markdown .roadmap-timeline a {
+  position: relative;
   display: block;
   width: 100%;
   min-width: 720px;
@@ -264,6 +265,13 @@ html[data-theme='dark'] {
   display: block;
   width: 100%;
   max-width: none;
+}
+
+.markdown .roadmap-today-marker {
+  position: absolute;
+  width: 1px;
+  background: #a65d59;
+  pointer-events: none;
 }
 
 .markdown .roadmap-support-table {

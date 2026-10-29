@@ -51,7 +51,7 @@ const config = {
   staticDirectories: ['static', '.generated-markdown'],
   trailingSlash: false,
   headTags: isDevelopment ? [{ tagName: 'meta', attributes: { name: 'robots', content: 'noindex, follow' } }] : [],
-  clientModules: ['./src/resource-route-aliases.js'],
+  clientModules: ['./src/resource-route-aliases.js', './src/roadmap-today-client.js'],
   onBrokenLinks: 'throw',
   markdown: {
     parseFrontMatter: parseRepresentationFrontMatter,

@@ -48,7 +48,12 @@ test('export generates roadmap images and portable support tables from one confi
   const manifest = JSON.parse(await readFile(path.join(root, '.generated-markdown/asset-manifest.json'), 'utf8'));
   assert.ok(manifest['assets/roadmaps/example-library.svg']);
   assert.match(await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8'), /2027-02-01/);
-  assert.deepEqual(JSON.parse(await readFile(path.join(root, '.docusaurus/roadmap-support.json'), 'utf8')), { 'example-library': { roadmap, versions: ['v1'] } });
+  const snapshot = JSON.parse(await readFile(path.join(root, '.docusaurus/roadmap-support.json'), 'utf8'))['example-library'];
+  assert.deepEqual(snapshot.roadmap, roadmap);
+  assert.deepEqual(snapshot.versions, ['v1']);
+  assert.equal(snapshot.timeline.bottom - snapshot.timeline.top, 24);
+  assert.ok(snapshot.timeline.last > snapshot.timeline.first);
+  assert.doesNotMatch(output, /data-timeline-layout|roadmap-today-marker/);
   const original = output;
   await exportRoadmap();
   assert.equal(await readFile(path.join(root, '.generated-markdown/example-library/index.md'), 'utf8'), original);

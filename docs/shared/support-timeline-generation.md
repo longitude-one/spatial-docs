@@ -98,7 +98,7 @@ The forecast and actual release may differ; the generator does not require one t
 
 A `null` end date does not mean indefinite support. Only announced, placeable periods are drawn.
 The implementation uses UTC calendar days and treats support end dates as inclusive; interval geometry ends at the start of the following day.
-No countdown, elapsed duration, current-date marker or automatic release-state promotion is generated.
+No countdown, elapsed duration, current-date marker or automatic release-state promotion is generated in the standalone SVG.
 
 ## Node.js API
 
@@ -122,6 +122,8 @@ const svg = generateSupportTimeline(roadmap, window);
 
 The validators and `RoadmapDataError` are exported from `scripts/roadmap-data.mjs`.
 `options.width` defaults to `960` and must be a safe integer of at least `360` pixels.
+`options.phpReference` optionally accepts a PHP roadmap object, validated by `validatePhpReference(input)` from the same module.
+Omitting it leaves the standalone library calendar unchanged. The website build supplies the shared PHP configuration automatically.
 The SVG may be wider than requested to preserve at least 54 pixels per displayed year; its `viewBox` preserves all content when scaled.
 Long headings wrap. Branch names appear inside active-support bars; detailed dates and notes remain in the accessible description and support table.
 The opaque ivory background, site-palette text, patterned security bars and distinct marker shapes remain readable independently of the surrounding theme.
@@ -225,3 +227,38 @@ Images are linked so readers can open and zoom them. HTML calendars and tables s
 the table retains semantic column headers and the standalone SVG retains its own title, description and legend.
 Portable Markdown includes the complete GFM table and relative image reference, without build metadata, MDX or raw HTML.
 The [shared assets publication contract](./shared-assets-publication-contract.md) validates and publishes the generated images alongside other shared resources.
+
+## Maintaining the PHP reference bars
+
+Edit the exact file `config/roadmaps/PHP.json` to maintain the secondary reference bars shared by all configured library timelines.
+It uses the same roadmap model: `library` is `PHP`, and each branch's `version` is a major.minor value such as `8.4`.
+Keep every field, using `null` for inapplicable Composer constraints and notes. The same date, chronology, uniqueness and unknown-field validation applies.
+Use explicit release and support dates from the official [PHP Supported Versions page](https://www.php.net/supported-versions.php).
+The initial configuration records PHP 8.2, 8.3, 8.4 and 8.5 from that page, checked on October 29, 2026.
+For historical branches, consult PHP's [end-of-life branches](https://www.php.net/eol.php).
+Do not calculate dates from support durations or copy these dates into LongitudeOne library configurations.
+
+The build places intersecting PHP periods directly after the library bars on the same display window and date axis.
+The compact bars are 16 pixels high, compared with 24 pixels for library bars, with muted solid active support and hatched security-only support.
+Only labels such as `PHP 8.4` are visible; full dates remain in the non-visible SVG description, with no PHP tooltip commentary.
+Labels are centered in the visible active-support segment when it has enough room; otherwise they start in the hatched security segment.
+Label placement leaves space for continuation arrows. An active-only sliver retains its readable label within the calendar bounds.
+Labels keep their font size even when a period is clipped to a few days. The existing horizontal scroll and zoom preserve readability on narrow screens.
+
+PHP remains reference data: it creates no landing page, documentation-version list, navigation entry or support table.
+Both HTML and portable Markdown use the same generated SVG asset. Missing or unpopulated PHP data adds no reference bars;
+invalid non-empty data fails before any images are replaced. PHP data never establishes a missing or empty library roadmap.
+When adding a PHP version, verify its announced dates, then run the roadmap tests, full tests, build and Markdown lint.
+Inspect representative released and planned library timelines in both site themes and at mobile widths.
+
+## Browser date marker
+
+The website adds a one-pixel muted red line across the library and PHP bar area at the visitor's current local calendar day.
+Browser JavaScript calculates its position from the same calendar geometry used to generate the SVG, including the inclusive final display day.
+The line refreshes at local midnight and when a suspended page becomes visible again; no daily build is required.
+It follows the image when resized or scrolled, leaves continuation arrows unchanged, and disappears when today is outside the display window.
+An accessible non-visible label identifies the date. No visible date label or additional legend is added.
+
+This is a website enhancement, not a support commitment. Without JavaScript, the complete static calendar and support table remain available.
+Standalone SVGs and portable Markdown retain the same script-free calendar assets and announced dates; they do not include a current-date marker.
+Use the Markdown page's HTML counterpart link to view the live marker.

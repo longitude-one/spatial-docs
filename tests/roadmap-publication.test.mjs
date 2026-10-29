@@ -304,3 +304,20 @@ test('invalid PHP reference configuration fails before replacing any generated i
     assert.equal(await readFile(image, 'utf8'), original);
   }
 });
+
+test('only the HTML timeline receives clock-free geometry for the browser date marker', async (t) => {
+  const root = await fixture(t);
+  const data = await generateRoadmapAssets(root);
+  const metadata = data['example-library'].timeline;
+  assert.equal(metadata.bottom - metadata.top, 24 + 2 * 16);
+  const html = { type: 'root', children: [] };
+  const portable = structuredClone(html);
+  appendRoadmapSupport(html, 'example-library/index.md', data, { html: true });
+  appendRoadmapSupport(portable, 'example-library/index.md', data);
+  assert.deepEqual(JSON.parse(html.children[1].data.hProperties['data-timeline-layout']), metadata);
+  assert.equal(portable.children[1].data.hProperties['data-timeline-layout'], undefined);
+  assert.doesNotMatch(processor.stringify(portable), /data-timeline-layout|roadmap-today-marker|<span/);
+  const svg = await readFile(path.join(root, 'static/assets/roadmaps/example-library.svg'), 'utf8');
+  assert.doesNotMatch(svg, /roadmap-today-marker|<script|Today:/);
+  assert.doesNotMatch(JSON.stringify(metadata), /today|current|timestamp/i);
+});

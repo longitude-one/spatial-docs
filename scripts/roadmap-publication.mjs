@@ -4,7 +4,7 @@ import { load } from 'js-yaml';
 import { validateRoadmapData, validatePhpReference, validateTimelineWindow, RoadmapDataError } from './roadmap-data.mjs';
 import { discoverLibraries } from './library-versions.mjs';
 import { baseUrl } from './site-settings.mjs';
-import { generateSupportTimeline } from './roadmap-timeline.mjs';
+import { buildSupportTimeline } from './roadmap-timeline.mjs';
 
 const text = (value) => ({ type: 'text', value });
 const paragraph = (value) => ({ type: 'paragraph', children: [text(value)] });
@@ -24,13 +24,15 @@ function documentationVersionNodes(library, versions, html) {
 }
 
 /** Portable MDAST shared by Docusaurus and Markdown export; no HTML or MDX. */
-export function roadmapSupportNodes(input, { library = input?.library, versions = [], html = false } = {}) {
+export function roadmapSupportNodes(input, { library = input?.library, versions = [], html = false, timeline = null } = {}) {
   if (input === null) return [paragraph('The roadmap for this library has not been established yet.'), ...documentationVersionNodes(library, versions, html)];
   const roadmap = validateRoadmapData(input);
   if (!roadmap.branches.length) return roadmapSupportNodes(null, { library: roadmap.library, versions, html });
   const image = `../assets/roadmaps/${roadmap.library}.svg`;
   const children = [heading('Release timeline'), {
-    type: 'paragraph', data: { hProperties: { className: ['roadmap-timeline'] } }, children: [{ type: 'link', url: image, children: [{
+    type: 'paragraph', data: { hProperties: { className: ['roadmap-timeline'],
+      ...(html && timeline ? { 'data-timeline-layout': JSON.stringify(timeline) } : {}),
+    } }, children: [{ type: 'link', url: image, children: [{
       type: 'image', url: image,
       alt: `${roadmap.library} release and support timeline. Planned releases use diamonds; actual releases use circles. Full dates and PHP compatibility follow in the support table.`,
     }] }],
@@ -69,10 +71,10 @@ export function appendRoadmapSupport(tree, sourcePath, roadmaps, { html = false 
   if (!/^[^/]+\/index\.md$/.test(sourcePath)) return;
   const library = sourcePath.split('/')[0];
   if (!Object.hasOwn(roadmaps, library)) return;
-  const { roadmap, versions } = roadmaps[library];
+  const { roadmap, versions, timeline } = roadmaps[library];
   // Refresh only build-owned nodes; authored content (including metadata) stays in order.
   const authored = tree.children.filter((node) => !node.data?.generatedRoadmapSupport);
-  const generated = roadmapSupportNodes(roadmap, { library, versions, html });
+  const generated = roadmapSupportNodes(roadmap, { library, versions, html, timeline });
   for (const node of generated) node.data = { ...node.data, generatedRoadmapSupport: true };
   tree.children = [...authored, ...generated];
 }
@@ -133,7 +135,9 @@ export async function generateRoadmapAssets(root) {
         try { window = validateTimelineWindow(JSON.parse(await readFile(filename, 'utf8'))); }
         catch (error) { throw new Error(`Cannot read roadmap display window ${filename}: ${error.message}`, { cause: error }); }
       }
-      images.push([`${library}.svg`, generateSupportTimeline(roadmap, window, { phpReference })]);
+      const { svg, layout } = buildSupportTimeline(roadmap, window, { phpReference });
+      roadmaps[library].timeline = layout;
+      images.push([`${library}.svg`, svg]);
     }
   }
   const destination = path.join(root, 'static/assets/roadmaps');

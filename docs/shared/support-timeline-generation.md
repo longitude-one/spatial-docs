@@ -98,7 +98,7 @@ The forecast and actual release may differ; the generator does not require one t
 
 A `null` end date does not mean indefinite support. Only announced, placeable periods are drawn.
 The implementation uses UTC calendar days and treats support end dates as inclusive; interval geometry ends at the start of the following day.
-No countdown, elapsed duration, current-date marker or automatic release-state promotion is generated.
+No countdown, elapsed duration, current-date marker or automatic release-state promotion is generated in the standalone SVG.
 
 ## Node.js API
 
@@ -250,3 +250,15 @@ Both HTML and portable Markdown use the same generated SVG asset. Missing or unp
 invalid non-empty data fails before any images are replaced. PHP data never establishes a missing or empty library roadmap.
 When adding a PHP version, verify its announced dates, then run the roadmap tests, full tests, build and Markdown lint.
 Inspect representative released and planned library timelines in both site themes and at mobile widths.
+
+## Browser date marker
+
+The website adds a one-pixel muted red line across the library and PHP bar area at the visitor's current local calendar day.
+Browser JavaScript calculates its position from the same calendar geometry used to generate the SVG, including the inclusive final display day.
+The line refreshes at local midnight and when a suspended page becomes visible again; no daily build is required.
+It follows the image when resized or scrolled, leaves continuation arrows unchanged, and disappears when today is outside the display window.
+An accessible non-visible label identifies the date. No visible date label or additional legend is added.
+
+This is a website enhancement, not a support commitment. Without JavaScript, the complete static calendar and support table remain available.
+Standalone SVGs and portable Markdown retain the same script-free calendar assets and announced dates; they do not include a current-date marker.
+Use the Markdown page's HTML counterpart link to view the live marker.

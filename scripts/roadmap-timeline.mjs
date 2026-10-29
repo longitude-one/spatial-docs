@@ -62,8 +62,8 @@ function period(kind, start, end, label, geometry, y, planned, branchLabel, seco
   return `${result}</g>`;
 }
 
-/** Return a deterministic standalone SVG; no clock, support-duration policy or version classification is consulted. */
-export function generateSupportTimeline(input, displayWindow, { width: requestedWidth = 960, phpReference = null } = {}) {
+/** Build a standalone SVG and its shared calendar geometry without consulting the clock. */
+export function buildSupportTimeline(input, displayWindow, { width: requestedWidth = 960, phpReference = null } = {}) {
   const roadmap = validateRoadmapData(input);
   const php = phpReference === null ? null : validatePhpReference(phpReference);
   const window = validateTimelineWindow(displayWindow, roadmap.library);
@@ -152,6 +152,7 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
     phpRows.push(`${row}</g>`);
     y += 16;
   }
+  const barBottom = y + 2;
   y += 26;
   const legend = [];
   for (const [index, label] of ['Planned release (diamond)', 'Actual release (circle)', 'Active support', 'Security fixes only (hatched)'].entries()) {
@@ -162,7 +163,7 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
   }
   y += 130;
   const height = y + 20;
-  return [
+  const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${number(width)}" height="${height}" viewBox="0 0 ${number(width)} ${height}" role="img" aria-labelledby="timeline-title timeline-description">`,
     `<title id="timeline-title">${escape(title)}</title>`,
     `<desc id="timeline-description">${escape(description.join(' '))} Planned releases use diamonds, actual releases circles, active support a solid bar, and security fixes only a hatched bar. Arrows mark clipped support periods.</desc>`,
@@ -175,4 +176,10 @@ export function generateSupportTimeline(input, displayWindow, { width: requested
     ...years.map((tick) => `<g data-year="${tick.year}"><path d="M ${number(geometry.x(tick.position))} ${axisY - 7} v 7" stroke="${colors.text}"/><text x="${number(geometry.x(tick.position))}" y="${axisY - 12}" text-anchor="${tick.position === first ? 'start' : 'middle'}" font-size="12">${tick.year}</text></g>`),
     ...rows, ...(phpRows.length ? [`<g data-reference="PHP">${phpRows.join('')}</g>`] : []), ...legend, '</g>', '</svg>', '',
   ].join('\n');
+  return { svg, layout: { first, last, width, height, left: 24, right: width - 24, top: axisY, bottom: barBottom } };
+}
+
+/** Return a deterministic standalone SVG; browser-only decoration is not part of the portable image. */
+export function generateSupportTimeline(input, displayWindow, options) {
+  return buildSupportTimeline(input, displayWindow, options).svg;
 }

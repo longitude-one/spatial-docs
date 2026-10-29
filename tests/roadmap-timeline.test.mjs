@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import sax from 'sax';
-import { generateSupportTimeline } from '../scripts/roadmap-timeline.mjs';
+import { buildSupportTimeline, generateSupportTimeline } from '../scripts/roadmap-timeline.mjs';
 import { readRoadmapData, validateRoadmapData, validatePhpReference, validateTimelineWindow, RoadmapDataError } from '../scripts/roadmap-data.mjs';
 
 const run = promisify(execFile);
@@ -480,4 +480,22 @@ test('PHP reference configuration reuses schema and calendar diagnostics and rej
     phpData(branch({ version: '8.4', extra: true })),
     phpData(branch({ version: '8.4' }), branch({ version: '8.4' })),
   ]) assert.throws(() => generateSupportTimeline(data(branch()), window, { phpReference: input }), RoadmapDataError);
+});
+
+test('browser overlay geometry matches the SVG axis and exact library/PHP bar area, excluding heading and legend', () => {
+  const input = data(branch(), branch({ version: '2.x' }));
+  const phpReference = phpData(branch({ version: '8.4' }), branch({ version: '8.5' }));
+  const { svg, layout } = buildSupportTimeline(input, window, { phpReference });
+  assert.equal(svg, generateSupportTimeline(input, window, { phpReference }));
+  const primary = rows(svg);
+  const secondary = phpRows(svg);
+  assert.equal(layout.top, Number(rect(primary[0], 'active').attributes.y));
+  const last = rect(secondary.at(-1), 'active').attributes;
+  assert.equal(layout.bottom, Number(last.y) + Number(last.height));
+  assert.equal(layout.left, Number(rect(primary[0], 'active').attributes.x));
+  const end = rect(primary[0], 'security').attributes;
+  close(layout.right, Number(end.x) + Number(end.width));
+  assert.equal(layout.last - layout.first, 366);
+  assert.ok(layout.top > 0 && layout.bottom < layout.height);
+  assert.doesNotMatch(svg, /roadmap-today-marker|<script/);
 });

@@ -18,17 +18,17 @@ composer require longitude-one/spatial-types:^1.0
 ## Usage
 
 ```php
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineStringImmutable;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable;
 
-$point = new Point(1, 2);
+$point = new PointImmutable(1, 2);
 echo $point->getX(); // 1
 echo $point->getY(); // 2
 
-$lineString = new LineString([
-    new Point(1, 2, 4326),
-    new Point(3, 4, 4326),
-    new Point(5, 6, 4326),
+$lineString = new LineStringImmutable([
+    new PointImmutable(1, 2, 4326),
+    new PointImmutable(3, 4, 4326),
+    new PointImmutable(5, 6, 4326),
 ], 4326);
 $lineString->getSrid(); // 4326
 ```
@@ -48,22 +48,11 @@ of abstract and concrete classes in every dimension and family.
 instantiable classes. See [Instantiable spatial types](./instantiable-spatial-types.md)
 for the complete coverage matrix.
 
-## Immutability
+## Immutability and mutability
 
-Spatial values are immutable and safe to share: their coordinates, SRID, and
-aggregate membership are set at construction time and never changed through
-the public API. Use `withCoordinates()` with an immutable `Value\Coordinates`
-value to represent another location, or `withSpatialReference()` to associate
-the same coordinates with another declared reference. Both return new objects.
-
-`LineString`, `Polygon`, `Triangle`, and `PolyhedralSurface` also provide
-`withArrayOfCoordinates()` to create a new instance with replacement
-coordinates. This preserves their family, dimension, and SRID without changing
-the source object.
-
-This prevents a value shared by other aggregates from silently changing them.
-See [Immutability](./immutability.md) for the rationale, examples, and the
-complete contract.
+Choose immutable types for safe reuse of shared spatial values, or mutable types
+for flexible, in-place editing. See [Immutability and mutability](./immutability.md)
+for the benefits of each approach.
 
 ## Spatial reference system (SRS)
 
@@ -72,17 +61,18 @@ projection remains available through `getSrid()`, while `getSpatialReference()`
 preserves the optional authority (for example `EPSG:4326`). Constructors and
 factories accept either a legacy integer or a `SpatialReference` instance.
 
-All members of an aggregate must have exactly the same spatial reference
-system, including the unnamed reference represented by identifier `0`. It is
-not a wildcard. Use `withSpatialReference()` (or the legacy `withSrid()`) only
-to relabel coordinates; neither method performs a reprojection.
+For valid aggregates, members must use the same complete spatial reference,
+including its authority. Identifier `0` is an unnamed reference, not a wildcard.
+Constructors retain declared metadata without enforcing geometric validity;
+use [Spatial Validator](../../spatial-validator/v1/index.md) to check compatibility explicitly.
 
-See [Spatial reference systems](./spatial-reference-systems.md) for the
-strict aggregate rule, its ISO/IEC 13249-3 basis, and the distinction between
-declaring a reference and transforming coordinates.
+Immutable classes provide `withSpatialReference()` and `withSrid()`; mutable
+classes provide `setSpatialReference()` and `setSrid()`. These operations relabel
+coordinates without reprojecting them.
+See [Spatial reference systems](./spatial-reference-systems.md) for examples.
 
 ## Further reference
 
-- [Spatial validators](./validators.md)
-- [Empty MultiLineString interoperability](./empty-multilinestring-interoperability.md)
+- [Geometry and Geography](./mode-geography-geometry.md)
+- [Structural and geometric validation](./validators.md)
 - [Library roadmap](../index.md)

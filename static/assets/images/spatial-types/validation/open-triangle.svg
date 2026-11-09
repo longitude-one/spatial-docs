@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 390" role="img" aria-labelledby="title description">
+  <title id="title">Open triangle boundary</title>
+  <desc id="description">A (0, 0), B (4, 0), C (0, 3) form an open boundary. The dashed C to A segment is missing from the data. Construction succeeds, but triangle validation fails.</desc>
+  <rect width="760" height="390" fill="#F5F8FA" />
+  <g font-family="sans-serif" fill="#183D55">
+    <text x="28" y="35" font-size="21" font-weight="bold">Open triangle boundary</text>
+    <text x="28" y="65" font-size="18">Structure accepted by Spatial Types</text>
+    <polyline points="120,270 340,270 120,105" fill="none" stroke="#D45151" stroke-width="4" stroke-linejoin="round" />
+    <path d="M120 105 V270" stroke="#D45151" stroke-width="3" stroke-dasharray="8 7" />
+    <g fill="#D45151" stroke="#183D55" stroke-width="1.5">
+      <circle cx="120" cy="270" r="6" /><circle cx="340" cy="270" r="6" /><circle cx="120" cy="105" r="6" />
+    </g>
+    <g font-size="18">
+      <text x="68" y="300">A (0, 0)</text><text x="310" y="300">B (4, 0)</text><text x="68" y="95">C (0, 3)</text>
+      <text x="430" y="145">Stored: A → B → C</text>
+      <text x="430" y="185">Missing: return to A</text>
+      <text x="430" y="225">Dashed edge is not stored.</text>
+      <text x="430" y="265">No closed triangular boundary.</text>
+    </g>
+    <rect x="24" y="325" width="712" height="45" rx="6" fill="#D45151" fill-opacity="0.12" stroke="#D45151" />
+    <text x="40" y="354" font-size="18" font-weight="bold">ERROR: geometrically invalid, but structurally possible</text>
+  </g>
+</svg>

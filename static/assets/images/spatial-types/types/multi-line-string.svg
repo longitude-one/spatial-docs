@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">MultiLineString examples</title>
+  <desc id="description">One MultiLineString containing two disconnected line strings, each composed of straight segments.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">Two LineString members</text>
+    <polyline points="65,225 155,105 280,180" fill="none" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <polyline points="420,110 530,225 680,150" fill="none" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <circle cx="65" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="155" cy="105" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="280" cy="180" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="420" cy="110" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="530" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="680" cy="150" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="115" y="260" font-size="18" fill="#183D55">Member 1</text>
+    <text x="505" y="260" font-size="18" fill="#183D55">Member 2</text>
+    <text x="45" y="305" font-size="18" fill="#183D55">There is no implicit segment between members.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="45" y="240">A</text>
+    <text x="150" y="90">B</text>
+    <text x="290" y="185">C</text>
+    <text x="415" y="95">D</text>
+    <text x="525" y="250">E</text>
+    <text x="690" y="155">F</text>
+  </g>
+</svg>

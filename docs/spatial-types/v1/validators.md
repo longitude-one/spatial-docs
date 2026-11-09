@@ -1,173 +1,137 @@
 ---
-title: Spatial validators
-description: Symfony Validator constraints, internal invariants and opt-in spatial validation in Spatial Types 1.x.
+title: Structural and geometric validation
+description: Understand the structural guarantees of Spatial Types and the geometric checks performed explicitly by Spatial Validator.
 ---
 
-Symfony Validator `^5.4 || ^6.0 || ^7.0 || ^8.0` is supported. Versions below
-5.4 and future major versions such as 9.x are not accepted. The library still
-requires PHP 8.4 or later within PHP 8.x, independently of Symfony's requirements.
-CI explicitly installs and verifies Validator 5.4.x, 6.4.x, 7.4.x and 8.1.x,
-then runs the complete test suite for each version.
+`longitude-one/spatial-types` checks that a spatial object's structure can be
+represented safely in PHP. `longitude-one/spatial-validator` checks whether that
+representation describes a valid geometry. Creating an object successfully does
+not mean that its geometry is valid.
 
-This library exposes Symfony Validator constraints for checking spatial values.
-They are useful in two complementary situations:
+## What Spatial Types checks
 
-- **Internal invariants** protect a value while it is built or updated. The
-  library invokes the relevant validator and throws `InvalidValueException` or
-  a compatibility exception when the invariant is not met.
-- **Application rules** are opt-in. Create a Symfony validator and apply the
-  constraint yourself; validation returns a `ConstraintViolationList` and does
-  not alter the spatial value.
+Spatial Types enforces the expected component types, supported coordinate layouts,
+and mutable or immutable ownership rules. These checks protect the object model;
+they do not determine whether points form a valid line, triangle, or surface.
 
-The second category is deliberately not imposed by constructors. For example,
-a `LineString` can be non-simple when an application needs to retain imported
-or invalid geometry for later review.
-
-## Summary
-
-| Constraint | Rule |
-| --- | --- |
-| `NoConsecutiveDuplicatePoints` | Adjacent points must differ. |
-| `MinimumPointCount` | Requires at least the configured number of points (four by default). |
-| `FirstPointEqualsLastPoint` | First and last points are equal. |
-| `Ring` | Composes minimum point count, closure, and no consecutive duplicate points. |
-| `Triangle` | Empty or one four-position exterior ring, validated through `Ring`, without holes. |
-| `PolyhedralSurface` | Empty or connected planar 3D faces with simple rings and consistent shared edges; free edges are allowed. |
-| `SameFamily` | Uses the requested `Geometry` or `Geography` family. |
-| `SameDimension` | Uses the requested `XY`, `XYZ`, `XYM`, or `XYZM` layout. |
-| `SameSpatialReference` | Uses the requested complete spatial reference. |
-| `SimpleLineString` | Is simple in the XY projection; Z and M are ignored. |
-| `SimpleThreeDimensionalLineString` | Is simple in XYZ space; M is ignored. |
-
-### Application of constraints
-
-| Constraint | Value | Applied internally | Typical external use |
-| --- | --- | --- | --- |
-| `NoConsecutiveDuplicatePoints` | `LineString` | Yes: `LineString` construction and coordinate replacement. | Audit an implementation of `LineStringInterface`. |
-| `MinimumPointCount` | `LineString` | Through `Ring` when a polygon receives a ring. | Validate a candidate ring before building a polygon. |
-| `FirstPointEqualsLastPoint` | `LineString` | Through `Ring` when a polygon receives a ring. | Validate a candidate ring. |
-| `Ring` | `LineString` | Yes: polygon boundaries. | Validate a ring independently. |
-| `Triangle` | `PolygonInterface` | Yes: triangle construction and coordinate replacement. | Check whether a polygon has triangle structure. |
-| `PolyhedralSurface` | `PolyhedralSurfaceInterface` | Yes: construction and coordinate replacement. | Audit patch boundaries without requiring a closed solid. |
-| `SameFamily` | Spatial value | Yes: aggregate membership. | Validate an incoming member against an expected family. |
-| `SameDimension` | Spatial value | Yes: aggregate membership. | Validate an incoming member against an expected layout. |
-| `SameSpatialReference` | Spatial value | Yes: aggregate membership. | Validate an incoming member against an expected reference. |
-| `SimpleLineString` | `LineString` | No. | Apply the usual two-dimensional simplicity rule. |
-| `SimpleThreeDimensionalLineString` | `XYZ`/`XYZM` `LineString` | No. | Apply a three-dimensional simplicity rule. |
-
-“Applied internally” describes the library's public constructors and immutable
-replacement methods. It does not mean every constraint is automatically run
-when Symfony validates an object.
-
-## Using a constraint externally
-
-Create Symfony's validator, validate the value, then inspect the violation
-list. No exception is thrown merely because the rule fails.
+For example, an immutable LineString cannot contain mutable Points:
 
 ```php
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SimpleLineString;
-use Symfony\Component\Validator\Validation;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Point;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineStringImmutable;
 
-$line = new LineString([[0, 0], [2, 2], [0, 2], [2, 0]]);
-$violations = Validation::createValidator()->validate($line, new SimpleLineString());
+$pointA = new Point(0, 0);
+$pointB = new Point(1, 1);
 
-if (0 !== count($violations)) {
-    // The line self-intersects in XY.
-}
+// Rejected during construction: the supplied points are mutable.
+$line = new LineStringImmutable([$pointA, $pointB]);
 ```
 
-Several constraints may be evaluated together:
+This is a structural error: changing either point later would silently change a
+supposedly immutable line. Supply `PointImmutable` objects or coordinate arrays
+instead. Whether the resulting line is geometrically valid is a separate question.
+
+## What Spatial Validator checks
+
+Spatial Validator inspects an existing object through Symfony constraints. Its
+`Spatial` constraint selects the validator for the declared spatial type. Checks
+include point coordinates, ring closure, triangle geometry, component reference
+compatibility, and topology where supported. Optional properties such as line
+simplicity require additional constraints.
+
+Validation reports violations without repairing the geometry or transforming its
+coordinates. Supported checks depend on the type, dimension, and Geometry or
+Geography family; unavailable checks produce warnings.
+
+All three examples below are **structurally valid representations accepted by
+Spatial Types, but geometrically invalid**. Red outlines and explicit ERROR labels
+identify the geometric problem; red does not mean construction is rejected.
+
+### A triangle with an open boundary
 
 ```php
-use LongitudeOne\SpatialTypes\Validator\Constraints\FirstPointEqualsLastPoint;
-use LongitudeOne\SpatialTypes\Validator\Constraints\MinimumPointCount;
-use LongitudeOne\SpatialTypes\Validator\Constraints\NoConsecutiveDuplicatePoints;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SimpleLineString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\TriangleImmutable;
 
-$violations = Validation::createValidator()->validate($line, [
-    new MinimumPointCount(),
-    new FirstPointEqualsLastPoint(),
-    new NoConsecutiveDuplicatePoints(),
-    new SimpleLineString(),
+$triangle = new TriangleImmutable([
+    [[0, 0], [4, 0], [0, 3]],
 ]);
 ```
 
-Use `Ring` instead of its three structural components when simplicity is not a
-requirement. Add `SimpleLineString` separately when it is. `PolyhedralSurface`
-composes `Ring` and `SimpleThreeDimensionalLineString` for each face boundary,
-checks face planarity and tests oriented edge incidence and global connectivity.
-Empty surfaces and single faces are accepted, but empty member faces are not.
-The edge test splits common segments at existing vertices and ignores M. It
-uses exact XYZ arithmetic, including in Geography, without geodesic modelling.
-It does not validate arbitrary face-interior intersections, hole containment or
-vertex-manifold topology. A surface can have free boundary edges; closure around
-a solid is not required.
+Spatial Types accepts this representation: it contains coordinate pairs from
+which immutable points and a boundary can be built. It does not close the boundary
+or check that it describes a valid triangle.
 
-## Two-dimensional and three-dimensional simplicity
+Spatial Validator's triangle rules require a non-empty triangle to have three
+distinct vertices and a closed exterior boundary with four positions:
+A → B → C → A. Here, the final `[0, 0]` is missing. Geometric validation must
+report the open boundary and incorrect position count. Adding that final position
+would give this example a valid triangular boundary.
 
-`SimpleLineString` checks only X/Y. An XY crossing is a violation even when
-the segments use different elevations. This corresponds to the usual 2D
-topological predicate.
+![Open A–B–C boundary: structurally accepted, geometrically invalid because the return to A is missing.](../../assets/images/spatial-types/validation/open-triangle.svg)
 
-`SimpleThreeDimensionalLineString` accepts only line strings with a Z ordinate
-(`XYZ` or `XYZM`) and checks X/Y/Z. Two segments that cross in projection but
-are at different elevations do not meet in 3D. M is not a spatial coordinate
-for this rule and is ignored.
+### A triangle with four distinct vertices
 
 ```php
-use LongitudeOne\SpatialTypes\Types\Dimension3z\Geometry\LineString;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SimpleThreeDimensionalLineString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\TriangleImmutable;
 
-$line = new LineString([[0, 0, 0], [2, 2, 0], [0, 2, 1], [2, 0, 1]]);
-$violations = Validation::createValidator()->validate($line, new SimpleThreeDimensionalLineString());
-
-// No violation: the projected crossing occurs at two different elevations.
-```
-
-## Compatibility constraints
-
-The three compatibility constraints use the expected value as their
-constructor argument. This mirrors the checks performed when a spatial value
-is added to an aggregate.
-
-```php
-use LongitudeOne\Core\Enum\CoordinateDimensionEnum;
-use LongitudeOne\Core\Enum\SpatialModelEnum;
-use LongitudeOne\SpatialTypes\Reference\SpatialReference;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SameDimension;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SameFamily;
-use LongitudeOne\SpatialTypes\Validator\Constraints\SameSpatialReference;
-
-$violations = Validation::createValidator()->validate($line, [
-    new SameFamily(SpatialModelEnum::GEOMETRY),
-    new SameDimension(CoordinateDimensionEnum::XYZ),
-    new SameSpatialReference(SpatialReference::fromSrid(2154), 'line string'),
+$triangle = new TriangleImmutable([
+    [[0, 0], [4, 0], [4, 3], [0, 3], [0, 0]],
 ]);
 ```
 
-An SRID of `0` is a concrete unnamed spatial reference, not a wildcard. See
-[Spatial reference systems](spatial-reference-systems.md) for the membership
-rules and their rationale.
+This example has **four distinct vertices**, A, B, C, and D, plus a repeated A
+to close the boundary: five stored positions in total. A valid triangular boundary
+has three distinct vertices and four stored positions, including closure.
 
-## Triangle structure
+Spatial Types accepts this structure without checking the vertex count. The shape
+is a rectangle declared as a Triangle: it is **structurally valid but geometrically
+invalid for its declared type**. Spatial Validator's triangle rules must report
+the incorrect exterior position count, even though the boundary is closed.
 
-`Triangle` validates any `PolygonInterface`, including ordinary polygons and
-third-party implementations. It accepts an empty boundary; otherwise it requires
-exactly one exterior ring containing four positions and no interior rings
-(ISO/IEC CD 13249-3, section 8.4). It composes `Ring` to check closure and
-consecutive duplicate points. It does not test non-collinearity or full polygon
-topology.
+![Closed A–B–C–D–A rectangle stored as a Triangle: structurally accepted, geometrically invalid with four distinct vertices.](../../assets/images/spatial-types/validation/four-vertex-triangle.svg)
+
+### A collection with different SRIDs
 
 ```php
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Polygon;
-use LongitudeOne\SpatialTypes\Validator\Constraints\Triangle;
-use Symfony\Component\Validator\Validation;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\GeometryCollectionImmutable;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable;
 
-$polygon = new Polygon([[[0, 0], [4, 0], [0, 4], [0, 0]]]);
-$violations = Validation::createValidator()->validate($polygon, new Triangle());
+$collection = new GeometryCollectionImmutable(4326, [
+    new PointImmutable(2, 48, 4326),
+    new PointImmutable(700000, 6600000, 2154),
+]);
 ```
 
-Triangle values invoke this constraint through `TriangleValidation` during
-construction and immutable coordinate replacements, in both families and all
-four coordinate layouts. Invalid values raise `InvalidValueException`.
+Spatial Types retains the declared references: the collection and first point
+use SRID `4326`, while the second point uses `2154`. All components are immutable
+spatial objects, so the representation can be constructed.
+
+Spatial Validator checks that each component has the same spatial reference as
+its parent. It must report the second point's incompatible reference. This check
+compares the complete reference, including its authority when present, rather
+than only the integer SRID. Validation does not reproject the point; correcting
+the mismatch requires coordinates expressed in the intended reference.
+
+This collection is **structurally valid but geometrically invalid because its
+component references are incompatible**. The illustration uses separate cards:
+the two coordinate pairs must not be plotted as though they shared one reference.
+
+![Collection with SRID 4326 containing points in SRIDs 4326 and 2154: structurally accepted, geometrically invalid reference mismatch.](../../assets/images/spatial-types/validation/mixed-srid-collection.svg)
+
+## Apply validation explicitly
+
+Install `longitude-one/spatial-validator` with a version compatible with your
+Spatial Types API, then use its Symfony constraints under
+`LongitudeOne\SpatialValidator\Validator\Constraints`.
+See the [Spatial Validator guide](../../spatial-validator/v1/index.md) for setup
+and validation calls, and [geometry type validators](../../spatial-validator/v1/geometric-types.md)
+for the detailed checks.
+
+Validator versions that still call `isEmpty()`, `isClosed()`, or `isSimple()` on
+spatial objects require adaptation: these methods are no longer exposed by
+Spatial Types. The construction examples above describe Spatial Types behaviour;
+the geometric checks described alongside them require a compatible validator.
+
+Validate mutable objects again after editing when your application requires a
+valid result. Immutability protects against indirect edits; it does not establish
+geometric validity.

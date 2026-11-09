@@ -13,7 +13,6 @@ no historical major is reassigned. Library-specific APIs remain in that library.
 | `docs/immutability.md` | `immutability.md` |
 | `docs/spatial-reference-systems.md` | `spatial-reference-systems.md` |
 | `docs/validators.md` | `validators.md` |
-| `docs/empty-multilinestring-interoperability.md` | `empty-multilinestring-interoperability.md` |
 
 ## Adaptations and exclusions
 

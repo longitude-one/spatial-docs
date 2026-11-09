@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 390" role="img" aria-labelledby="title description">
+  <title id="title">Collection with incompatible references</title>
+  <desc id="description">A collection declares SRID 4326. Point A (2, 48) declares SRID 4326; point B (700000, 6600000) declares SRID 2154. Both can be stored, but B has an incompatible reference. Cards are schematic, not a shared coordinate plot.</desc>
+  <rect width="760" height="390" fill="#F5F8FA" />
+  <g font-family="sans-serif" fill="#183D55">
+    <text x="28" y="35" font-size="21" font-weight="bold">Collection with incompatible references</text>
+    <text x="28" y="65" font-size="18">Structure accepted by Spatial Types</text>
+    <rect x="28" y="88" width="704" height="215" rx="8" fill="none" stroke="#D45151" stroke-width="3" />
+    <text x="48" y="118" font-size="19" font-weight="bold">GeometryCollection — SRID 4326</text>
+    <rect x="48" y="138" width="314" height="100" rx="6" fill="white" stroke="#183D55" />
+    <circle cx="70" cy="168" r="6" fill="#2784C2" stroke="#183D55" />
+    <text x="88" y="174" font-size="18">A (2, 48)</text>
+    <text x="66" y="210" font-size="18">SRID 4326: matches parent</text>
+    <rect x="382" y="138" width="330" height="100" rx="6" fill="#D45151" fill-opacity="0.12" stroke="#D45151" stroke-width="3" />
+    <circle cx="404" cy="168" r="6" fill="#D45151" stroke="#183D55" />
+    <text x="422" y="174" font-size="18">B (700000, 6600000)</text>
+    <text x="400" y="210" font-size="18" font-weight="bold">SRID 2154: ERROR, mismatch</text>
+    <text x="48" y="275" font-size="17">Schematic membership diagram; no common coordinate plane or reprojection.</text>
+    <rect x="24" y="325" width="712" height="45" rx="6" fill="#D45151" fill-opacity="0.12" stroke="#D45151" />
+    <text x="40" y="354" font-size="18" font-weight="bold">ERROR: geometrically invalid, but structurally possible</text>
+  </g>
+</svg>

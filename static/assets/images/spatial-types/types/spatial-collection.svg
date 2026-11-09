@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">SpatialCollection examples</title>
+  <desc id="description">One spatial collection containing a Point, a LineString and a Polygon.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">Different member types in one collection</text>
+    <text x="110" y="160" font-size="18" fill="#183D55">Point</text>
+    <polyline points="235,225 310,115 365,200" fill="none" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <text x="240" y="265" font-size="18" fill="#183D55">LineString</text>
+    <polygon points="470,225 680,225 635,105 510,120" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <text x="530" y="265" font-size="18" fill="#183D55">Polygon</text>
+    <text x="45" y="310" font-size="18" fill="#183D55">All three objects are members of the same collection.</text>
+  </g>
+  <g>
+    <circle cx="100" cy="170" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="235" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="310" cy="115" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="365" cy="200" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="470" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="680" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="635" cy="105" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="510" cy="120" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="80" y="160">A</text>
+    <text x="215" y="240">B</text>
+    <text x="305" y="100">C</text>
+    <text x="375" y="205">D</text>
+    <text x="450" y="235">E</text>
+    <text x="690" y="235">F</text>
+    <text x="640" y="93">G</text>
+    <text x="490" y="110">H</text>
+  </g>
+</svg>

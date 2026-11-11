@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">LineString examples</title>
+  <desc id="description">A two-point segment and a four-point open line with three straight segments.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">One segment</text>
+    <polyline points="65,220 275,115" fill="none" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <circle cx="65" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="275" cy="115" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="415" y="52" font-size="20" fill="#183D55">Several segments</text>
+    <polyline points="430,220 505,110 590,200 685,105" fill="none" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <circle cx="430" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="505" cy="110" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="590" cy="200" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="685" cy="105" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="45" y="290" font-size="18" fill="#183D55">Points are connected in sequence.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="47" y="240">A</text>
+    <text x="285" y="105">B</text>
+    <text x="410" y="235">C</text>
+    <text x="500" y="95">D</text>
+    <text x="585" y="225">E</text>
+    <text x="695" y="95">F</text>
+  </g>
+</svg>

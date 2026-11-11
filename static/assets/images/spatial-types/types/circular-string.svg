@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">CircularString examples</title>
+  <desc id="description">A semicircular arc through A, B and C, followed by two joined arcs through D, E, F, G and H. The second joined arc has half the radius of the first, with a shared downward vertical tangent at F and an upward vertical tangent at H.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <!-- Second example: svgX = 470 + 80*x; svgY = 180 - 80*y. D(-1,0), E(0,1), F(1,0), G(1.5,-0.5), H(2,0). D-E-F: center (0,0), radius 1. F-G-H: center (1.5,0), radius 0.5. Tangents at F agree and are vertical; the tangent at H is vertical. -->
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">One circular arc</text>
+    <path d="M65 210 A100 100 0 0 1 265 210" fill="none" stroke="#2784C2" stroke-width="3" />
+    <circle cx="65" cy="210" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="165" cy="110" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="265" cy="210" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="405" y="52" font-size="20" fill="#183D55">Two joined arcs</text>
+    <path d="M390 180 A80 80 0 0 1 550 180 A40 40 0 0 0 630 180" fill="none" stroke="#2784C2" stroke-width="3" />
+    <circle cx="390" cy="180" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="470" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="550" cy="180" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="590" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="630" cy="180" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="45" y="300" font-size="18" fill="#183D55">The curve passes through the marked points.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="75" y="200">A</text>
+    <text x="175" y="100">B</text>
+    <text x="275" y="200">C</text>
+    <text x="372" y="205">D</text>
+    <text x="463" y="83">E</text>
+    <text x="544" y="164">F</text>
+    <text x="584" y="247">G</text>
+    <text x="640" y="184">H</text>
+  </g>
+</svg>

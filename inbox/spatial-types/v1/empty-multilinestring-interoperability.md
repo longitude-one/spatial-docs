@@ -1,12 +1,13 @@
----
-title: Empty MultiLineString members
-description: Empty MultiLineString member preservation and the dated WKT and WKB interoperability checks for Spatial Types 1.x.
----
+# Empty MultiLineString members
 
 Issue [#9](https://github.com/longitude-one/spatial-types/issues/9) protects the
 distinction between zero line-string members, one empty member, and a mixture
 of empty and non-empty members. The domain tests cover XY, XYZ, XYM and XYZM
 in both Geometry and Geography families, using objects and coordinate arrays.
+Member count and arrays preserve the distinction between zero members and
+stored EMPTY members. Emptiness evaluation belongs to `spatial-validator`.
+The interoperability results below are a dated snapshot of the specified
+external adapters, not a fresh verification after the EMPTY-predicate change.
 
 The available ISO/IEC CD 13249-3:201x(E), Committee Draft dated 2009-01-16,
 clause 9.4.1 defines `ST_MultiLineString` as a collection of `ST_LineString`

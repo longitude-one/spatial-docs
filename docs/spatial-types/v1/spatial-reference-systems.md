@@ -1,73 +1,87 @@
 ---
 title: Spatial reference systems
-description: SpatialReference identity, aggregate compatibility and reference replacement without coordinate transformation in Spatial Types 1.x.
+description: Preserve declared component references and distinguish reference propagation from coordinate transformation.
 ---
 
-Every spatial value has a `Reference\SpatialReference`. It identifies the
-spatial reference system (SRS) through an integer identifier and, when known,
-its authority. For example, `SpatialReference::epsg(4326)` represents
-`EPSG:4326`.
+Every spatial object has a `Reference\SpatialReference`: an integer identifier with an optional authority.
+For example, `SpatialReference::epsg(4326)` declares EPSG:4326. `getSrid()` exposes only the integer;
+use `getSpatialReference()` when the authority matters. Identifier 0 is an unnamed reference, not a wildcard.
 
-`getSrid()` remains available as the legacy integer view of that reference.
-Use `getSpatialReference()` when the authority must be retained or compared.
+## Supplied objects keep their reference
 
-## Aggregate invariant
-
-Every member of an aggregate must have exactly the same spatial reference as
-its parent. This applies to points in a `LineString`, rings in a `Polygon`, and
-components in a `CompoundCurve`, and all values contained by a `Multi*` type
-or a geometry collection.
-
-Consequently, this is invalid:
+Constructors retain supplied components and their references without checking reference compatibility with the parent.
+Coordinate arrays behave differently: newly created descendants receive the aggregate's reference.
+Composer's autoloader must already be loaded for these examples.
 
 ```php
 use LongitudeOne\SpatialTypes\Reference\SpatialReference;
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineStringImmutable;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable;
 
-new LineString([
-    new Point(2.3522, 48.8566), // The unnamed reference with identifier 0.
-], SpatialReference::epsg(4326));
+$point = new PointImmutable(1, 2);
+$line = new LineStringImmutable([$point, [3, 4]], SpatialReference::epsg(4326));
+
+assert($point === $line->getPoint(0));
+assert(0 === $line->getPoint(0)->getSrid());
+assert('EPSG' === $line->getPoint(1)->getSpatialReference()->authority);
+assert(4326 === $line->getPoint(1)->getSrid());
 ```
 
-It raises `InvalidSridException`. Identifier `0` is an unnamed reference, not a
-wildcard. A line string with the unnamed reference may contain only points with
-that same unnamed reference; a line string in `EPSG:4326` may contain only
-points in `EPSG:4326`.
+Construction succeeds despite the mismatch. Applications requiring compatible references must check the complete identity, including authority,
+through explicit [validation](./validators.md).
 
-This rule also distinguishes references that have the same identifier but a
-different authority. The full `SpatialReference` identity must match.
+## Copying preserves individual references
 
-## Why the library is strict
-
-ISO/IEC 13249-3, subclause 4.2.14 (`ST_GeomCollection`), states that all
-elements of a geometry collection are in the same spatial reference system and
-that it is also the collection's SRS. The standard then describes typed
-subcollections such as `ST_MultiPoint`, whose members are restricted to points.
-
-This library applies that same invariant consistently to every aggregate. It
-prevents a coordinate tuple expressed in one system from being silently read as
-coordinates in another system.
-
-## Changing a reference is not a transformation
-
-`withSpatialReference()` creates an immutable copy and changes only its declared
-reference. It does not change coordinates and therefore does not perform a
-coordinate transformation. `withSrid()` is the legacy integer equivalent.
-
-To obtain a valid value in a different SRS, calculate new coordinates with an
-external transformer, then create or update a value with those coordinates and
-the target `SpatialReference`.
+Immutable `copy()` preserves every component's own complete reference, even when it differs from the parent's.
+Component replacements such as `withPoint()` deeply copy unchanged components through the same contract.
+In contrast, `withSpatialReference()` and its integer equivalent `withSrid()` apply the requested reference recursively to copied descendants.
 
 ```php
 use LongitudeOne\SpatialTypes\Reference\SpatialReference;
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineStringImmutable;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable;
 use LongitudeOne\SpatialTypes\Value\Coordinates;
 
-$paris = new Point(2.3522, 48.8566, SpatialReference::epsg(4326));
-$lambert93 = $paris->withSpatialReference(SpatialReference::epsg(2154));
-$lambert93 = $lambert93->withCoordinates(Coordinates::xy(652469.0227, 6862035.2594));
+$point = new PointImmutable(1, 2, SpatialReference::epsg(4326));
+$line = new LineStringImmutable([$point, [3, 4]], 0);
+$copy = $line->copy();
+$edited = $line->withPoint(1, Coordinates::xy(5, 6));
+$relabeled = $line->withSpatialReference(SpatialReference::epsg(3857));
+
+assert(0 === $copy->getSrid());
+assert('EPSG' === $copy->getPoint(0)->getSpatialReference()->authority);
+assert(4326 === $edited->getPoint(0)->getSrid());
+assert($edited->getPoint(0) !== $point);
+assert(3857 === $relabeled->getPoint(0)->getSrid());
+assert($line->toArray() === $relabeled->toArray());
+assert(4326 === $point->getSrid());
 ```
 
-The Lambert 93 ordinates in this example must be calculated by that external
-transformer; this library intentionally does not provide it.
+## Mutable context propagation
+
+Mutable objects expose `setSpatialReference()`, `setSrid()` and `setFamily()`, returning the receiver.
+Aggregate context setters propagate to descendants by default; passing `false` as the second argument changes only the receiving declaration.
+This applies to paths, compound curves, polygons, surfaces, multi-objects and nested collections.
+
+```php
+use LongitudeOne\SpatialTypes\Types\Dimension2\LineString;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Point;
+
+$shared = new Point(1, 2, 4326);
+$first = new LineString([$shared], 4326);
+$second = new LineString([$shared], 4326);
+$first->setSrid(3857, false);
+assert(4326 === $shared->getSrid());
+$first->setSrid(2154);
+assert(2154 === $second->getPoint(0)->getSrid());
+assert(4326 === $second->getSrid());
+assert([1, 2] === $shared->toArray());
+```
+
+Shared descendants expose propagated changes through all their owners, while those other owners retain their own declarations.
+
+## Relabeling is not reprojection
+
+All these reference operations preserve ordinates. Assigning EPSG:3857 to a position expressed in EPSG:4326 does not calculate projected coordinates.
+For a real change of coordinate system, calculate target ordinates with an external transformer, then create or update an object with those ordinates and the target reference.
+See [immutable replacement](./mutability-and-immutability/immutability.md) and [mutable setters](./mutability-and-immutability/mutability.md).

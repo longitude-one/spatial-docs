@@ -120,4 +120,4 @@ See [spatial reference systems](../spatial-reference-systems.md) for reference h
 
 Immutability protects against indirect edits, not invalid geometry. Constructors and replacements do not automatically check closure, continuity or topology.
 Apply [geometric validation](../validators.md) explicitly when needed.
-For additional replacement methods, see the [immutable API reference](../instantiable-spatial-types.md#immutability-contract).
+For construction examples by spatial type, see the [type guides](../instantiable-spatial-types.md#type-guides).

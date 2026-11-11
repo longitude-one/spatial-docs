@@ -156,7 +156,7 @@ objects, including nested collections, through `MutableSpatialInterface`.
 coordinate layouts incompatible with the mutable receiver, without geometric checks.
 Mutable implementations remain independent of immutable classes and expose no
 copy operations. The public operations and ownership rules are documented in
-[mutable multi-objects and spatial collections](../instantiable-spatial-types.md#mutable-multi-objects-and-spatial-collections).
+[mutable editing guide](../mutability-and-immutability/mutability.md).
 
 ## Factory selection
 

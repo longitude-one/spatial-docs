@@ -13,7 +13,7 @@ arcs share an endpoint.
 
 ## CircularString — Supported representations
 
-Availability in Spatial Types `1.0.0-RC`:
+Availability in the current version of Spatial Types:
 
 | Coordinate layout | Geometry Mutable | Geometry Immutable | Geography Mutable | Geography Immutable |
 | --- | :---: | :---: | :---: | :---: |

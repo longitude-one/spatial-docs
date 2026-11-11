@@ -13,7 +13,7 @@ itself represent a solid.
 
 ## PolyhedralSurface — Supported representations
 
-Availability in Spatial Types `1.0.0-RC`:
+Availability in the current version of Spatial Types:
 
 | Coordinate layout | Geometry Mutable | Geometry Immutable | Geography Mutable | Geography Immutable |
 | --- | :---: | :---: | :---: | :---: |
@@ -22,7 +22,7 @@ Availability in Spatial Types `1.0.0-RC`:
 | XYM | ❌ | ❌ | ❌ | ❌ |
 | XYZM | ✅ | ✅ | ✅ | ✅ |
 
-In `1.0.0-RC`, PolyhedralSurface is implemented only for layouts containing Z: XYZ and XYZM.
+In the current version, PolyhedralSurface is implemented only for layouts containing Z: XYZ and XYZM.
 
 ## Creating the illustrated objects
 

@@ -5,6 +5,7 @@ description: Choose a supported spatial type, create a first object and find the
 
 Choose the type that matches your data, then use a [factory](./spatial-factories/index.md),
 the [builder](./spatial-builder.md) or a direct constructor to create it.
+For the organization of mutable and immutable classes, see [Type class hierarchy](./types/type-class-hierarchy.md).
 
 ## Type guides
 

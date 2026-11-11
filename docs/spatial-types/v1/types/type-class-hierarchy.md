@@ -1,167 +1,112 @@
 ---
 title: Type class hierarchy
-description: Separate immutable and mutable spatial class hierarchies, public interfaces and internal implementation bases in Spatial Types 1.x.
+description: Find public mutable and immutable spatial classes and choose the interfaces needed to read or edit them.
 sidebar_position: 1
 ---
 
-All abstract bases and traits shown here are internal implementation symbols.
-Their documented operations remain available through public concrete types.
-Common interfaces expose reads; immutable interfaces add copy and replacement operations; mutable interfaces add in-place edits.
+Spatial Types provides two groups of concrete classes: immutable values and mutable objects.
+Their namespaces help you find the right class; their interfaces describe the operations you can use.
+The trees below show namespace organization, not PHP inheritance.
 
-The following tree describes class inheritance, rather than the file layout.
-Abstract nodes are relative to `Internal\Types`; concrete spatial nodes remain
-relative to the public `Types` namespace. The dimension-specific and collection
-branches of every abstract base are preserved under `Internal\Types`.
-The point behavior and sequence-editing traits shown here are under
-`Internal\Types`.
-`{Dimension2, Dimension3m, Dimension3z, Dimension4zm}` represents
-one branch for each listed coordinate dimension and `{Geometry, Geography}` one
-concrete class for each spatial model.
+## Immutable classes
 
-`AbstractSpatialTypeImmutable` extends the read-only `AbstractSpatialType` base.
-The following hierarchy contains immutable implementation bases. Mutable points
-extend `AbstractSpatialType` through `AbstractPoint`, with concrete
-`Dimension{2,3m,3z,4zm}\Point` classes. `PointBehaviorTrait` shares point reads,
-coordinate initialization and parsing between `AbstractPoint` and
-`AbstractPointImmutable`; mutable points do not inherit copy operations.
-
-All immutable branches implement `ImmutableSpatialInterface::copy(): static`.
-The common base copies leaf values; aggregate storage owners recursively copy
-their spatial descendants while retaining each descendant's own declared
-context. Custom implementations must provide the same public contract; see
-[immutability guide](../mutability-and-immutability/immutability.md).
+Choose a dimension, then Geometry or Geography, then the spatial type with an `Immutable` suffix.
+For example, an immutable XY Geometry point is `LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable`.
 
 ```text
-AbstractSpatialTypeImmutable
-├── AbstractCompoundCurveImmutable
-│   └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\CompoundCurveImmutable
-├── AbstractCircularStringImmutable
-│   └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\CircularStringImmutable
-├── AbstractPointImmutable
-│   └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\PointImmutable
-├── AbstractPolygonImmutable
-│   ├── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\PolygonImmutable
-│   └── AbstractTriangleImmutable
-│       └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\TriangleImmutable
-├── AbstractPolyhedralSurfaceImmutable
-│   └── Dimension{3z,4zm}\{Geometry,Geography}\PolyhedralSurfaceImmutable
-├── AbstractMultiPolygonImmutable
-│   └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\MultiPolygonImmutable
-├── AbstractCollectionImmutable
-│   ├── Dimension2\AbstractCollectionImmutable
-│   │   ├── Dimension2\Geometry\GeometryCollectionImmutable
-│   │   └── Dimension2\Geography\GeographyCollectionImmutable
-│   └── Dimension{3m,3z,4zm}\{Geometry\GeometryCollectionImmutable,Geography\GeographyCollectionImmutable}
-├── Collection\AbstractPointCollectionImmutable
-│   ├── AbstractLineStringImmutable
-│   │   └── Dimension{2,3m,3z,4zm}\AbstractLineStringImmutable
-│   │       └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\LineStringImmutable
-│   └── AbstractMultiPointImmutable
-│       └── Dimension{2,3m,3z,4zm}\AbstractMultiPointImmutable
-│           └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\MultiPointImmutable
-└── Collection\AbstractLineStringCollectionImmutable
-    └── AbstractMultiLineStringImmutable
-        └── Dimension{2,3m,3z,4zm}\AbstractMultiLineStringImmutable
-            └── Dimension{2,3m,3z,4zm}\{Geometry,Geography}\MultiLineStringImmutable
+LongitudeOne\SpatialTypes\Types
+└── <dimension>
+    ├── Geometry
+    │   ├── PointImmutable
+    │   ├── LineStringImmutable
+    │   ├── CircularStringImmutable
+    │   ├── CompoundCurveImmutable
+    │   ├── PolygonImmutable
+    │   ├── TriangleImmutable
+    │   ├── PolyhedralSurfaceImmutable  (XYZ and XYZM only)
+    │   ├── MultiPointImmutable
+    │   ├── MultiLineStringImmutable
+    │   ├── MultiPolygonImmutable
+    │   └── GeometryCollectionImmutable
+    └── Geography
+        ├── Same spatial types as Geometry
+        └── GeographyCollectionImmutable instead of GeometryCollectionImmutable
 ```
 
-`LineStringInterface`, `CircularStringInterface` and `CompoundCurveInterface`
-extend `CurveInterface`, which exposes nullable start/end points
-in addition to `SpatialInterface`. Circular strings have their own point
-storage; they are not line strings. Geometric evaluation belongs to explicit validation.
-Immutable compound curves retain ordered `ImmutableCurveInterface` components
-and require curve interfaces and point tuples with numeric or null ordinates; functional compatibility
-and endpoint continuity are not checked.
+Immutable objects return new values through their applicable `with…` operations.
+Their family and coordinate layout are fixed by the concrete class.
+See [Immutability](../mutability-and-immutability/immutability.md) for an example of correcting one track without changing another.
 
-Mutable point-defined paths extend the read-only spatial base independently of
-immutable implementations:
+## Mutable classes
+
+Mutable classes live directly under the dimension namespace and have no `Immutable` suffix.
+For example, `LongitudeOne\SpatialTypes\Types\Dimension2\Point` represents an editable XY point.
+Its constructor selects Geometry or Geography, defaulting to Geometry.
 
 ```text
-AbstractSpatialType
-└── AbstractPointSequence
-    ├── AbstractLineString
-    │   └── Dimension{2,3m,3z,4zm}\LineString
-    └── AbstractCircularString
-        └── Dimension{2,3m,3z,4zm}\CircularString
+LongitudeOne\SpatialTypes\Types
+└── <dimension>
+    ├── Point
+    ├── LineString
+    ├── CircularString
+    ├── CompoundCurve
+    ├── Polygon
+    ├── Triangle
+    ├── PolyhedralSurface  (XYZ and XYZM only)
+    ├── MultiPoint
+    ├── MultiLineString
+    ├── MultiPolygon
+    └── SpatialCollection
 ```
 
-`PointSequenceEditingTrait` shares ordered membership editing between the two
-mutable path bases. These paths contain only `MutablePointInterface` instances;
-coordinate tuples create mutable points, and immutable components are rejected.
-Their interfaces refine the common read methods to return mutable points and
-expose type-specific mutation, including optional context propagation. The common
-interfaces remain read-only, and mutable paths expose no copy operations.
+The same mutable class supports either family. `SpatialCollection` is the mutable counterpart of both immutable heterogeneous collection classes.
+Setters edit the receiver; supplied mutable components remain shared by reference. See [Mutability](../mutability-and-immutability/mutability.md).
 
-Mutable compound curves use a separate base:
+## Dimension namespaces
 
-```text
-AbstractSpatialType
-└── AbstractCompoundCurve
-    └── Dimension{2,3m,3z,4zm}\CompoundCurve
+| Coordinate layout | Replace `<dimension>` with | Ordinates |
+| --- | --- | --- |
+| XY | `Dimension2` | X, Y |
+| XYZ | `Dimension3z` | X, Y, Z |
+| XYM | `Dimension3m` | X, Y, M |
+| XYZM | `Dimension4zm` | X, Y, Z, M |
+
+Both groups support these layouts, except PolyhedralSurface, which requires a layout containing Z.
+To select a type by its use case, see the [spatial type catalogue](../instantiable-spatial-types.md).
+
+## Use interfaces for application code
+
+Interfaces live under `LongitudeOne\SpatialTypes\Interfaces`.
+Use a common interface when your code only reads a value, and a representation-specific interface when it needs to edit or replace it.
+
+| Your code needs to… | Example interface |
+| --- | --- |
+| Read any spatial object's type, family or reference | `SpatialInterface` |
+| Read point coordinates, regardless of mutability | `PointInterface` |
+| Read ordered points from a line string | `LineStringInterface` |
+| Read a curve's start and end points | `CurveInterface` |
+| Copy an immutable value or replace its reference | `ImmutableSpatialInterface` |
+| Replace an immutable point's coordinates | `ImmutablePointInterface` |
+| Edit a point in place | `MutablePointInterface` |
+
+For example, a function reading a point's position can accept either representation without depending on a concrete class:
+
+```php
+use LongitudeOne\SpatialTypes\Interfaces\PointInterface;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\PointImmutable;
+use LongitudeOne\SpatialTypes\Types\Dimension2\Point;
+
+function position(PointInterface $point): array
+{
+    return $point->toArray();
+}
+
+assert([1, 2] === position(new PointImmutable(1, 2)));
+assert([3, 4] === position(new Point(3, 4)));
 ```
 
-`MutableCompoundCurveInterface` refines component getters to mutable line-string
-or circular-string interfaces and exposes ordered membership editing. Immutable
-compound curves retain their separate immutable base and copy contracts.
+Composer's autoloader must already be loaded. The objects implement the same read interface while retaining their own editing contracts.
+Internal abstract bases and traits are implementation details; application code can use public concrete classes and interfaces directly.
 
-Mutable polygons and triangles share ring storage and editing in a separate base:
-
-```text
-AbstractSpatialType
-└── AbstractPolygon
-    ├── Dimension{2,3m,3z,4zm}\Polygon
-    └── Dimension{2,3m,3z,4zm}\Triangle
-```
-
-`MutablePolygonInterface` refines ring accessors to `MutableLineStringInterface`
-and provides ring editing and ring-then-point replacement. `MutableTriangleInterface`
-adds the distinct triangle type contract. Both concrete variants retain mutable
-rings and points by reference and expose no immutable copy operations. Their
-layout and spatial type are fixed; geometric validity remains explicit.
-
-Mutable polyhedral surfaces use a separate patch-owning base:
-
-```text
-AbstractSpatialType
-└── AbstractPolyhedralSurface
-    └── Dimension{3z,4zm}\PolyhedralSurface
-```
-
-`MutablePolyhedralSurfaceInterface` refines patch accessors to
-`MutablePolygonInterface` and exposes patch editing plus patch-then-ring-then-point
-addressing. The base retains patches and their mutable descendants by reference.
-Coordinate arrays create mutable polygons in the fixed XYZ or XYZM layout;
-immutable surface implementations and their copy contracts remain separate.
-
-Mutable multi-objects and heterogeneous collections share ordered membership:
-
-```text
-AbstractSpatialType
-└── AbstractMutableCollection
-    ├── AbstractMultiPoint
-    │   └── Dimension{2,3m,3z,4zm}\MultiPoint
-    ├── AbstractMultiLineString
-    │   └── Dimension{2,3m,3z,4zm}\MultiLineString
-    ├── AbstractMultiPolygon
-    │   └── Dimension{2,3m,3z,4zm}\MultiPolygon
-    └── AbstractSpatialCollection
-        └── Dimension{2,3m,3z,4zm}\SpatialCollection
-```
-
-`MutableCollectionInterface` provides ordered member editing and recursive
-context propagation. Each `MutableMulti<Type>Interface` refines member reads to
-the corresponding mutable type. `SpatialCollection` accepts mutable spatial
-objects, including nested collections, through `MutableSpatialInterface`.
-`MutableComponentGuard` rejects immutable descendants, containment cycles and
-coordinate layouts incompatible with the mutable receiver, without geometric checks.
-Mutable implementations remain independent of immutable classes and expose no
-copy operations. The public operations and ownership rules are documented in
-[mutable editing guide](../mutability-and-immutability/mutability.md).
-
-## Factory selection
-
-[Public type-specific factories](../spatial-factories/index.md) parallel the dimension,
-family and type namespaces under `Factory`. Their shared static mode selects
-the immutable or mutable concrete implementation without changing this
-inheritance hierarchy. The immutable default and subsequent mode switches
-apply across all consumers in the same execution.
+If you prefer not to select concrete classes yourself, use [spatial factories](../spatial-factories/index.md)
+or the [spatial builder](../spatial-builder.md).

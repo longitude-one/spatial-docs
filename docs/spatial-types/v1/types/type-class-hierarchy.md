@@ -1,5 +1,5 @@
 ---
-title: Type class hierarchy
+title: Classes and interfaces
 description: Find public mutable and immutable spatial classes and choose the interfaces needed to read or edit them.
 sidebar_position: 1
 ---

@@ -9,6 +9,9 @@ sidebar_position: 5
 A CompoundCurve is an ordered sequence of curve components joined at their endpoints. In Spatial Types, its direct components are LineString or
 CircularString objects.
 
+Endpoint continuity describes a valid compound curve; construction does not enforce it. Disconnected or empty components can remain stored.
+Use explicit [geometric validation](../validators.md) to check continuity.
+
 ![One compound curve made of a straight segment followed by a semicircular arc. The components share an endpoint.](../../../assets/images/spatial-types/types/compound-curve.svg)
 
 ## CompoundCurve — Supported representations

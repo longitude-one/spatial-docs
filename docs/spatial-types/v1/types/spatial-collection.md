@@ -7,7 +7,7 @@ sidebar_position: 12
 ## What is a SpatialCollection?
 
 A SpatialCollection groups spatial objects, potentially of different types, into one value. It can also contain nested collections. The immutable variants
-are named GeometryCollection and GeographyCollection.
+are named GeometryCollectionImmutable and GeographyCollectionImmutable.
 
 ![One spatial collection containing a Point, a LineString and a Polygon.](../../../assets/images/spatial-types/types/spatial-collection.svg)
 

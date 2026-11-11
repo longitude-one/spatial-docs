@@ -9,6 +9,9 @@ sidebar_position: 8
 A PolyhedralSurface is a surface assembled from flat Polygon patches joined along shared edges in three-dimensional space. It may be open; it does not by
 itself represent a solid.
 
+Flatness and adjacency describe the intended surface geometry. Spatial Types stores patches without checking planarity, connectivity or surface topology.
+Construction does not certify a valid surface; use explicit [geometric validation](../validators.md) for the checks supported by your validator.
+
 ![An open surface with two rectangular patches, above a closed square-based pyramid with four triangular sides and a square base. Dashed edges are hidden.](../../../assets/images/spatial-types/types/polyhedral-surface.svg)
 
 ## PolyhedralSurface — Supported representations

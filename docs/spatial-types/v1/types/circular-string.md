@@ -9,6 +9,9 @@ sidebar_position: 4
 A CircularString is a curve made of circular arcs joined end to end. An arc is described by its start point, a point on the arc and its end point; adjacent
 arcs share an endpoint.
 
+This describes the intended curve geometry. Spatial Types stores the defining points without checking arc cardinality or geometric validity.
+Incomplete point sequences remain representable; use explicit [geometric validation](../validators.md) when needed.
+
 ![A semicircle through A–B–C and two joined circular arcs through D–E–F–G–H, with a smooth vertical join at F and a vertical tangent at H.](../../../assets/images/spatial-types/types/circular-string.svg)
 
 ## CircularString — Supported representations

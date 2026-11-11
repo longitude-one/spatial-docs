@@ -6,8 +6,11 @@ sidebar_position: 7
 
 ## What is a Triangle?
 
-A Triangle is a Polygon with three distinct vertices and no holes. Its single exterior ring returns to its starting point, so the ring contains four
+A valid Triangle is a Polygon with three distinct vertices and no holes. Its single exterior ring returns to its starting point, so the ring contains four
 positions.
+
+Spatial Types can also store an incomplete or open triangle boundary, or additional rings, without enforcing these geometric rules.
+Use explicit [geometric validation](../validators.md) to check the represented triangle.
 
 ![Two triangles with three vertices each. Each exterior ring closes by repeating its first position.](../../../assets/images/spatial-types/types/triangle.svg)
 

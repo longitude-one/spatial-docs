@@ -6,7 +6,10 @@ sidebar_position: 6
 
 ## What is a Polygon?
 
-A Polygon represents an area bounded by one exterior ring and, optionally, interior rings that form holes. Its rings are closed LineString objects.
+A Polygon represents an area bounded by one exterior ring and, optionally, interior rings that form holes. A valid polygon has closed LineString boundaries.
+
+Spatial Types stores the supplied boundaries without checking closure or hole topology. Construction alone does not establish polygon validity.
+Use explicit [geometric validation](../validators.md) when your application requires it.
 
 ![A polygon without holes and a polygon with one rectangular hole. The hole is excluded from the filled area.](../../../assets/images/spatial-types/types/polygon.svg)
 

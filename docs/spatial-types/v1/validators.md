@@ -52,6 +52,5 @@ Its constraints live under `LongitudeOne\SpatialValidator\Validator\Constraints`
 See the [setup guide](../../spatial-validator/v1/index.md) and [geometry type validators](../../spatial-validator/v1/geometric-types.md)
 for supported checks and validation calls. Available checks depend on type, layout and family.
 
-The spatial interfaces expose no `isEmpty()`, `isClosed()`, `isSimple()` or `isLine()` methods.
-Validator versions that call those removed predicates require adaptation; constructor acceptance is not a substitute for validation.
+Use Spatial Validator to evaluate emptiness, closure and simplicity; these evaluations are not operations on the spatial value itself.
 Revalidate mutable objects after edits whenever the consuming application requires valid geometry.

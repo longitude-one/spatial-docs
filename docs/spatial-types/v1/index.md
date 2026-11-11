@@ -33,20 +33,18 @@ $lineString = new LineStringImmutable([
 $lineString->getSrid(); // 4326
 ```
 
-For the complete catalogue of concrete types, constructors, accessors, and
-mutability rules, see [Instantiable spatial types](./instantiable-spatial-types.md).
+To choose a supported type and find its construction guide, see [Instantiable spatial types](./instantiable-spatial-types.md).
 
 ## Type class hierarchy
 
-See [Type class hierarchy](./types/type-class-hierarchy.md) for the complete inheritance
-of abstract and concrete classes in every dimension and family.
+See [Type class hierarchy](./types/type-class-hierarchy.md) for the organization of mutable and immutable implementations.
 
 ### Types not yet available
 
 `CurvePolygon`, `MultiCurve`,
 `MultiSurface` and `TIN` do not yet have
 instantiable classes. See [Instantiable spatial types](./instantiable-spatial-types.md)
-for the complete coverage matrix.
+for the supported types and implementation-status API.
 
 ## Mutability and immutability
 

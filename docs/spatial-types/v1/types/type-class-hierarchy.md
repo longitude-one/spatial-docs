@@ -68,8 +68,8 @@ AbstractSpatialTypeImmutable
 `LineStringInterface`, `CircularStringInterface` and `CompoundCurveInterface`
 extend `CurveInterface`, which exposes nullable start/end points
 in addition to `SpatialInterface`. Circular strings have their own point
-storage; they are not line strings. Closure and simplicity predicates are absent from the spatial interfaces.
-Compound curves retain ordered `ImmutableCurveInterface` components
+storage; they are not line strings. Geometric evaluation belongs to explicit validation.
+Immutable compound curves retain ordered `ImmutableCurveInterface` components
 and require curve interfaces and point tuples with numeric or null ordinates; functional compatibility
 and endpoint continuity are not checked.
 

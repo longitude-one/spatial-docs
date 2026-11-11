@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 730" role="img" aria-labelledby="title description">
+  <title id="title">PolyhedralSurface examples</title>
+  <desc id="description">Top: an open surface made of two rectangular patches sharing an edge. Bottom: a closed square-based pyramid made of four triangular side patches and one square base patch. Dashed lines show hidden edges. Both examples represent surfaces, not solid interiors.</desc>
+  <rect width="740" height="730" fill="#F5F8FA" />
+  <!-- Axonometric projection: svgX = 340 + 40*x + 16*y; svgY = 240 - 12*y - 32*z.
+       Vertices: (-4,0,2), (0,0,0), (0,6,0), (-4,6,2), (4,0,2), (4,6,2). -->
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">Two joined patches: an open surface</text>
+    <polygon points="180,176 340,240 436,168 276,104" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <polygon points="340,240 500,176 596,104 436,168" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <path d="M340 240 L436 168" fill="none" stroke="#183D55" stroke-width="5" />
+    <path d="M340 240 L436 168" fill="none" stroke="#DB9251" stroke-width="3" />
+    <circle cx="180" cy="176" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="340" cy="240" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="436" cy="168" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="276" cy="104" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="500" cy="176" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="596" cy="104" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="180" y="235" font-size="18" fill="#183D55">Patch 1</text>
+    <text x="510" y="235" font-size="18" fill="#183D55">Patch 2</text>
+    <text x="45" y="290" font-size="18" fill="#183D55">Highlighted edge: shared by both patches. No enclosed volume.</text>
+  </g>
+  <!-- Pyramid projection: svgX = 340 + 40*x - 24*y; svgY = 620 - 12*x - 18*y - 42*z. Square base: G(0,0,0), H(4,0,0), I(4,4,0), J(0,4,0). Apex K(2,2,3). Patches: G-J-I-H-G, G-H-K-G, H-I-K-H, I-J-K-I, J-G-K-J. -->
+  <g font-family="sans-serif" stroke-linejoin="round">
+    <text x="45" y="365" font-size="20" fill="#183D55">Square-based pyramid: a closed surface</text>
+    <polygon points="340,620 500,572 404,500 244,548" fill="#39A576" fill-opacity="0.12" />
+    <polygon points="340,620 500,572 372,434" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" />
+    <polygon points="244,548 340,620 372,434" fill="#39A576" fill-opacity="0.4" stroke="#2784C2" stroke-width="3" />
+    <path d="M500 572 L404 500 L244 548 M404 500 L372 434" fill="none" stroke="#183D55" stroke-width="2" stroke-dasharray="7 6" />
+    <circle cx="340" cy="620" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="500" cy="572" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="404" cy="500" r="5" fill="#F5F8FA" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="244" cy="548" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="372" cy="434" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="45" y="670" font-size="18" fill="#183D55">Four triangular sides + one square base.</text>
+    <text x="45" y="705" font-size="18" fill="#183D55">Dashed lines show hidden edges, including those of the base.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="158" y="168">A</text>
+    <text x="333" y="265">B</text>
+    <text x="436" y="153">C</text>
+    <text x="269" y="89">D</text>
+    <text x="510" y="181">E</text>
+    <text x="606" y="96">F</text>
+    <text x="335" y="645">G</text>
+    <text x="512" y="582">H</text>
+    <text x="416" y="505">I</text>
+    <text x="222" y="548">J</text>
+    <text x="365" y="417">K</text>
+  </g>
+</svg>

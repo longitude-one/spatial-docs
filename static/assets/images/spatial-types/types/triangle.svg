@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">Triangle examples</title>
+  <desc id="description">Two triangles with three vertices each. Each exterior ring closes by repeating its first position.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">A right triangle</text>
+    <polygon points="70,235 285,235 70,100" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <circle cx="70" cy="235" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="285" cy="235" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="70" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="415" y="52" font-size="20" fill="#183D55">An oblique triangle</text>
+    <polygon points="430,235 685,205 555,95" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <circle cx="430" cy="235" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="685" cy="205" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="555" cy="95" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="45" y="290" font-size="18" fill="#183D55">Each ring closes at its first vertex. No interior rings.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="50" y="250">A</text>
+    <text x="295" y="250">B</text>
+    <text x="50" y="90">C</text>
+    <text x="410" y="250">D</text>
+    <text x="695" y="220">E</text>
+    <text x="550" y="80">F</text>
+  </g>
+</svg>

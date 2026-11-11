@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">MultiPolygon examples</title>
+  <desc id="description">One MultiPolygon containing two separate polygons. The second polygon has a hole.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">Two Polygon members</text>
+    <polygon points="65,230 285,225 250,100 105,115" fill="#39A576" fill-opacity="0.22" stroke="#2784C2" stroke-width="3" stroke-linejoin="round" />
+    <path d="M430 100 H685 V235 H430 Z M505 145 H610 V195 H505 Z" fill="#39A576" fill-opacity="0.22" fill-rule="evenodd" stroke="#2784C2" stroke-width="3" />
+    <text x="125" y="265" font-size="18" fill="#183D55">Member 1</text>
+    <text x="505" y="265" font-size="18" fill="#183D55">Member 2</text>
+    <text x="45" y="305" font-size="18" fill="#183D55">Each shaded region is a separate Polygon member.</text>
+  </g>
+  <g>
+    <circle cx="65" cy="230" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="285" cy="225" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="250" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="105" cy="115" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="430" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="685" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="685" cy="235" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="430" cy="235" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="505" cy="145" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="610" cy="145" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="610" cy="195" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="505" cy="195" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="45" y="240">A</text>
+    <text x="295" y="235">B</text>
+    <text x="255" y="88">C</text>
+    <text x="85" y="105">D</text>
+    <text x="410" y="90">E</text>
+    <text x="693" y="90">F</text>
+    <text x="695" y="245">G</text>
+    <text x="410" y="245">H</text>
+    <text x="485" y="137">I</text>
+    <text x="618" y="137">J</text>
+    <text x="618" y="215">K</text>
+    <text x="485" y="215">L</text>
+  </g>
+</svg>

@@ -1,13 +1,15 @@
 ---
 title: Spatial Types 1.x
-description: Installation, usage and reference documentation for the 1.x major of LongitudeOne Spatial Types.
+description: >-
+  Get started with LongitudeOne Spatial Types: represent positions and paths, create your first objects and choose a construction approach.
 sidebar_label: Overview
 pagination_label: Spatial Types 1.x
 sidebar_position: 1
 ---
 
-Spatial Types provides PHP spatial types with geometric and geographic classes.
-For database persistence with Doctrine, see [Doctrine Spatial](../../doctrine-spatial/index.md).
+Spatial Types represents spatial data as PHP objects: a location as a Point, a runner's track as a LineString, or an area as a Polygon.
+Use these objects to keep coordinates, ordered components and their declared spatial reference together in your application.
+Both Cartesian coordinates (Geometry) and longitude/latitude coordinates (Geography) are supported.
 
 ## Installation
 
@@ -15,74 +17,50 @@ For database persistence with Doctrine, see [Doctrine Spatial](../../doctrine-sp
 composer require longitude-one/spatial-types:^1.0
 ```
 
-## Usage
+## Record a runner's track
+
+A LineString stores positions in order. This example records three positions in an illustrative local Cartesian frame,
+where X and Y are measured in metres. The default SRID 0 leaves the reference unnamed.
+Load Composer's autoloader before creating spatial objects.
 
 ```php
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\LineString;
-use LongitudeOne\SpatialTypes\Types\Dimension2\Geometry\Point;
+require_once 'vendor/autoload.php';
 
-$point = new Point(1, 2);
-echo $point->getX(); // 1
-echo $point->getY(); // 2
+use LongitudeOne\SpatialTypes\Factory\Dimension2\Geometry\LineStringFactory;
+use LongitudeOne\SpatialTypes\Factory\SpatialFactory;
 
-$lineString = new LineString([
-    new Point(1, 2, 4326),
-    new Point(3, 4, 4326),
-    new Point(5, 6, 4326),
-], 4326);
-$lineString->getSrid(); // 4326
+SpatialFactory::immutable();
+$track = LineStringFactory::create([
+    [0, 0],
+    [150, 80],
+    [300, 160],
+]);
+
+$start = $track->getPoint(0);
+echo $start->getX(); // 0
+echo $start->getY(); // 0
+$track->toArray();  // [[0, 0], [150, 80], [300, 160]]
 ```
 
-For the complete catalogue of concrete types, constructors, accessors, and
-mutability rules, see [Instantiable spatial types](./instantiable-spatial-types.md).
+The factory creates the line and its points. Immutable objects retain their values; an update returns a new object.
+This example stores a path without calculating distance or speed.
 
-## Type class hierarchy
+## Choose how to create objects
 
-See [Type class hierarchy](./type-class-hierarchy.md) for the complete inheritance
-of abstract and concrete classes in every dimension and family.
+| Approach | Use it when… | Start here |
+| --- | --- | --- |
+| Factories | You know the type, layout and family, and want a shared mutable/immutable selection | [Spatial Factories](./spatial-factories/index.md) |
+| Builder | You want a reusable local configuration or need to assemble components progressively | [Spatial builder](./spatial-builder.md) |
+| Direct constructors | You want to choose a concrete mutable or immutable class explicitly | [Spatial type catalogue](./instantiable-spatial-types.md) |
 
-### Types not yet available
+Factories share their representation setting within the same PHP execution. A builder's configuration is local; direct constructors follow the chosen class.
 
-`CurvePolygon`, `MultiCurve`,
-`MultiSurface` and `TIN` do not yet have
-instantiable classes. See [Instantiable spatial types](./instantiable-spatial-types.md)
-for the complete coverage matrix.
+## Continue with your use case
 
-## Immutability
+- **Choose a shape:** browse the illustrated [type guides](./instantiable-spatial-types.md#type-guides) for points, curves, surfaces and collections.
+- **Choose an editing strategy:** use [immutable values or mutable objects](./mutability-and-immutability/index.md) according to how you share and update data.
+- **Declare a coordinate reference:** learn how [spatial reference systems](./spatial-reference-systems.md) are retained and changed without reprojection.
+- **Check geometry:** understand [what Spatial Types checks](./validators.md). Construction success does not establish geometric validity; validation is explicit.
+- **Persist with Doctrine:** see [Doctrine Spatial](../../doctrine-spatial/index.md).
 
-Spatial values are immutable and safe to share: their coordinates, SRID, and
-aggregate membership are set at construction time and never changed through
-the public API. Use `withCoordinates()` with an immutable `Value\Coordinates`
-value to represent another location, or `withSpatialReference()` to associate
-the same coordinates with another declared reference. Both return new objects.
-
-`LineString`, `Polygon`, `Triangle`, and `PolyhedralSurface` also provide
-`withArrayOfCoordinates()` to create a new instance with replacement
-coordinates. This preserves their family, dimension, and SRID without changing
-the source object.
-
-This prevents a value shared by other aggregates from silently changing them.
-See [Immutability](./immutability.md) for the rationale, examples, and the
-complete contract.
-
-## Spatial reference system (SRS)
-
-Every spatial object has a `Reference\SpatialReference`. Its legacy integer
-projection remains available through `getSrid()`, while `getSpatialReference()`
-preserves the optional authority (for example `EPSG:4326`). Constructors and
-factories accept either a legacy integer or a `SpatialReference` instance.
-
-All members of an aggregate must have exactly the same spatial reference
-system, including the unnamed reference represented by identifier `0`. It is
-not a wildcard. Use `withSpatialReference()` (or the legacy `withSrid()`) only
-to relabel coordinates; neither method performs a reprojection.
-
-See [Spatial reference systems](./spatial-reference-systems.md) for the
-strict aggregate rule, its ISO/IEC 13249-3 basis, and the distinction between
-declaring a reference and transforming coordinates.
-
-## Further reference
-
-- [Spatial validators](./validators.md)
-- [Empty MultiLineString interoperability](./empty-multilinestring-interoperability.md)
-- [Library roadmap](../index.md)
+For planned evolution and support information, see the [library roadmap](../index.md).

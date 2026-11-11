@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 340" role="img" aria-labelledby="title description">
+  <title id="title">CompoundCurve examples</title>
+  <desc id="description">One compound curve made of a straight segment followed by a semicircular arc. The components share an endpoint.</desc>
+  <rect width="740" height="340" fill="#F5F8FA" />
+  <g font-family="sans-serif">
+    <text x="45" y="52" font-size="20" fill="#183D55">A straight component followed by a circular component</text>
+    <path d="M75 220 L285 220" fill="none" stroke="#2784C2" stroke-width="3" />
+    <path d="M285 220 A120 120 0 0 1 525 220" fill="none" stroke="#2784C2" stroke-width="3" />
+    <circle cx="75" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="285" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="405" cy="100" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <circle cx="525" cy="220" r="5" fill="#2784C2" stroke="#183D55" stroke-width="1.5" />
+    <text x="85" y="260" font-size="18" fill="#183D55">LineString</text>
+    <text x="360" y="260" font-size="18" fill="#183D55">CircularString</text>
+    <text x="45" y="300" font-size="18" fill="#183D55">B is the shared endpoint of the two components.</text>
+  </g>
+  <g font-family="sans-serif" font-size="18" fill="#183D55">
+    <text x="85" y="210">A</text>
+    <text x="295" y="210">B</text>
+    <text x="415" y="90">C</text>
+    <text x="535" y="210">D</text>
+  </g>
+</svg>

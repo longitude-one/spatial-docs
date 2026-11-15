@@ -10,6 +10,11 @@ or open a pull request for a focused correction using the existing PR template.
 For local previews and legal configuration, see the [README](README.md).
 The operational notes below cover stopping servers and publishing approved releases.
 
+Release configuration lives in [quality/commit-and-tag-version/.versionrc.json](quality/commit-and-tag-version/.versionrc.json).
+Run release tooling from the repository root with
+`commit-and-tag-version --config quality/commit-and-tag-version/.versionrc.json --dry-run`
+to preview a release. Actual releases require the maintainer's authorization.
+
 ## Stop the local server
 
 Press **Ctrl+C** in the terminal running `npm run start:local` or `npm run serve`.
